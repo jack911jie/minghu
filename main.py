@@ -4,11 +4,12 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import re
+from PIL import Image
 
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        with open (os.path.join(self.dir,'config.dazhi'),'r',encoding='utf-8') as f:
+        with open (os.path.join(self.dir,'config'),'r',encoding='utf-8') as f:
             lines=f.readlines()
         _line=''
         for line in lines:
@@ -29,6 +30,7 @@ class MingHu:
         nat = np.datetime64('NaT')
         xls_name=os.path.join(self.cus_file_dir,cus+'.xlsx')
         infos=pd.read_excel(xls_name,sheet_name='训练情况',skiprows=2,header=None)
+        infos=infos.iloc[:,0:10] #取前10列
         infos.columns=['时间','形式','目标肌群','有氧项目','有氧时长','力量内容','重量','次数','教练姓名','教练评语']
         # infos.rename(columns={'0':'时间','Unnamed: 1':'形式','Unnamed: 2':'目标肌群', \
         #                       'Unnamed: 3':'有氧项目','Unnamed: 4':'有氧时长','Unnamed: 5':'力量内容', \
@@ -53,8 +55,8 @@ class MingHu:
         _sum_train_items=df_train_big_type.groupby(['目标肌群'],as_index=False)
         print(_sum_train_items.count())
         sum_train_items=[]
-        for dst_muscle,itm in _sum_train_items:
-            print(dst_muscle)
+        # for dst_muscle,itm in _sum_train_items:
+        #     print(dst_muscle)
         # print(sum_train_items)
             
         
