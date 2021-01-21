@@ -8,7 +8,7 @@ import re
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        with open (os.path.join(self.dir,'config.linux'),'r',encoding='utf-8') as f:
+        with open (os.path.join(self.dir,'config.dazhi'),'r',encoding='utf-8') as f:
             lines=f.readlines()
         _line=''
         for line in lines:
@@ -18,7 +18,7 @@ class MingHu:
 
         self.cus_file_dir=config['会员档案文件夹']
 
-    def read_cus(self,cus='MH001韦美霜',start_time='20160101',end_time=''):
+    def read_cus(self,cus='MH001韦美霜',start_time='20150101',end_time=''):
         if end_time=='':
             end_time=datetime.now()
         else:
@@ -33,7 +33,10 @@ class MingHu:
         # infos.rename(columns={'0':'时间','Unnamed: 1':'形式','Unnamed: 2':'目标肌群', \
         #                       'Unnamed: 3':'有氧项目','Unnamed: 4':'有氧时长','Unnamed: 5':'力量内容', \
         #                           'Unnamed: 6':'重量','Unnamed: 7':'次数','Unnamed: 8':'教练姓名','Unnamed: 9':'教练评语',},inplace=True)
-        # print(infos['教练评语'])
+
+        infos=infos[(infos['时间']>=start_time) & (infos['时间']<=end_time)] #根据时间段筛选记录
+        # print(infos)
+
         traing_times=infos['时间'].nunique()
         
         # print('会员训练次数：',traing_times)
