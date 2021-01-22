@@ -12,7 +12,7 @@ from PIL import Image
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        with open (os.path.join(self.dir,'config.dazhi'),'r',encoding='utf-8') as f:
+        with open (os.path.join(self.dir,'config.linux'),'r',encoding='utf-8') as f:
             lines=f.readlines()
         _line=''
         for line in lines:
@@ -89,6 +89,11 @@ class MingHu:
 
         #起止日期
         out['interval']=[infos['时间'].min(),infos['时间'].max()]  
+        out['interval_input']=[start_time,end_time]
+
+        #次数
+        train_times=infos.groupby(['时间'],as_index=False).nunique()['时间'].nunique()
+        out['train_times']=train_times
 
         #抗阻训练
         train_dates=infos.groupby(['时间','目标肌群'])
@@ -117,8 +122,75 @@ class MingHu:
         return out
 
     def draw(self,cus='MH001韦美霜',start_time='20150101',end_time=''):
-        infos=self.read_cus(cus=cus,start_time=start_time,end_time=end_time)
-        print(infos)
+
+        def txts():
+            infos=self.read_cus(cus=cus,start_time=start_time,end_time=end_time)
+        
+            txts=Vividict()
+            #文字
+            nickname=infos['nickname']
+            sex=infos['sex']
+            if sex=='女':
+                sex='美女'
+            else:
+                sex='帅哥'
+
+            txts['sex']=sex
+            txts['age']=infos['age']
+        
+            #测量
+            latest_msr_time=infos['body']['time']
+            txts['latest_msr_time']=datetime.strftime(latest_msr_time,'%Y年%m月%d日')
+            txts['ht']='身高 '+str(infos['body']['ht'])+'厘米'
+            txts['wt']='体重 '+str(infos['body']['wt']) +'千克'
+            txts['bfr']='体脂率 '+str(infos['body']['bfr']) 
+            txts['chest']='胸围 '+str(infos['body']['chest']) 
+            txts['l_arm']='左臂围 '+str(infos['body']['l_arm']) 
+            txts['r_arm']='右臂围 '+str(infos['body']['r_arm']) 
+            txts['waist']='腰围 '+str(infos['body']['waist']) 
+            txts['hip']='臀围 '+str(infos['body']['hip']) 
+            txts['l_leg']='左大腿围 '+str(infos['body']['l_leg']) 
+            txts['r_leg']='右大腿围 '+str(infos['body']['r_leg']) 
+            txts['l_calf']='左小腿围 '+str(infos['body']['l_calf']) 
+            txts['r_calf']='右大腿围 '+str(infos['body']['r_calf']) 
+
+            #训练情况
+            intervals_input=infos['interval_input'][1]-infos['interval_input'][0]
+            txts['intervals_train_0']='您在{0}-{1}的'.format(datetime.strftime(infos['interval_input'][0],'%Y年%m月%d日'),datetime.strftime(infos['interval_input'][1],'%Y年%m月%d日'))
+            txts['intervals_train_1']='{0}天里锻炼了{1}次'.format(str(intervals_input.days),str(infos['train_times']))
+
+            if infos['train']:
+                t=''
+                for items in infos['train']:
+                    # txts['train_content'][items]='    '+str(infos[items])+' 次'
+                    
+                    if items=='muscle':
+                        for k in infos['train'][items]:
+                            t=t+str(k)+'    '+str(infos['train'][items][k])+'次\n'
+                        
+                    elif items=='oxy_time':
+                        _oxy_time=infos['train'][items]
+                        if _oxy_time>60:
+                            if _oxy_time%60==0:
+                                _oxy_time='有氧训练    '+str(int(_oxy_time//60))+'分钟\n'
+                            else:
+                                _oxy_time='有氧训练    '+str(int(_oxy_time//60))+'分钟'+str(int(_oxy_time%60))+'秒\n'
+                        t=t+_oxy_time
+                        t.rstrip()
+                        
+                        txts['train_content']=t
+            else:
+                txts['train_content']=''
+
+        
+            return txts
+
+        def exp_pic(t):
+            print(t)
+
+        t=txts()
+        exp_pic(t)
+        
 
 class Vividict(dict):
     def __missing__(self, key):
@@ -127,5 +199,5 @@ class Vividict(dict):
 
 if __name__=='__main__':
     p=MingHu()
-    p.draw(cus='MH001韦美霜',start_time='20200901',end_time='20200905')
+    p.draw(cus='MH001韦美霜',start_time='20200901',end_time='20200907')
 
