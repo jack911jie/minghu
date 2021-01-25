@@ -15,13 +15,16 @@ import random
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.linux'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
-        self.inst_dir=config['教练文件夹']
+        self.ins_dir=config['教练文件夹']
+        self.slogan_dir=config['文案文件夹']
+        self.save_dir=config['输出文件夹']
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.linux'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
+        # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
     def put_txt_img(self,img,t,total_dis,xy,dis_line,fill,font_name,font_size,addSPC='None'):
@@ -169,14 +172,29 @@ class MingHu:
                 out['train']['muscle']=''
         else:
             out['train']['muscle']=''
-
+    
         #有氧训练总时长
         out['train']['oxy_time']=infos['有氧时长'].sum()
 
         # print('201 line:',out)
         return out
 
-    def draw(self,cus='MH001韦美霜',ins='韦越棋',start_time='20150101',end_time=''):
+    def draw(self,cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20150101',end_time=''):
+        
+        def slogan():
+            df_slogans=pd.read_excel(os.path.join(self.slogan_dir,'文案.xlsx'))
+            df_slogans.dropna(axis=0,how='any',subset=['文案'],inplace=True)
+            slogans=df_slogans['文案'].values.tolist()
+            slogan=random.choice(slogans)
+            # print('189 line:',df_slogans)
+            return slogan
+
+        def ins_info():
+            df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'))
+            ins_inf={}
+            ins_inf['nickname']=df_ins[df_ins['员工编号']==ins[0:8]]['昵称'].values.tolist()[0].strip()
+            ins_inf['tel']='电话：'+str(df_ins[df_ins['员工编号']==ins[0:8]]['电话'].values.tolist()[0]).strip()
+            return ins_inf
 
         def txts():
             infos=self.exp_cus_prd(cus=cus,start_time=start_time,end_time=end_time)        
@@ -262,6 +280,14 @@ class MingHu:
         
             return txts
 
+        def save_pic_name(cus):
+            save_dir=os.path.join(self.save_dir,cus)
+            if not os.path.exists(save_dir):
+                os.mkdir(save_dir)
+            _date=datetime.strftime(datetime.now(),"%Y%m%d_%H%M%S")
+            save_name=os.path.join(save_dir,_date+'_'+cus+'.jpg')
+            return save_name
+
         def exp_pic(t):
             # print('279 line:',t)
             dis_line=20
@@ -280,7 +306,7 @@ class MingHu:
                 gap_body=0
             else:
                 s_title_body=s_title
-                s_body=500
+                s_body=560
                 gap_body=gap
 
             if t['train_content']:
@@ -296,7 +322,16 @@ class MingHu:
                 s_train=0
                 gap_train=0
 
-            s_slogan=120
+            slogan_txt=slogan()
+            slogan_txt=slogan_txt+'\n期待您在铭湖健身遇见更好的自己。'
+            dis_line_slogan=15
+            ft_size_slogan=36
+            # print('327 line',slogan_txt)
+            num_prgr_slogan=len(slogan_txt.split('\n'))
+            # s_slogan=120
+            s_slogan=dis_line_slogan*(num_prgr_slogan-1)+ft_size_slogan*num_prgr_slogan+40
+            # print(s_slogan,num_prgr_slogan)
+
             s_logo=680
             s_bottom=40
 
@@ -316,7 +351,7 @@ class MingHu:
             x_l=18
             x_r=x_l+block_wid
 
-            def bg():                
+            def bg(ins=ins):           
                 # y_item=dis_line*(num_prgr-1)+ft_size*num_prgr+50
                 img = Image.new("RGB",(720,y_bottom+s_bottom),(255,255,255))
                 
@@ -335,8 +370,8 @@ class MingHu:
                 if t['train_content']:
                     draw.rectangle((x_l,y_title_train,x_l+254,y_title_train+s_title_train),fill='#fff4ee') #train title
                     draw.rectangle((x_l,y_train,x_r,y_train+s_train),fill='#fff4ee') #train
-                    draw.rectangle((x_l+40,y_train+200,x_r-40,y_train+200+s_train_content),fill='#ffffff') #train content
-                
+                    y_train_content_bottom=y_train+200+s_train_content
+                    draw.rectangle((x_l+40,y_train+200,x_r-40,y_train_content_bottom),fill='#ffffff') #train content                    
                 draw.rectangle((x_l,y_slogan,x_r,y_slogan+s_slogan),fill='#fff4ee') #slogan
                 draw.rectangle((x_l,y_logo,x_r,y_logo+s_logo),fill='#fff4ee') #logo
                 draw.rectangle((0,y_bottom,720,y_bottom+s_bottom),fill='#fff4ee') #bottom
@@ -361,7 +396,7 @@ class MingHu:
                     w_model,h_model=pic_model.size
                     pic_model=pic_model.resize((280,int(h_model*280/w_model)))
                     r2,g2,b2,a2=pic_model.split()
-                    img.paste(pic_model,(x_l+int((block_wid-pic_model.size[0])/2),y_body+s_body-pic_model.size[1]-20),mask=a2)
+                    img.paste(pic_model,(x_l+int((block_wid-pic_model.size[0])/2),y_body+s_body-pic_model.size[1]-75),mask=a2)
 
                 if t['train_content']:
                     teach_pic_src=os.path.join(self.material_dir,'指导.png')
@@ -373,7 +408,7 @@ class MingHu:
                     # img.paste(pic_teach,())   x_l+40,y_train+200,x_r-40,y_train+200+s_train_content
 
                 #logo
-                logo=Image.open(os.path.join(self.inst_dir,'minghulogo.png'))
+                logo=Image.open(os.path.join(self.ins_dir,'minghulogo.png'))
                 w_logo,h_logo=logo.size
                 logo=logo.resize((300,int(h_logo*300/w_logo)))
                 r4,g4,b4,a4=logo.split()
@@ -381,7 +416,7 @@ class MingHu:
 
                 #qrcode
 
-                qrcode=Image.open(os.path.join(self.inst_dir,ins+'二维码.jpg'))
+                qrcode=Image.open(os.path.join(self.ins_dir,ins+'二维码.jpg'))
                 w_qrcode,h_qrcode=qrcode.size
                 qrcode=qrcode.resize((150,int(h_qrcode*150/w_qrcode)))
                 # r5,g5,b5,a5=qrcode.split()
@@ -406,6 +441,7 @@ class MingHu:
                     draw.text((x_l+500,y_title_body+280), t['waist'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #腰
                     draw.text((x_l+500,y_title_body+370), t['l_leg'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #左大腿
                     draw.text((x_l+500,y_title_body+470), t['l_calf'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #左小腿
+                    draw.text((x_l+260,y_title_body+550), t['wt'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #体重
                 
                 if t['train_content']:
                     draw.text((x_l+30,y_title_train+5), '看看努力的自己', fill = '#ff9c6c',font=self.fonts('上首金牛',30))  #看看努力的自己                    
@@ -417,24 +453,27 @@ class MingHu:
                         draw.text((x_l+180,y_train+140), '完成了下面的训练内容', fill = '#898886',font=self.fonts('aa楷体',32))  #完成了下面的训练内容
                         self.put_txt_img(img,t=t['train_content'],total_dis=420,xy=[x_l+95,y_train+230],dis_line=16,fill='#ff9c6c',font_name='杨任东石竹体',font_size=38)
                         percent=random.randint(70,93)
-                        draw.text((x_l+145,y_train+540), '击败了铭湖健身 {} 的会员!'.format(str(percent)+'%'), fill = '#ff9c6c',font=self.fonts('aa楷体',32))  #击败了
+                        draw.text((x_l+145,y_train_content_bottom+20), '击败了铭湖健身 {} 的会员!'.format(str(percent)+'%'), fill = '#ff9c6c',font=self.fonts('aa楷体',32))  #击败了
                     else:
                         draw.text((x_l+145,y_train+45), t['intervals_train_0'], fill = '#898886',font=self.fonts('aa楷体',40))  #您在。。。
                         draw.text((x_l+160,y_train+85), t['intervals_train_1'], fill = '#ff9c6c',font=self.fonts('aa楷体',40))  #XX天里
-                        draw.text((x_l+50,y_train+115), '你成了下面的训练内容:', fill = '#898886',font=self.fonts('aa楷体',45))  #完成了下面的训练内容
+                        draw.text((x_l+50,y_train+115), '你成了下面的训练内容:', fill = '#898886',font=self.fonts('aa楷体',40))  #完成了下面的训练内容
                         self.put_txt_img(img,t=t['train_content'],total_dis=420,xy=[x_l+95,y_train+230],dis_line=16,fill='#ff9c6c',font_name='杨任东石竹体',font_size=36)
-                        draw.text((x_l+55,y_train+550), '保持这样的状态，好身材还远吗？', fill = '#ff9c6c',font=self.fonts('aa楷体',40))  #击败了
+                        draw.text((x_l+55,y_train_content_bottom+20), '保持这样的状态，好身材还远吗？', fill = '#ff9c6c',font=self.fonts('aa楷体',40))  #击败了
 
                 # 鸡汤
-                draw.text((x_l+20,y_slogan+15),'不经历风雨，怎么见彩虹，\n期待你在铭湖健身遇见更好的自己！',fill='#cd8c52',font=self.fonts('优设标题黑',40))
+                draw.text((x_l+20,y_slogan+15),slogan_txt,fill='#cd8c52',font=self.fonts('优设标题黑',ft_size_slogan))
 
                 # addr
-                draw.text((x_l+10,y_logo+240),'南宁市青秀区民族大道88-1号铭湖金曲A座802室',fill='#693607',font=self.fonts('微软雅黑',30))
+                draw.text((x_l+10,y_logo+240),'南宁市青秀区民族大道88-1号铭湖经典A座802室',fill='#693607',font=self.fonts('微软雅黑',30))
                 draw.text((x_l+125,y_logo+310),'让健身变得有趣',fill='#693607',font=self.fonts('丁永康硬笔楷书',60))
-                draw.text((x_l+255,y_logo+570),ins[0]+'教练',fill='#693607',font=self.fonts('丁永康硬笔楷书',50))
-                draw.text((x_l+115,y_logo+630),'电话：XXXXXXXXXXX',fill='#693607',font=self.fonts('丁永康硬笔楷书',40))
 
-                img.save('/home/jack/data/temp/minghu_test.jpg',quality=95,subsampling=0)
+                ins=ins_info()
+                draw.text((x_l+255,y_logo+570),ins['nickname'],fill='#693607',font=self.fonts('丁永康硬笔楷书',50))
+                draw.text((x_l+115,y_logo+630),ins['tel'],fill='#693607',font=self.fonts('丁永康硬笔楷书',40))
+
+                save_name=save_pic_name(cus)
+                img.save(save_name,quality=95,subsampling=0)
 
                 img.show()
 
@@ -442,7 +481,8 @@ class MingHu:
 
         t=txts()
         exp_pic(t)
-        # bg()
+        # slogan()
+        # ins_info()
 
 
             
@@ -455,6 +495,6 @@ class Vividict(dict):
 
 if __name__=='__main__':
     p=MingHu()
-    p.draw(cus='MH000丽看看',ins='陆伟杰',start_time='20200104',end_time='')
+    p.draw(cus='MH000唐青剑',ins='MHINS002韦越棋',start_time='20200101',end_time='')
 
 
