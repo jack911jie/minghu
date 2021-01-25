@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'modules'))
 import days_cal
+import readconfig
 import composing
 import json
 import pandas as pd
@@ -14,40 +15,13 @@ import random
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        with open (os.path.join(self.dir,'config.linux'),'r',encoding='utf-8') as f:
-            lines=f.readlines()
-        _line=''
-        for line in lines:
-            newLine=line.strip('\n')
-            _line=_line+newLine
-        config=json.loads(_line) 
-
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.linux'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.inst_dir=config['教练文件夹']
 
     def fonts(self,font_name,font_size):
-        # fontList={
-        #     '丁永康硬笔楷书':'E:\\健身项目\\minghu\\fonts\\2012DingYongKangYingBiKaiShuXinBan-2.ttf',
-        #     '方正韵动粗黑':'E:\\健身项目\\minghu\\fonts\\FZYunDongCuHei.ttf',
-        #     '微软雅黑':'E:\\健身项目\\minghu\\fonts\\msyh.ttc',
-        #     '上首金牛':'E:\\健身项目\\minghu\\fonts\\ShangShouJinNiuTi-2.ttf',
-        #     '杨任东石竹体':'E:\\健身项目\\minghu\\fonts\\yangrendongzhushi-Regular.ttf',
-        #     '优设标题黑':'E:\\健身项目\\minghu\\fonts\\yousheTitleHei.ttf'       
-        # }
-
-        fontList={
-            '丁永康硬笔楷书':'/home/jack/data/健身项目/minghu/fonts/2012DingYongKangYingBiKaiShuXinBan-2.ttf',
-            '方正韵动粗黑':'/home/jack/data/健身项目/minghu/fonts/FZYunDongCuHei.ttf',
-            '微软雅黑':'/home/jack/data/健身项目/minghu/fonts/msyh.ttc',
-            '上首金牛':'/home/jack/data/健身项目/minghu/fonts/ShangShouJinNiuTi-2.ttf',
-            '杨任东石竹体':'/home/jack/data/健身项目/minghu/fonts/yangrendongzhushi-Regular.ttf',
-            '优设标题黑':'/home/jack/data/健身项目/minghu/fonts/yousheTitleHei.ttf'       
-        }
-
-        # ImageFont.truetype('j:\\fonts\\2012DingYongKangYingBiKaiShuXinBan-2.ttf',font_size)
-
-
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.linux'))
         return ImageFont.truetype(fontList[font_name],font_size)
 
     def put_txt_img(self,img,t,total_dis,xy,dis_line,fill,font_name,font_size,addSPC='None'):
@@ -93,7 +67,6 @@ class MingHu:
         df_body=pd.read_excel(xls_name,sheet_name='身体数据')
         df_infos=pd.read_excel(xls_name,sheet_name='训练情况',skiprows=2,header=None)
         return [df_basic,df_body,df_infos]
-
 
     def exp_cus_prd(self,cus='MH001韦美霜',start_time='20150101',end_time=''):
         df=self.read_excel(cus=cus)
@@ -416,12 +389,12 @@ class MingHu:
 
                 #------文字-----------
                 x_nickname=250
-                draw.text((x_nickname,110), t['nickname'], fill = '#ff6667',font=self.fonts('杨任东石竹体',80))  #姓名
-                draw.text((x_nickname+len(t['nickname'])*80+30,150), t['sex'], fill = '#ff6667',font=self.fonts('杨任东石竹体',40))  #性别
+                draw.text((x_nickname,110), t['nickname'], fill = '#ff6667',font=self.fonts('华康古籍木兰',80))  #姓名
+                draw.text((x_nickname+len(t['nickname'])*80+30,150), t['sex'], fill = '#ff6667',font=self.fonts('华康古籍木兰',40))  #性别
                 if t['latest_msr_time']!=0:
                     draw.text((x_l+30,y_title_body+5), '看看棒棒的自己', fill = '#ff9c6c',font=self.fonts('上首金牛',30))  #看看棒棒的自己
-                    draw.text((x_l+115,y_title_body+65), '您最近一次测量身体围度，是在', fill = '#898886',font=self.fonts('杨任东石竹体',36))  #您最近一次测量身体围度
-                    draw.text((x_l+205,y_title_body+115), t['latest_msr_time'], fill = '#ff9c6c',font=self.fonts('杨任东石竹体',40))  #测围度日期
+                    draw.text((x_l+115,y_title_body+65), '您最近一次测量身体围度，是在', fill = '#898886',font=self.fonts('aa楷体',36))  #您最近一次测量身体围度
+                    draw.text((x_l+205,y_title_body+115), t['latest_msr_time'], fill = '#ff9c6c',font=self.fonts('aa楷体',40))  #测围度日期
 
                     draw.text((x_l+50,y_title_body+190), t['r_arm'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #右臂
                     draw.text((x_l+90,y_title_body+270), t['hip'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  # 臀
@@ -437,19 +410,20 @@ class MingHu:
                 if t['train_content']:
                     draw.text((x_l+30,y_title_train+5), '看看努力的自己', fill = '#ff9c6c',font=self.fonts('上首金牛',30))  #看看努力的自己                    
                     if t['intervals_train_1']:
-                        draw.text((x_l+35,y_train+35), t['intervals_train_0'], fill = '#898886',font=self.fonts('杨任东石竹体',36))  #您在。。。
-                        draw.text((x_l+160,y_train+85), t['intervals_train_1'], fill = '#ff9c6c',font=self.fonts('杨任东石竹体',40))  #XX天里
-                        draw.text((x_l+160,y_train+140), '完成了下面的训练内容', fill = '#898886',font=self.fonts('杨任东石竹体',38))  #完成了下面的训练内容
-                        self.put_txt_img(img,t=t['train_content'],total_dis=420,xy=[x_l+95,y_train+230],dis_line=16,fill='#ff9c6c',font_name='杨任东石竹体',font_size=36)
-                        
+                        draw.text((x_l+45,y_train+35), t['intervals_train_0'], fill = '#898886',font=self.fonts('aa楷体',34))  #您在。。。
+                        ft_size_days=40
+                        x_days=composing.center_align_x(start_x=x_l,wide=block_wid,ft_size=ft_size_days,t=t['intervals_train_1'])
+                        draw.text((x_days,y_train+85), t['intervals_train_1'], fill = '#ff9c6c',font=self.fonts('aa楷体',ft_size_days))  #XX天里（居中）
+                        draw.text((x_l+180,y_train+140), '完成了下面的训练内容', fill = '#898886',font=self.fonts('aa楷体',32))  #完成了下面的训练内容
+                        self.put_txt_img(img,t=t['train_content'],total_dis=420,xy=[x_l+95,y_train+230],dis_line=16,fill='#ff9c6c',font_name='杨任东石竹体',font_size=38)
                         percent=random.randint(70,93)
-                        draw.text((x_l+105,y_train+550), '击败了铭湖健身 {} 的会员!'.format(str(percent)+'%'), fill = '#ff9c6c',font=self.fonts('杨任东石竹体',40))  #击败了
+                        draw.text((x_l+145,y_train+540), '击败了铭湖健身 {} 的会员!'.format(str(percent)+'%'), fill = '#ff9c6c',font=self.fonts('aa楷体',32))  #击败了
                     else:
-                        draw.text((x_l+145,y_train+45), t['intervals_train_0'], fill = '#898886',font=self.fonts('杨任东石竹体',45))  #您在。。。
-                        # draw.text((x_l+160,y_train+85), t['intervals_train_1'], fill = '#ff9c6c',font=self.fonts('杨任东石竹体',40))  #XX天里
-                        draw.text((x_l+50,y_train+115), '你成了下面的训练内容:', fill = '#898886',font=self.fonts('杨任东石竹体',45))  #完成了下面的训练内容
+                        draw.text((x_l+145,y_train+45), t['intervals_train_0'], fill = '#898886',font=self.fonts('aa楷体',40))  #您在。。。
+                        draw.text((x_l+160,y_train+85), t['intervals_train_1'], fill = '#ff9c6c',font=self.fonts('aa楷体',40))  #XX天里
+                        draw.text((x_l+50,y_train+115), '你成了下面的训练内容:', fill = '#898886',font=self.fonts('aa楷体',45))  #完成了下面的训练内容
                         self.put_txt_img(img,t=t['train_content'],total_dis=420,xy=[x_l+95,y_train+230],dis_line=16,fill='#ff9c6c',font_name='杨任东石竹体',font_size=36)
-                        draw.text((x_l+55,y_train+550), '保持这样的状态，好身材还远吗？', fill = '#ff9c6c',font=self.fonts('杨任东石竹体',40))  #击败了
+                        draw.text((x_l+55,y_train+550), '保持这样的状态，好身材还远吗？', fill = '#ff9c6c',font=self.fonts('aa楷体',40))  #击败了
 
                 # 鸡汤
                 draw.text((x_l+20,y_slogan+15),'不经历风雨，怎么见彩虹，\n期待你在铭湖健身遇见更好的自己！',fill='#cd8c52',font=self.fonts('优设标题黑',40))

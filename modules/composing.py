@@ -156,10 +156,6 @@ def put_txt_img(draw,t,total_dis,xy,dis_line,fill,font_name,font_size,addSPC='No
             m+=1
             n+=1
 
-def char_len(txt):
-    len_s=len(txt)
-    len_u=len(txt.encode('utf-8'))
-    ziShu_z=(len_u-len_s)/2
-    ziShu_e=len_s-ziShu_z
-    total=ziShu_z+ziShu_e*0.5    
-    return total
+def center_align_x(start_x=0,wide=720,ft_size=30,t='这是一条测试'):
+    x=int(start_x+(wide-char_len(t)*ft_size)/2)
+    return x
