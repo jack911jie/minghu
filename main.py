@@ -15,7 +15,7 @@ import random
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.linux'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -23,7 +23,7 @@ class MingHu:
         self.save_dir=config['输出文件夹']
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.linux'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
@@ -193,7 +193,9 @@ class MingHu:
             df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'))
             ins_inf={}
             ins_inf['nickname']=df_ins[df_ins['员工编号']==ins[0:8]]['昵称'].values.tolist()[0].strip()
-            ins_inf['tel']='电话：'+str(df_ins[df_ins['员工编号']==ins[0:8]]['电话'].values.tolist()[0]).strip()
+            tel=str(df_ins[df_ins['员工编号']==ins[0:8]]['电话'].values.tolist()[0]).strip()
+            tel=tel[0:3]+'-'+tel[3:7]+'-'+tel[7:]
+            ins_inf['tel']='电话：'+tel
             return ins_inf
 
         def txts():
@@ -215,18 +217,18 @@ class MingHu:
             if infos['body']:
                 latest_msr_time=infos['body']['time']
                 txts['latest_msr_time']=datetime.strftime(latest_msr_time,'%Y年%m月%d日')
-                txts['ht']='身高 '+str(infos['body']['ht'])+'厘米'
-                txts['wt']='体重 '+str(infos['body']['wt']) +'千克'
-                txts['bfr']='体脂率 '+str(infos['body']['bfr']) 
-                txts['chest']='胸围 '+str(infos['body']['chest']) 
-                txts['l_arm']='左臂围 '+str(infos['body']['l_arm']) 
-                txts['r_arm']='右臂围 '+str(infos['body']['r_arm']) 
-                txts['waist']='腰围 '+str(infos['body']['waist']) 
-                txts['hip']='臀围 '+str(infos['body']['hip']) 
-                txts['l_leg']='左大腿围 '+str(infos['body']['l_leg']) 
-                txts['r_leg']='右大腿围 '+str(infos['body']['r_leg']) 
-                txts['l_calf']='左小腿围 '+str(infos['body']['l_calf']) 
-                txts['r_calf']='右大腿围 '+str(infos['body']['r_calf']) 
+                txts['ht']='身高 '+str('{:g}'.format(infos['body']['ht']))+' cm'
+                txts['wt']='体重 '+str('{:g}'.format(infos['body']['wt']))+' Kg'
+                txts['bfr']='体脂率 '+str(infos['body']['bfr'])
+                txts['chest']='胸围 '+str('{:g}'.format(infos['body']['chest']))+' cm'
+                txts['l_arm']='左臂围 '+str('{:g}'.format(infos['body']['l_arm']))  +' cm'
+                txts['r_arm']='右臂围 '+str('{:g}'.format(infos['body']['r_arm'])) +' cm'
+                txts['waist']='腰围 '+str('{:g}'.format(infos['body']['waist'])) +' cm'
+                txts['hip']='臀围 '+str('{:g}'.format(infos['body']['hip']))  +' cm'
+                txts['l_leg']='左大腿围 '+str('{:g}'.format(infos['body']['l_leg']))  +' cm'
+                txts['r_leg']='右大腿围 '+str('{:g}'.format(infos['body']['r_leg']))  +' cm'
+                txts['l_calf']='左小腿围 '+str('{:g}'.format(infos['body']['l_calf']))  +' cm'
+                txts['r_calf']='右大腿围 '+str('{:g}'.format(infos['body']['r_calf']))  +' cm'
             else:
                 txts['latest_msr_time']=0
 
@@ -431,17 +433,17 @@ class MingHu:
                     draw.text((x_l+115,y_title_body+65), '您最近一次测量身体围度，是在', fill = '#898886',font=self.fonts('aa楷体',36))  #您最近一次测量身体围度
                     draw.text((x_l+205,y_title_body+115), t['latest_msr_time'], fill = '#ff9c6c',font=self.fonts('aa楷体',40))  #测围度日期
 
-                    draw.text((x_l+50,y_title_body+190), t['r_arm'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #右臂
-                    draw.text((x_l+90,y_title_body+270), t['hip'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  # 臀
-                    draw.text((x_l+50,y_title_body+380), t['r_leg'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #右大腿
-                    draw.text((x_l+50,y_title_body+460), t['r_calf'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #右小腿
+                    draw.text((x_l+20,y_title_body+190), t['r_arm'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #右臂
+                    draw.text((x_l+75,y_title_body+270), t['hip'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  # 臀
+                    draw.text((x_l+20,y_title_body+380), t['r_leg'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #右大腿
+                    draw.text((x_l+20,y_title_body+460), t['r_calf'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #右小腿
 
                     draw.text((x_l+500,y_title_body+190), t['chest'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #胸
                     draw.text((x_l+500,y_title_body+240), t['l_arm'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #左臂
                     draw.text((x_l+500,y_title_body+280), t['waist'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #腰
                     draw.text((x_l+500,y_title_body+370), t['l_leg'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #左大腿
                     draw.text((x_l+500,y_title_body+470), t['l_calf'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #左小腿
-                    draw.text((x_l+260,y_title_body+550), t['wt'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #体重
+                    draw.text((x_l+290,y_title_body+550), t['wt'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #体重
                 
                 if t['train_content']:
                     draw.text((x_l+30,y_title_train+5), '看看努力的自己', fill = '#ff9c6c',font=self.fonts('上首金牛',30))  #看看努力的自己                    
