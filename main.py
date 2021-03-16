@@ -1,6 +1,7 @@
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'modules'))
+import pic_transfer
 import days_cal
 import readconfig
 import composing
@@ -13,11 +14,13 @@ from PIL import Image,ImageDraw,ImageFont
 import random
 import matplotlib.pyplot as plt 
 import matplotlib.font_manager as fm
+# from matplotlib.backends.backend_agg import FigureCanvasAgg
+plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.linux'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.dazhi'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -25,7 +28,7 @@ class MingHu:
         self.save_dir=config['输出文件夹']
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.linux'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.dazhi'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
@@ -135,7 +138,15 @@ class MingHu:
             out['body']['r_leg']=body_recent[10]
             out['body']['l_calf']=body_recent[11]
             out['body']['r_calf']=body_recent[12]
-            
+            out['body']['ht_lung']=body_recent[13]
+            out['body']['balance']=body_recent[14]
+            out['body']['power']=body_recent[15]
+            out['body']['flexibility']=body_recent[16]
+            out['body']['core']=body_recent[17]
+
+            bfr_data=cals()
+            bfr=bfr_data.bfr(age=age,sex=out['sex'],ht=out['body']['ht'],wt=out['body']['wt'],waist=out['body']['waist'],formula=1)
+            out['body']['bfr']=bfr
 
         #------------训练数据--------
         # infos=pd.read_excel(xls_name,sheet_name='训练情况',skiprows=2,header=None)
@@ -185,6 +196,7 @@ class MingHu:
         
         def slogan():
             df_slogans=pd.read_excel(os.path.join(self.slogan_dir,'文案.xlsx'))
+            # print(df_slogans)
             df_slogans.dropna(axis=0,how='any',subset=['文案'],inplace=True)
             slogans=df_slogans['文案'].values.tolist()
             slogan=random.choice(slogans)
@@ -231,6 +243,7 @@ class MingHu:
                 txts['r_leg']='右大腿围 '+str('{:g}'.format(infos['body']['r_leg']))  +' cm'
                 txts['l_calf']='左小腿围 '+str('{:g}'.format(infos['body']['l_calf']))  +' cm'
                 txts['r_calf']='右大腿围 '+str('{:g}'.format(infos['body']['r_calf']))  +' cm'
+                txts['bfr']='体脂率：'+str('{:.2%}'.format(infos['body']['bfr']))
             else:
                 txts['latest_msr_time']=0
 
@@ -281,8 +294,92 @@ class MingHu:
                 txts['intervals_train_1']=''
 
             # print(txts)
+
+            radar_data={'ht_lung':infos['body']['ht_lung'],'balance':infos['body']['balance'],'power':infos['body']['power'], \
+                        'flexibility':infos['body']['flexibility'],'core':infos['body']['core']}
         
-            return txts
+            return {'txts':txts,'radar_data':radar_data}
+
+        def radar(data):
+            # print(data)
+            # 构造数据
+            values = list(data.values())
+            feature =list(data.keys()) 
+
+            N = len(values)
+            # 设置雷达图的角度，用于平分切开一个圆面
+            angles = np.linspace(0, 2 * np.pi, N, endpoint=False)
+
+
+            # 为了使雷达图一圈封闭起来，需要下面的步骤
+            values = np.concatenate((values, [values[0]]))
+            angles = np.concatenate((angles, [angles[0]]))
+
+            # print(values,angles)
+
+            # 绘图
+            fig = plt.figure(figsize=(6,5))
+            # 这里一定要设置为极坐标格式
+            ax = fig.add_subplot(111, polar=True)
+            # ccl=ax.patch
+
+            # 绘制折线图
+            ax.plot(angles, values, 'o-', linewidth=2,color='#ff9c6c')
+            # 填充颜色
+            ax.fill(angles, values, color='#ff9c6c',alpha=0.25)
+            # 添加每个特征的标签
+            ax.set_thetagrids(angles * 180 / np.pi, '',color='r',fontsize=13)
+            # 设置雷达图的范围
+            r_distance=10
+            ax.set_rlim(0, r_distance)
+
+            ax.grid(color='#F1E0D6', alpha=0.25, lw=3)
+            ax.spines['polar'].set_color('#F1E0D6')
+            ax.spines['polar'].set_alpha(0.2)
+            ax.spines['polar'].set_linewidth(2)
+            # ax.spines['polar'].set_linestyle('-.')
+
+            #项目名称：
+            a=[0,0,np.pi/30,-np.pi/50,0,0,0]
+            b=[r_distance*1.1,r_distance*1.1,r_distance*1.3,r_distance*1.4,r_distance*1.12]
+
+            e_to_c={'ht_lung': '心肺', 'balance': '平衡', 'power': '力量', 'flexibility': '柔韧性', 'core': '核心'}
+            for k,i in enumerate(angles):
+                try:
+                    # print(k,i,e_to_c[feature[k]])
+                    ax.text(i+a[k],b[k],e_to_c[feature[k]],fontsize=18,color='#ff9c6c')
+                except:
+                    pass
+
+            #分值：
+            # c = [1, 0.6, 1.6, 2.3, 1.5, 1,1]
+            # print(len(angles))
+            # for j,i in enumerate(angles):
+            #     try:
+            #         r=values[j]-2*i/np.pi
+            #         ax.text(i,values[j]+c[j],values[j],color='#218FBD',fontsize=18)
+            #     except:
+            #         pass
+
+            # 添加标题
+            #plt.title('活动前后员工状态表现')
+            # 添加网格线
+            ax.grid(True,color='grey',alpha=0.1)
+
+            # a=np.arange(0,2*np.pi,0.01)
+            # ax.plot(a,10*np.ones_like(a),linewidth=2,color='b')
+
+
+            ax.set_yticklabels([])
+            # plt.savefig(savefilename,transparent=True,bbox_inches='tight')
+            # 显示图形
+            # plt.show()
+
+            #将matplotlib的图形转换为PIL的对象
+            image=pic_transfer.mat_to_pil_img(fig)
+
+
+            return image
 
         def save_pic_name(cus):
             save_dir=os.path.join(self.save_dir,cus)
@@ -292,7 +389,10 @@ class MingHu:
             save_name=os.path.join(save_dir,_date+'_'+cus+'.jpg')
             return save_name
 
-        def exp_pic(t):
+        def exp_pic(dat):
+            t=dat['txts']
+            radar_data=dat['radar_data']
+            
             # print('279 line:',t)
             dis_line=20
             ft_size=36
@@ -310,7 +410,7 @@ class MingHu:
                 gap_body=0
             else:
                 s_title_body=s_title
-                s_body=560
+                s_body=960
                 gap_body=gap
 
             if t['train_content']:
@@ -386,6 +486,7 @@ class MingHu:
                 if t['sex']=='美女':
                     pic_head_src=os.path.join(self.material_dir,'女性头像01.png')
                 else:
+                    pic_head_src=os.path.join(self.material_dir,'男性头像01.png')
                     pass #男性
                 pic_head=Image.open(pic_head_src)
                 w_head,h_head=pic_head.size
@@ -400,7 +501,14 @@ class MingHu:
                     w_model,h_model=pic_model.size
                     pic_model=pic_model.resize((280,int(h_model*280/w_model)))
                     r2,g2,b2,a2=pic_model.split()
-                    img.paste(pic_model,(x_l+int((block_wid-pic_model.size[0])/2),y_body+s_body-pic_model.size[1]-75),mask=a2)
+                    img.paste(pic_model,(x_l+int((block_wid-pic_model.size[0])/2),y_title_body+175),mask=a2)
+
+                    #雷达图
+                    img_radar=radar(radar_data)
+                    # img_radar.show()
+                    # print(img_radar.size)
+                    img_radar=img_radar.resize((400,int(400*img_radar.size[1]/img_radar.size[0])))
+                    img.paste(img_radar,(x_l+int((block_wid-img_radar.size[0])/2),y_title_body+175+int(h_model*280/w_model)+100))
 
                 if t['train_content']:
                     teach_pic_src=os.path.join(self.material_dir,'指导.png')
@@ -445,7 +553,8 @@ class MingHu:
                     draw.text((x_l+500,y_title_body+280), t['waist'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #腰
                     draw.text((x_l+500,y_title_body+370), t['l_leg'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #左大腿
                     draw.text((x_l+500,y_title_body+470), t['l_calf'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #左小腿
-                    draw.text((x_l+290,y_title_body+550), t['wt'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #体重
+                    draw.text((x_l+180,y_title_body+550), t['wt'], fill = '#000000',font=self.fonts('aa楷体',25))  #体重
+                    draw.text((x_l+360,y_title_body+550), t['bfr'], fill = '#000000',font=self.fonts('aa楷体',25))  #体脂率
                 
                 if t['train_content']:
                     draw.text((x_l+30,y_title_train+5), '看看努力的自己', fill = '#ff9c6c',font=self.fonts('上首金牛',30))  #看看努力的自己                    
@@ -484,14 +593,18 @@ class MingHu:
             bg()
 
         t=txts()
+        # radar(t['radar_data'])
         exp_pic(t)
         # slogan()
         # ins_info()
 
 class FitData2Pic:
     def __init__(self):
+        self.dir=os.path.dirname(os.path.abspath(__file__))
         self.default_title='会员健身数据比较'
-        self.fn='/home/jack/data/健身项目/minghu/会员档案/MH000唐青剑.xlsx'
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.dazhi.wsl'))
+        self.fn=os.path.join(config['会员档案文件夹'],'MH000唐青剑.xlsx')
+        #self.fn='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\铭湖健身工作室\\会员\\MH000唐青剑.xlsx'
         self.font='/home/jack/data/健身项目/minghu/fonts/msyh.ttc'
 
     def to_pic(self,title='',fn='',d_font=''):
@@ -659,8 +772,8 @@ class Vividict(dict):
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    # p=MingHu()
-    # p.draw(cus='MH000唐青剑',ins='MHINS002韦越棋',start_time='20200101',end_time='')
+    p=MingHu()
+    p.draw(cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20200905',end_time='20200920')
 
     #根据多次体测数据生成折线图
     # fitdata=FitData2Pic()
