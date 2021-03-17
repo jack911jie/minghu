@@ -20,7 +20,7 @@ plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.dazhi'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -28,7 +28,7 @@ class MingHu:
         self.save_dir=config['输出文件夹']
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.dazhi'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
@@ -152,42 +152,45 @@ class MingHu:
         # infos=pd.read_excel(xls_name,sheet_name='训练情况',skiprows=2,header=None)
         infos=infos.iloc[:,0:10] #取前10列
         infos.columns=['时间','形式','目标肌群','有氧项目','有氧时长','力量内容','重量','次数','教练姓名','教练评语']
+        # print(infos.dropna(how='all'))
+        if infos.dropna(how='all').shape[0]!=0:
+            infos=infos[(infos['时间']>=start_time) & (infos['时间']<=end_time)] #根据时间段筛选记录      
 
-        infos=infos[(infos['时间']>=start_time) & (infos['时间']<=end_time)] #根据时间段筛选记录
+            # print('168 line:',infos)
 
-        # print('168 line:',infos)
+            #起止日期
+            out['interval']=[infos['时间'].min(),infos['时间'].max()]  
+            out['interval_input']=[start_time,end_time]
 
-        #起止日期
-        out['interval']=[infos['时间'].min(),infos['时间'].max()]  
-        out['interval_input']=[start_time,end_time]
+            #次数
+            train_times=infos.groupby(['时间'],as_index=False).nunique()['时间'].nunique()
+            out['train_times']=train_times
 
-        #次数
-        train_times=infos.groupby(['时间'],as_index=False).nunique()['时间'].nunique()
-        out['train_times']=train_times
-
-        #抗阻训练
-        train_dates=infos.groupby(['时间','目标肌群'])
-        # print(train_dates)
-        train_big_type=[]
-        for dt,itm in train_dates:
-            train_big_type.append(list(dt))
-        df_train_big_type=pd.DataFrame(train_big_type)    
-        if not df_train_big_type.empty:   
-            df_train_big_type.columns=['时间','目标肌群']
-            _sum_train_items=df_train_big_type.groupby(['目标肌群'],as_index=False)
-            sum_train_items=pd.DataFrame(_sum_train_items.count())  
-            sum_train_items.dropna(axis=0, how='any', inplace=True)
-            sum_train_items=sum_train_items[sum_train_items['目标肌群']!=' '].values
-            if len(sum_train_items)>0:
-                for itm in sum_train_items:
-                    out['train']['muscle'][itm[0]]=itm[1]
+            #抗阻训练
+            train_dates=infos.groupby(['时间','目标肌群'])
+            # print(train_dates)
+            train_big_type=[]
+            for dt,itm in train_dates:
+                train_big_type.append(list(dt))
+            df_train_big_type=pd.DataFrame(train_big_type)    
+            if not df_train_big_type.empty:   
+                df_train_big_type.columns=['时间','目标肌群']
+                _sum_train_items=df_train_big_type.groupby(['目标肌群'],as_index=False)
+                sum_train_items=pd.DataFrame(_sum_train_items.count())  
+                sum_train_items.dropna(axis=0, how='any', inplace=True)
+                sum_train_items=sum_train_items[sum_train_items['目标肌群']!=' '].values
+                if len(sum_train_items)>0:
+                    for itm in sum_train_items:
+                        out['train']['muscle'][itm[0]]=itm[1]
+                else:
+                    out['train']['muscle']=''
             else:
                 out['train']['muscle']=''
+        
+            #有氧训练总时长
+            out['train']['oxy_time']=infos['有氧时长'].sum()
         else:
-            out['train']['muscle']=''
-    
-        #有氧训练总时长
-        out['train']['oxy_time']=infos['有氧时长'].sum()
+            out['train']=''
 
         # print('201 line:',out)
         return out
@@ -586,9 +589,11 @@ class MingHu:
                 draw.text((x_l+115,y_logo+630),ins['tel'],fill='#693607',font=self.fonts('丁永康硬笔楷书',40))
 
                 save_name=save_pic_name(cus)
+                print(cus)
                 img.save(save_name,quality=95,subsampling=0)
+                print('完成')
 
-                img.show()
+                # img.show()
 
             bg()
 
@@ -773,7 +778,7 @@ class Vividict(dict):
 if __name__=='__main__':
     #根据训练数据生成阶段报告
     p=MingHu()
-    p.draw(cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20200905',end_time='20200920')
+    p.draw(cus='MH003吕雅颖',ins='MHINS002韦越棋',start_time='20210315',end_time='20210320')
 
     #根据多次体测数据生成折线图
     # fitdata=FitData2Pic()
