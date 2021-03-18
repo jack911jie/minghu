@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import re
+import random
 from PIL import Image,ImageDraw,ImageFont
 import random
 import matplotlib.pyplot as plt 
@@ -20,7 +21,7 @@ plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.dazhi'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -28,7 +29,7 @@ class MingHu:
         self.save_dir=config['输出文件夹']
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.dazhi'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
@@ -487,10 +488,16 @@ class MingHu:
 
                 #头像
                 if t['sex']=='美女':
-                    pic_head_src=os.path.join(self.material_dir,'女性头像01.png')
+                    pics_f=[]
+                    for fn in os.listdir(self.material_dir):
+                        if re.match(r'女性头像\d{2}.jpg',fn) or re.match(r'女性头像\d{2}.png',fn):
+                            pics_f.append(fn)
+                    filename=random.choice(pics_f)                   
+                    pic_head_src=os.path.join(self.material_dir,filename)
                 else:
-                    pic_head_src=os.path.join(self.material_dir,'男性头像03.png')
+                    # pic_head_src=os.path.join(self.material_dir,'男性头像03.png')
                     # pass #男性
+                    pass
                 pic_head=Image.open(pic_head_src)
                 pic_head=pic_transfer.round_corner(pic_head)
                 w_head,h_head=pic_head.size

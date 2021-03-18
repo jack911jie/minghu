@@ -72,6 +72,7 @@ def round_corner(img,method='in'):
 
 if __name__=='__main__':
     # img=Image.open('E:\\健身项目\\素材\\男性头像01.jpg')
-    img=Image.open('E:/temp/快快12月.jpg')
+    img=Image.open('E:\\铭湖健身\\素材\\女性头像02.jpg')
     imgg=round_corner(img,method='in')
+    imgg.save('E:\\铭湖健身\\素材\\tt.png')
     imgg.show()
