@@ -20,7 +20,7 @@ plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.dazhi'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -28,7 +28,7 @@ class MingHu:
         self.save_dir=config['输出文件夹']
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.dazhi'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
@@ -466,7 +466,7 @@ class MingHu:
 
                 #--------框-----------
                 draw.rectangle((0,0,720,y0+s_top),fill='#fff4ee') #top
-                draw.rectangle((x_l,y_name,x_r,y_name+s_name),fill='#fff4ee') #name
+                # draw.rectangle((x_l,y_name,x_r,y_name+s_name),fill='#fff4ee') #name
                 y_pic_box=y_name+int(s_name*0.2/2)
                 draw.rectangle((x_l+20,y_pic_box,x_l+20+int(s_name*0.8),y_name+int(s_name*0.9)),fill='#ffffff') #head pic box
 
@@ -489,9 +489,10 @@ class MingHu:
                 if t['sex']=='美女':
                     pic_head_src=os.path.join(self.material_dir,'女性头像01.png')
                 else:
-                    pic_head_src=os.path.join(self.material_dir,'男性头像01.png')
-                    pass #男性
+                    pic_head_src=os.path.join(self.material_dir,'男性头像03.png')
+                    # pass #男性
                 pic_head=Image.open(pic_head_src)
+                pic_head=pic_transfer.round_corner(pic_head)
                 w_head,h_head=pic_head.size
                 pic_head=pic_head.resize((int(w_head*120/h_head),120))
                 r1,g1,b1,a1=pic_head.split()
@@ -778,7 +779,7 @@ class Vividict(dict):
 if __name__=='__main__':
     #根据训练数据生成阶段报告
     p=MingHu()
-    p.draw(cus='MH003吕雅颖',ins='MHINS002韦越棋',start_time='20210315',end_time='20210320')
+    p.draw(cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20210315',end_time='20210320')
 
     #根据多次体测数据生成折线图
     # fitdata=FitData2Pic()
