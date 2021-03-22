@@ -21,7 +21,7 @@ plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.dazhi'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -29,9 +29,39 @@ class MingHu:
         self.save_dir=config['输出文件夹']
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.dazhi'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
+
+    def color_list(self,sex='美女'):
+        if sex=='美女':
+            colors={
+                'comment_bg':'#fff4ee',
+                'txt_person':'#ff6667',
+                'txt_title':'#ff9c6c',
+                'txt_date':'#ff9c6c',
+                'txt_fix':'#898886',
+                'txt_dimension':'#000000',
+                'txt_train':'#ff9c6c',
+                'txt_slogan':'#cd8c52',
+                'gym_info':'#693607'
+            }
+        elif sex=='帅哥':
+            colors={
+                'comment_bg':'#e5f5fd',
+                'txt_person':'#3c5ebb',
+                'txt_title':'#3c5ebb',
+                'txt_date':'#3c5ebb',
+                'txt_fix':'#9c9fa0',
+                'txt_dimension':'#000000',
+                'txt_train':'#3c5ebb',
+                'txt_slogan':'#8da8db',
+                'gym_info':'#2c2e35'
+            }
+        else:
+            pass
+
+        return colors
 
     def put_txt_img(self,img,t,total_dis,xy,dis_line,fill,font_name,font_size,addSPC='None'):
         
@@ -225,8 +255,10 @@ class MingHu:
             sex=infos['sex']
             if sex=='女':
                 sex='美女'
-            else:
+            elif sex=='男':
                 sex='帅哥'
+            else:
+                pass
 
             txts['sex']=sex
             txts['age']=infos['age']
@@ -304,7 +336,8 @@ class MingHu:
         
             return {'txts':txts,'radar_data':radar_data}
 
-        def radar(data):
+        def radar(data,sex):
+            color=self.color_list(sex=sex)
             # print(data)
             # 构造数据
             values = list(data.values())
@@ -328,9 +361,9 @@ class MingHu:
             # ccl=ax.patch
 
             # 绘制折线图
-            ax.plot(angles, values, 'o-', linewidth=2,color='#ff9c6c')
+            ax.plot(angles, values, 'o-', linewidth=2,color=color['txt_train'])
             # 填充颜色
-            ax.fill(angles, values, color='#ff9c6c',alpha=0.25)
+            ax.fill(angles, values, color=color['txt_train'],alpha=0.25)
             # 添加每个特征的标签
             ax.set_thetagrids(angles * 180 / np.pi, '',color='r',fontsize=13)
             # 设置雷达图的范围
@@ -351,7 +384,7 @@ class MingHu:
             for k,i in enumerate(angles):
                 try:
                     # print(k,i,e_to_c[feature[k]])
-                    ax.text(i+a[k],b[k],e_to_c[feature[k]],fontsize=18,color='#ff9c6c')
+                    ax.text(i+a[k],b[k],e_to_c[feature[k]],fontsize=18,color=color['txt_train'])
                 except:
                     pass
 
@@ -391,10 +424,13 @@ class MingHu:
                 os.mkdir(save_dir)
             _date=datetime.strftime(datetime.now(),"%Y%m%d_%H%M%S")
             save_name=os.path.join(save_dir,_date+'_'+cus+'.jpg')
+            print('文件名：'+save_name)
             return save_name
 
-        def exp_pic(dat):
+        def exp_pic(dat):           
+
             t=dat['txts']
+            color=self.color_list(sex=t['sex'])
             radar_data=dat['radar_data']
             
             # print('279 line:',t)
@@ -466,23 +502,23 @@ class MingHu:
                 draw=ImageDraw.Draw(img)
 
                 #--------框-----------
-                draw.rectangle((0,0,720,y0+s_top),fill='#fff4ee') #top
+                draw.rectangle((0,0,720,y0+s_top),fill=color['comment_bg']) #top
                 # draw.rectangle((x_l,y_name,x_r,y_name+s_name),fill='#fff4ee') #name
                 y_pic_box=y_name+int(s_name*0.2/2)
                 draw.rectangle((x_l+20,y_pic_box,x_l+20+int(s_name*0.8),y_name+int(s_name*0.9)),fill='#ffffff') #head pic box
 
                 if t['latest_msr_time']!=0:
-                    draw.rectangle((x_l,y_title_body,x_l+254,y_title_body+s_title_body),fill='#fff4ee') #body title
-                    draw.rectangle((x_l,y_body,x_r,y_body+s_body),fill='#fff4ee') #body
+                    draw.rectangle((x_l,y_title_body,x_l+254,y_title_body+s_title_body),fill=color['comment_bg']) #body title
+                    draw.rectangle((x_l,y_body,x_r,y_body+s_body),fill=color['comment_bg']) #body
 
                 if t['train_content']:
-                    draw.rectangle((x_l,y_title_train,x_l+254,y_title_train+s_title_train),fill='#fff4ee') #train title
-                    draw.rectangle((x_l,y_train,x_r,y_train+s_train),fill='#fff4ee') #train
+                    draw.rectangle((x_l,y_title_train,x_l+254,y_title_train+s_title_train),fill=color['comment_bg']) #train title
+                    draw.rectangle((x_l,y_train,x_r,y_train+s_train),fill=color['comment_bg']) #train
                     y_train_content_bottom=y_train+200+s_train_content
                     draw.rectangle((x_l+40,y_train+200,x_r-40,y_train_content_bottom),fill='#ffffff') #train content                    
-                draw.rectangle((x_l,y_slogan,x_r,y_slogan+s_slogan),fill='#fff4ee') #slogan
-                draw.rectangle((x_l,y_logo,x_r,y_logo+s_logo),fill='#fff4ee') #logo
-                draw.rectangle((0,y_bottom,720,y_bottom+s_bottom),fill='#fff4ee') #bottom
+                draw.rectangle((x_l,y_slogan,x_r,y_slogan+s_slogan),fill=color['comment_bg']) #slogan
+                draw.rectangle((x_l,y_logo,x_r,y_logo+s_logo),fill=color['comment_bg']) #logo
+                draw.rectangle((0,y_bottom,720,y_bottom+s_bottom),fill=color['comment_bg']) #bottom
 
                  #--------图片-----------
 
@@ -495,9 +531,15 @@ class MingHu:
                     filename=random.choice(pics_f)                   
                     pic_head_src=os.path.join(self.material_dir,filename)
                 else:
+                    pics_f=[]
+                    for fn in os.listdir(self.material_dir):
+                        if re.match(r'男性头像\d{2}.jpg',fn) or re.match(r'男性头像\d{2}.png',fn):
+                            pics_f.append(fn)
+                    filename=random.choice(pics_f)                   
+                    pic_head_src=os.path.join(self.material_dir,filename)
                     # pic_head_src=os.path.join(self.material_dir,'男性头像03.png')
                     # pass #男性
-                    pass
+                    # pass
                 pic_head=Image.open(pic_head_src)
                 pic_head=pic_transfer.round_corner(pic_head)
                 w_head,h_head=pic_head.size
@@ -507,7 +549,13 @@ class MingHu:
 
                 #模特
                 if t['latest_msr_time']!=0:
-                    model_src=os.path.join(self.material_dir,'size_model_female.png')
+                    if t['sex']=='美女':
+                        model_pic='size_model_female.png'
+                    elif t['sex']=='帅哥':
+                        model_pic='size_model_male.png'
+                    else:
+                        pass
+                    model_src=os.path.join(self.material_dir,model_pic)
                     pic_model=Image.open(model_src)
                     w_model,h_model=pic_model.size
                     pic_model=pic_model.resize((280,int(h_model*280/w_model)))
@@ -515,7 +563,7 @@ class MingHu:
                     img.paste(pic_model,(x_l+int((block_wid-pic_model.size[0])/2),y_title_body+175),mask=a2)
 
                     #雷达图
-                    img_radar=radar(radar_data)
+                    img_radar=radar(radar_data,sex=t['sex'])
                     # img_radar.show()
                     # print(img_radar.size)
                     img_radar=img_radar.resize((400,int(400*img_radar.size[1]/img_radar.size[0])))
@@ -546,55 +594,61 @@ class MingHu:
                 img.paste(qrcode,(int(x_l+(s_logo-150)/2),y_logo+logo.size[1]+220))
 
                 #------文字-----------
+                if t['sex']=='美女':
+                    title_01='看看棒棒的自己'
+                elif t['sex']=='帅哥':
+                    title_01='看看很酷的自己'
+                else:
+                    pass
+
                 x_nickname=250
-                draw.text((x_nickname,110), t['nickname'], fill = '#ff6667',font=self.fonts('华康古籍木兰',80))  #姓名
-                draw.text((x_nickname+len(t['nickname'])*80+30,150), t['sex'], fill = '#ff6667',font=self.fonts('华康古籍木兰',40))  #性别
+                draw.text((x_nickname,110), t['nickname'], fill = color['txt_person'],font=self.fonts('华康古籍木兰',80))  #姓名
+                draw.text((x_nickname+len(t['nickname'])*80+30,150), t['sex'], fill = color['txt_person'],font=self.fonts('华康古籍木兰',40))  #性别
                 if t['latest_msr_time']!=0:
-                    draw.text((x_l+30,y_title_body+5), '看看棒棒的自己', fill = '#ff9c6c',font=self.fonts('上首金牛',30))  #看看棒棒的自己
-                    draw.text((x_l+115,y_title_body+65), '您最近一次测量身体围度，是在', fill = '#898886',font=self.fonts('aa楷体',36))  #您最近一次测量身体围度
-                    draw.text((x_l+205,y_title_body+115), t['latest_msr_time'], fill = '#ff9c6c',font=self.fonts('aa楷体',40))  #测围度日期
+                    draw.text((x_l+30,y_title_body+5), title_01, fill = color['txt_title'],font=self.fonts('上首金牛',30))  #看看棒棒的自己
+                    draw.text((x_l+115,y_title_body+65), '您最近一次测量身体围度，是在', fill = color['txt_fix'],font=self.fonts('aa楷体',36))  #您最近一次测量身体围度
+                    draw.text((x_l+205,y_title_body+115), t['latest_msr_time'], fill = color['txt_date'],font=self.fonts('aa楷体',40))  #测围度日期
 
-                    draw.text((x_l+20,y_title_body+190), t['r_arm'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #右臂
-                    draw.text((x_l+75,y_title_body+270), t['hip'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  # 臀
-                    draw.text((x_l+20,y_title_body+380), t['r_leg'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #右大腿
-                    draw.text((x_l+20,y_title_body+460), t['r_calf'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #右小腿
+                    draw.text((x_l+20,y_title_body+190), t['r_arm'], fill = color['txt_dimension'],font=self.fonts('杨任东石竹体',25))  #右臂
+                    draw.text((x_l+75,y_title_body+270), t['hip'], fill = color['txt_dimension'],font=self.fonts('杨任东石竹体',25))  # 臀
+                    draw.text((x_l+20,y_title_body+380), t['r_leg'], fill = color['txt_dimension'],font=self.fonts('杨任东石竹体',25))  #右大腿
+                    draw.text((x_l+20,y_title_body+460), t['r_calf'],fill = color['txt_dimension'],font=self.fonts('杨任东石竹体',25))  #右小腿
+                    draw.text((x_l+500,y_title_body+190), t['chest'], fill = color['txt_dimension'],font=self.fonts('杨任东石竹体',25))  #胸
+                    draw.text((x_l+500,y_title_body+240), t['l_arm'], fill = color['txt_dimension'],font=self.fonts('杨任东石竹体',25))  #左臂
+                    draw.text((x_l+500,y_title_body+280), t['waist'], fill = color['txt_dimension'],font=self.fonts('杨任东石竹体',25))  #腰
+                    draw.text((x_l+500,y_title_body+370), t['l_leg'], fill = color['txt_dimension'],font=self.fonts('杨任东石竹体',25))  #左大腿
+                    draw.text((x_l+500,y_title_body+470), t['l_calf'], fill = color['txt_dimension'],font=self.fonts('杨任东石竹体',25))  #左小腿
+                    draw.text((x_l+180,y_title_body+550), t['wt'], fill = color['txt_dimension'],font=self.fonts('aa楷体',25))  #体重
+                    draw.text((x_l+360,y_title_body+550), t['bfr'], fill = color['txt_dimension'],font=self.fonts('aa楷体',25))  #体脂率         
 
-                    draw.text((x_l+500,y_title_body+190), t['chest'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #胸
-                    draw.text((x_l+500,y_title_body+240), t['l_arm'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #左臂
-                    draw.text((x_l+500,y_title_body+280), t['waist'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #腰
-                    draw.text((x_l+500,y_title_body+370), t['l_leg'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #左大腿
-                    draw.text((x_l+500,y_title_body+470), t['l_calf'], fill = '#000000',font=self.fonts('杨任东石竹体',25))  #左小腿
-                    draw.text((x_l+180,y_title_body+550), t['wt'], fill = '#000000',font=self.fonts('aa楷体',25))  #体重
-                    draw.text((x_l+360,y_title_body+550), t['bfr'], fill = '#000000',font=self.fonts('aa楷体',25))  #体脂率
-                
                 if t['train_content']:
-                    draw.text((x_l+30,y_title_train+5), '看看努力的自己', fill = '#ff9c6c',font=self.fonts('上首金牛',30))  #看看努力的自己                    
+                    draw.text((x_l+30,y_title_train+5), '看看努力的自己', fill = color['txt_title'],font=self.fonts('上首金牛',30))  #看看努力的自己                    
                     if t['intervals_train_1']:
-                        draw.text((x_l+45,y_train+35), t['intervals_train_0'], fill = '#898886',font=self.fonts('aa楷体',34))  #您在。。。
+                        draw.text((x_l+45,y_train+35), t['intervals_train_0'], fill =color['txt_fix'],font=self.fonts('aa楷体',34))  #您在。。。
                         ft_size_days=40
                         x_days=composing.center_align_x(start_x=x_l,wide=block_wid,ft_size=ft_size_days,t=t['intervals_train_1'])
-                        draw.text((x_days,y_train+85), t['intervals_train_1'], fill = '#ff9c6c',font=self.fonts('aa楷体',ft_size_days))  #XX天里（居中）
-                        draw.text((x_l+180,y_train+140), '完成了下面的训练内容', fill = '#898886',font=self.fonts('aa楷体',32))  #完成了下面的训练内容
-                        self.put_txt_img(img,t=t['train_content'],total_dis=420,xy=[x_l+95,y_train+230],dis_line=16,fill='#ff9c6c',font_name='杨任东石竹体',font_size=38)
+                        draw.text((x_days,y_train+85), t['intervals_train_1'], fill =color['txt_train'],font=self.fonts('aa楷体',ft_size_days))  #XX天里（居中）
+                        draw.text((x_l+180,y_train+140), '完成了下面的训练内容', fill = color['txt_fix'],font=self.fonts('aa楷体',32))  #完成了下面的训练内容
+                        self.put_txt_img(img,t=t['train_content'],total_dis=420,xy=[x_l+95,y_train+230],dis_line=16,fill=color['txt_train'],font_name='杨任东石竹体',font_size=38)
                         percent=random.randint(70,93)
-                        draw.text((x_l+145,y_train_content_bottom+20), '击败了铭湖健身 {} 的会员!'.format(str(percent)+'%'), fill = '#ff9c6c',font=self.fonts('aa楷体',32))  #击败了
+                        draw.text((x_l+145,y_train_content_bottom+20), '击败了铭湖健身 {} 的会员!'.format(str(percent)+'%'), fill = color['txt_train'],font=self.fonts('aa楷体',32))  #击败了
                     else:
-                        draw.text((x_l+145,y_train+45), t['intervals_train_0'], fill = '#898886',font=self.fonts('aa楷体',40))  #您在。。。
-                        draw.text((x_l+160,y_train+85), t['intervals_train_1'], fill = '#ff9c6c',font=self.fonts('aa楷体',40))  #XX天里
-                        draw.text((x_l+50,y_train+115), '你成了下面的训练内容:', fill = '#898886',font=self.fonts('aa楷体',40))  #完成了下面的训练内容
-                        self.put_txt_img(img,t=t['train_content'],total_dis=420,xy=[x_l+95,y_train+230],dis_line=16,fill='#ff9c6c',font_name='杨任东石竹体',font_size=36)
-                        draw.text((x_l+55,y_train_content_bottom+20), '保持这样的状态，好身材还远吗？', fill = '#ff9c6c',font=self.fonts('aa楷体',40))  #击败了
+                        draw.text((x_l+145,y_train+45), t['intervals_train_0'], fill = color['txt_fix'],font=self.fonts('aa楷体',40))  #您在。。。
+                        draw.text((x_l+160,y_train+85), t['intervals_train_1'], fill = color['txt_train'],font=self.fonts('aa楷体',40))  #XX天里
+                        draw.text((x_l+50,y_train+115), '你成了下面的训练内容:', fill = color['txt_fix'],font=self.fonts('aa楷体',40))  #完成了下面的训练内容
+                        self.put_txt_img(img,t=t['train_content'],total_dis=420,xy=[x_l+95,y_train+230],dis_line=16,fill=color['txt_train'],font_name='杨任东石竹体',font_size=36)
+                        draw.text((x_l+55,y_train_content_bottom+20), '保持这样的状态，好身材还远吗？', fill =color['txt_train'],font=self.fonts('aa楷体',40))  #击败了
 
                 # 鸡汤
-                draw.text((x_l+20,y_slogan+15),slogan_txt,fill='#cd8c52',font=self.fonts('优设标题黑',ft_size_slogan))
+                draw.text((x_l+20,y_slogan+15),slogan_txt,fill=color['txt_slogan'],font=self.fonts('优设标题黑',ft_size_slogan))
 
                 # addr
-                draw.text((x_l+10,y_logo+240),'南宁市青秀区民族大道88-1号铭湖经典A座802室',fill='#693607',font=self.fonts('微软雅黑',30))
-                draw.text((x_l+125,y_logo+310),'让健身变得有趣',fill='#693607',font=self.fonts('丁永康硬笔楷书',60))
+                draw.text((x_l+10,y_logo+240),'南宁市青秀区民族大道88-1号铭湖经典A座802室',fill=color['gym_info'],font=self.fonts('微软雅黑',30))
+                draw.text((x_l+125,y_logo+310),'让健身变得有趣',fill=color['gym_info'],font=self.fonts('丁永康硬笔楷书',60))
 
                 ins=ins_info()
-                draw.text((x_l+255,y_logo+570),ins['nickname'],fill='#693607',font=self.fonts('丁永康硬笔楷书',50))
-                draw.text((x_l+115,y_logo+630),ins['tel'],fill='#693607',font=self.fonts('丁永康硬笔楷书',40))
+                draw.text((x_l+255,y_logo+570),ins['nickname'],fill=color['gym_info'],font=self.fonts('丁永康硬笔楷书',50))
+                draw.text((x_l+115,y_logo+630),ins['tel'],fill=color['gym_info'],font=self.fonts('丁永康硬笔楷书',40))
 
                 save_name=save_pic_name(cus)
                 print(cus)
@@ -786,7 +840,7 @@ class Vividict(dict):
 if __name__=='__main__':
     #根据训练数据生成阶段报告
     p=MingHu()
-    p.draw(cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20210315',end_time='20210320')
+    p.draw(cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20200315',end_time='20210320')
 
     #根据多次体测数据生成折线图
     # fitdata=FitData2Pic()
