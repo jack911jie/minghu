@@ -21,7 +21,7 @@ plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.dazhi'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -29,7 +29,7 @@ class MingHu:
         self.save_dir=config['输出文件夹']
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.dazhi'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
@@ -635,7 +635,7 @@ class MingHu:
                     else:
                         draw.text((x_l+145,y_train+45), t['intervals_train_0'], fill = color['txt_fix'],font=self.fonts('aa楷体',40))  #您在。。。
                         draw.text((x_l+160,y_train+85), t['intervals_train_1'], fill = color['txt_train'],font=self.fonts('aa楷体',40))  #XX天里
-                        draw.text((x_l+50,y_train+115), '你成了下面的训练内容:', fill = color['txt_fix'],font=self.fonts('aa楷体',40))  #完成了下面的训练内容
+                        draw.text((x_l+50,y_train+115), '你完成了下面的训练内容:', fill = color['txt_fix'],font=self.fonts('aa楷体',40))  #完成了下面的训练内容
                         self.put_txt_img(img,t=t['train_content'],total_dis=420,xy=[x_l+95,y_train+230],dis_line=16,fill=color['txt_train'],font_name='杨任东石竹体',font_size=36)
                         draw.text((x_l+55,y_train_content_bottom+20), '保持这样的状态，好身材还远吗？', fill =color['txt_train'],font=self.fonts('aa楷体',40))  #击败了
 
