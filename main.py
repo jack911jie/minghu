@@ -603,7 +603,13 @@ class MingHu:
 
                 x_nickname=250
                 draw.text((x_nickname,110), t['nickname'], fill = color['txt_person'],font=self.fonts('华康古籍木兰',80))  #姓名
-                draw.text((x_nickname+len(t['nickname'])*80+30,150), t['sex'], fill = color['txt_person'],font=self.fonts('华康古籍木兰',40))  #性别
+                if t['sex']=='帅哥':
+                    sex='先生'
+                elif t['sex']=='美女':
+                    sex='女士'
+                else:
+                    print('warning:性别有误')
+                draw.text((x_nickname+len(t['nickname'])*80+30,150), sex, fill = color['txt_person'],font=self.fonts('华康古籍木兰',40))  #性别
                 if t['latest_msr_time']!=0:
                     draw.text((x_l+30,y_title_body+5), title_01, fill = color['txt_title'],font=self.fonts('上首金牛',30))  #看看棒棒的自己
                     draw.text((x_l+115,y_title_body+65), '您最近一次测量身体围度，是在', fill = color['txt_fix'],font=self.fonts('aa楷体',36))  #您最近一次测量身体围度
@@ -669,10 +675,11 @@ class FitData2Pic:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
         self.default_title='会员健身数据比较'
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.dazhi.wsl'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
         self.fn=os.path.join(config['会员档案文件夹'],'MH000唐青剑.xlsx')
-        #self.fn='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\铭湖健身工作室\\会员\\MH000唐青剑.xlsx'
-        self.font='/home/jack/data/健身项目/minghu/fonts/msyh.ttc'
+        # self.fn='D:\\Documents\\WXWork\\1688851376227744\WeDrive\\铭湖健身工作室\\铭湖健身工作室\\会员MH000唐青剑.xlsx'
+        # self.font='/home/jack/data/健身项目/minghu/fonts/msyh.ttc'
+        self.font='E:\\铭湖健身\\fonts\\msyh.ttc'
 
     def to_pic(self,title='',fn='',d_font=''):
         if title=='':
@@ -842,7 +849,7 @@ if __name__=='__main__':
     p=MingHu()
     p.draw(cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20200315',end_time='20210320')
 
-    #根据多次体测数据生成折线图
+    # 根据多次体测数据生成折线图
     # fitdata=FitData2Pic()
     # fitdata.to_pic()
 
