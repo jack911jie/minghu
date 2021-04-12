@@ -21,7 +21,7 @@ plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.dazhi'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -29,35 +29,62 @@ class MingHu:
         self.save_dir=config['输出文件夹']
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.dazhi'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
-    def color_list(self,sex='美女'):
+    def color_list(self,sex='美女',color_name=''):
+
         if sex=='美女':
-            colors={
-                'comment_bg':'#fff4ee',
-                'txt_person':'#ff6667',
-                'txt_title':'#ff9c6c',
-                'txt_date':'#ff9c6c',
-                'txt_fix':'#898886',
-                'txt_dimension':'#000000',
-                'txt_train':'#ff9c6c',
-                'txt_slogan':'#cd8c52',
-                'gym_info':'#693607'
-            }
+            if color_name=='':
+                color_name='light_pink'
+            if color_name=='light_orange':
+                colors={
+                    'comment_bg':'#fff4ee',
+                    'title_bg':'#fff4ee',
+                    'logo_bg':'#fff4ee',
+                    'train_content_bg':'#ffffff',
+                    'txt_person':'#ff6667',
+                    'txt_title':'#ff9c6c',
+                    'txt_date':'#ff9c6c',
+                    'txt_fix':'#898886',
+                    'txt_dimension':'#000000',
+                    'txt_train':'#ff9c6c',
+                    'txt_slogan':'#cd8c52',
+                    'gym_info':'#693607'
+                }
+            elif color_name=='light_pink':
+                colors={
+                    'comment_bg':'#fdf7f9',
+                    'title_bg':'#dfcbe4',
+                    'logo_bg':'#fbfbfb',
+                    'train_content_bg':'#ffffff',
+                    'txt_person':'#d584d0',
+                    'txt_title':'#ffffff',
+                    'txt_date':'#cf86cd',
+                    'txt_fix':'#717171',
+                    'txt_dimension':'#000000',
+                    'txt_train':'#cf86cd',
+                    'txt_slogan':'#b0b0b0',
+                    'gym_info':'#b0b0b0'
+                }
         elif sex=='帅哥':
-            colors={
-                'comment_bg':'#e5f5fd',
-                'txt_person':'#3c5ebb',
-                'txt_title':'#3c5ebb',
-                'txt_date':'#3c5ebb',
-                'txt_fix':'#9c9fa0',
-                'txt_dimension':'#000000',
-                'txt_train':'#3c5ebb',
-                'txt_slogan':'#8da8db',
-                'gym_info':'#2c2e35'
-            }
+            if color_name=='':
+                color_name='strong_blue'
+            if color_name=='strong_blue':
+                colors={
+                    'comment_bg':'#e5f5fd',
+                    'title_bg':'#e5f5fd',
+                    'logo_bg':'#e5f5fd',
+                    'txt_person':'#3c5ebb',
+                    'txt_title':'#3c5ebb',
+                    'txt_date':'#3c5ebb',
+                    'txt_fix':'#9c9fa0',
+                    'txt_dimension':'#000000',
+                    'txt_train':'#3c5ebb',
+                    'txt_slogan':'#8da8db',
+                    'gym_info':'#2c2e35'
+                }
         else:
             pass
 
@@ -505,20 +532,20 @@ class MingHu:
                 draw.rectangle((0,0,720,y0+s_top),fill=color['comment_bg']) #top
                 # draw.rectangle((x_l,y_name,x_r,y_name+s_name),fill='#fff4ee') #name
                 y_pic_box=y_name+int(s_name*0.2/2)
-                draw.rectangle((x_l+20,y_pic_box,x_l+20+int(s_name*0.8),y_name+int(s_name*0.9)),fill='#ffffff') #head pic box
+                draw.rectangle((x_l+20,y_pic_box,x_l+20+int(s_name*0.8),y_name+int(s_name*0.9)),fill=color['train_content_bg']) #head pic box
 
                 if t['latest_msr_time']!=0:
-                    draw.rectangle((x_l,y_title_body,x_l+254,y_title_body+s_title_body),fill=color['comment_bg']) #body title
+                    draw.rectangle((x_l,y_title_body,x_l+254,y_title_body+s_title_body),fill=color['title_bg']) #body title
                     draw.rectangle((x_l,y_body,x_r,y_body+s_body),fill=color['comment_bg']) #body
 
                 if t['train_content']:
-                    draw.rectangle((x_l,y_title_train,x_l+254,y_title_train+s_title_train),fill=color['comment_bg']) #train title
+                    draw.rectangle((x_l,y_title_train,x_l+254,y_title_train+s_title_train),fill=color['title_bg']) #train title
                     draw.rectangle((x_l,y_train,x_r,y_train+s_train),fill=color['comment_bg']) #train
                     y_train_content_bottom=y_train+200+s_train_content
-                    draw.rectangle((x_l+40,y_train+200,x_r-40,y_train_content_bottom),fill='#ffffff') #train content                    
-                draw.rectangle((x_l,y_slogan,x_r,y_slogan+s_slogan),fill=color['comment_bg']) #slogan
-                draw.rectangle((x_l,y_logo,x_r,y_logo+s_logo),fill=color['comment_bg']) #logo
-                draw.rectangle((0,y_bottom,720,y_bottom+s_bottom),fill=color['comment_bg']) #bottom
+                    draw.rectangle((x_l+40,y_train+200,x_r-40,y_train_content_bottom),fill=color['train_content_bg']) #train content                    
+                draw.rectangle((x_l,y_slogan,x_r,y_slogan+s_slogan),fill=color['logo_bg']) #slogan
+                draw.rectangle((x_l,y_logo,x_r,y_logo+s_logo),fill=color['logo_bg']) #logo
+                draw.rectangle((0,y_bottom,720,y_bottom+s_bottom),fill=color['logo_bg']) #bottom
 
                  #--------图片-----------
 
@@ -602,14 +629,14 @@ class MingHu:
                     pass
 
                 x_nickname=250
-                draw.text((x_nickname,110), t['nickname'], fill = color['txt_person'],font=self.fonts('华康古籍木兰',80))  #姓名
+                draw.text((x_nickname,110), t['nickname'], fill = color['txt_person'],font=self.fonts('汉仪心海楷体w',80))  #姓名
                 if t['sex']=='帅哥':
                     sex='先生'
                 elif t['sex']=='美女':
                     sex='女士'
                 else:
                     print('warning:性别有误')
-                draw.text((x_nickname+len(t['nickname'])*80+30,150), sex, fill = color['txt_person'],font=self.fonts('华康古籍木兰',40))  #性别
+                draw.text((x_nickname+len(t['nickname'])*80+30,150), sex, fill = color['txt_person'],font=self.fonts('汉仪心海楷体w',40))  #性别
                 if t['latest_msr_time']!=0:
                     draw.text((x_l+30,y_title_body+5), title_01, fill = color['txt_title'],font=self.fonts('上首金牛',30))  #看看棒棒的自己
                     draw.text((x_l+115,y_title_body+65), '您最近一次测量身体围度，是在', fill = color['txt_fix'],font=self.fonts('aa楷体',36))  #您最近一次测量身体围度
@@ -856,7 +883,3 @@ if __name__=='__main__':
     #计算体脂率
     # my=cals()
     # print(my.bfr(age=40,sex='男',ht=170,wt=63.8,waist=82,formula=1))
-
-
-
-
