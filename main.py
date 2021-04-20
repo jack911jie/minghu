@@ -21,7 +21,7 @@ plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.dazhi'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -29,7 +29,7 @@ class MingHu:
         self.save_dir=config['输出文件夹']
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.dazhi'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
