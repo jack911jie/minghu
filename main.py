@@ -21,7 +21,7 @@ plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 class MingHu:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -76,6 +76,7 @@ class MingHu:
                     'comment_bg':'#e5f5fd',
                     'title_bg':'#e5f5fd',
                     'logo_bg':'#e5f5fd',
+                    'train_content_bg':'#ffffff',
                     'txt_person':'#3c5ebb',
                     'txt_title':'#3c5ebb',
                     'txt_date':'#3c5ebb',
@@ -305,7 +306,7 @@ class MingHu:
                 txts['l_leg']='左大腿围 '+str('{:g}'.format(infos['body']['l_leg']))  +' cm'
                 txts['r_leg']='右大腿围 '+str('{:g}'.format(infos['body']['r_leg']))  +' cm'
                 txts['l_calf']='左小腿围 '+str('{:g}'.format(infos['body']['l_calf']))  +' cm'
-                txts['r_calf']='右大腿围 '+str('{:g}'.format(infos['body']['r_calf']))  +' cm'
+                txts['r_calf']='右小腿围 '+str('{:g}'.format(infos['body']['r_calf']))  +' cm'
                 txts['bfr']='体脂率：'+str('{:.2%}'.format(infos['body']['bfr']))
             else:
                 txts['latest_msr_time']=0
