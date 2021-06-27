@@ -6,6 +6,7 @@ import days_cal
 import readconfig
 import composing
 import json
+import openpyxl
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -27,6 +28,41 @@ class MingHu:
         self.ins_dir=config['教练文件夹']
         self.slogan_dir=config['文案文件夹']
         self.save_dir=config['输出文件夹']
+
+    def auto_cus_xls(self):
+        cus_name_input=''
+        while cus_name_input=='':
+            cus_name_input=input('请输入新会员姓名：')
+            if cus_name_input=='exit':
+                exit(0)
+ 
+        nums=[]
+        for fn in os.listdir(self.cus_file_dir):
+            if len(fn)<16:
+                if re.match(r'MH\d\d\d.*.xlsx',fn):
+                    num=int(fn[2:5])
+                    if num not in nums:
+                        nums.append(num)
+
+        new_num=str(max(nums)+1).zfill(3)
+        verify=input('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format('MH'+new_num+cus_name_input))
+        if verify:
+            xls_name='MH'+verify+cus_name_input
+        else:
+            xls_name='MH'+new_num+cus_name_input
+        
+        wb=openpyxl.load_workbook(os.path.join(self.cus_file_dir,'模板.xlsx'))
+        sht=wb['基本情况']
+        sht['A2']=xls_name[0:5]
+        sht['B2']=cus_name_input
+        if len(cus_name_input)>1:
+            sht['C2']=cus_name_input[1:]
+        else:
+            sht['C2']=cus_name_input
+        
+        wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsx'))
+        print('\n生成新的会员档案文件：{}'.format(self.cus_file_dir+'\\'+xls_name+'.xlsx'))
+
 
     def fonts(self,font_name,font_size):
         fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
@@ -876,6 +912,7 @@ if __name__=='__main__':
     #根据训练数据生成阶段报告
     p=MingHu()
     p.draw(cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20200315',end_time='20210320')
+    # p.auto_cus_xls()
 
     # 根据多次体测数据生成折线图
     # fitdata=FitData2Pic()
