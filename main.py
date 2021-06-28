@@ -703,11 +703,11 @@ class FitData2Pic:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
         self.default_title='会员健身数据比较'
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
-        self.fn=os.path.join(config['会员档案文件夹'],'MH000唐青剑.xlsx')
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        self.fn=os.path.join(config['会员档案文件夹'],'MH022骆莹莹.xlsx')
         # self.fn='D:\\Documents\\WXWork\\1688851376227744\WeDrive\\铭湖健身工作室\\铭湖健身工作室\\会员MH000唐青剑.xlsx'
         # self.font='/home/jack/data/健身项目/minghu/fonts/msyh.ttc'
-        self.font='E:\\铭湖健身\\fonts\\msyh.ttc'
+        self.font='j:\\fonts\\msyh.ttc'
 
     def to_pic(self,title='',fn='',d_font=''):
         if title=='':
@@ -874,12 +874,12 @@ class Vividict(dict):
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    p=MingHu()
-    p.draw(cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20200315',end_time='20210320')
+    # p=MingHu()
+    # p.draw(cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20200315',end_time='20210320')
 
     # 根据多次体测数据生成折线图
-    # fitdata=FitData2Pic()
-    # fitdata.to_pic()
+    fitdata=FitData2Pic()
+    fitdata.to_pic()
 
     #计算体脂率
     # my=cals()
