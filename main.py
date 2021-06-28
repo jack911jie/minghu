@@ -910,14 +910,9 @@ class Vividict(dict):
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-<<<<<<< HEAD
-    # p=MingHu()
-    # p.draw(cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20200315',end_time='20210320')
-=======
     p=MingHu()
     p.draw(cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20200315',end_time='20210320')
     # p.auto_cus_xls()
->>>>>>> b50da065a60eeab6faf1193be47394b8dbc65936
 
     # 根据多次体测数据生成折线图
     fitdata=FitData2Pic()
