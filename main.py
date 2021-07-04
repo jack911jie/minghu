@@ -489,6 +489,7 @@ class MingHu:
             _date=datetime.strftime(datetime.now(),"%Y%m%d_%H%M%S")
             save_name=os.path.join(save_dir,_date+'_'+cus+'.jpg')
             print('文件名：'+save_name)
+            os.startfile(save_dir)
             return save_name
 
         def exp_pic(dat):           
@@ -900,6 +901,10 @@ class cals:
             bmi=wt/((ht/100)*(ht/100))
             bfr=1.2*bmi+0.23*age-5.4-10.8*k
 
+
+        adj_bfr=input('\n计算出的体脂率为 {}，如需修改请直接输入体脂率（如：12.46%），不需要修改请直接按回车——\n\n'.format(str('{:.2%}'.format(bfr))))
+        if adj_bfr:
+            bfr=float(adj_bfr[:-1])/100
 
         return bfr
 
