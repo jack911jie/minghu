@@ -1,5 +1,7 @@
 import os
 import sys
+
+# from openpyxl.reader.excel import load_workbook
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'modules'))
 import pic_transfer
 import days_cal
@@ -7,7 +9,10 @@ import readconfig
 import composing
 import json
 import openpyxl
+# from openpyxl import load_workbook
 import pandas as pd
+pd.set_option('display.unicode.ambiguous_as_wide', True)
+pd.set_option('display.unicode.east_asian_width', True)
 import numpy as np
 from datetime import datetime
 import re
@@ -283,7 +288,7 @@ class MingHu:
                 out['train']['muscle']=''
         
             #有氧训练总时长
-            out['train']['oxy_time']=infos['有氧时长'].sum()
+            out['train']['oxy_time']=infos['有氧时长'].apply(lambda x:int(x) if isinstance(x,str) else x).sum()
         else:
             out['train']=''
 
@@ -489,6 +494,7 @@ class MingHu:
             _date=datetime.strftime(datetime.now(),"%Y%m%d_%H%M%S")
             save_name=os.path.join(save_dir,_date+'_'+cus+'.jpg')
             print('文件名：'+save_name)
+            os.startfile(save_dir)
             return save_name
 
         def exp_pic(dat):           
@@ -735,6 +741,77 @@ class MingHu:
         # slogan()
         # ins_info()
 
+class GroupDataInput:
+    def __init__(self):
+        self.dir=os.path.dirname(os.path.abspath(__file__))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        self.grp_dir=config['会员档案文件夹']
+
+    def data_input(self):
+        grp_file=os.path.join(self.grp_dir,'00-团课分班录入表.xlsx')
+        df_grp_pre=pd.read_excel(grp_file,sheet_name='分组',skiprows=1)
+        df_grp=df_grp_pre.iloc[:,4:]
+        df_grp_names=df_grp.columns.tolist()
+        #需录入数据的名单
+        df_real_list=df_grp_pre['Unnamed: 0'].dropna()           
+
+        df_data=pd.read_excel(grp_file,sheet_name='训练情况')
+        df_data=df_data.iloc[1:]
+        # wb_train_data=openpyxl.load_workbook(grp_file)
+        # sht_train=wb_train_data['训练情况']
+        # print(sht_train['i21'])
+
+        if df_real_list.empty:
+            exit('未录入数据')
+        else:
+            cus_list=df_real_list.apply(lambda x:x+'.xlsx').tolist()
+        
+        # cus_list=['MH024刘婵桢.xlsx']
+        for cus_name in cus_list:
+            fn=os.path.join(self.grp_dir,cus_name)
+
+            print('正在写入{}'.format(cus_name[0:-5]))
+
+            book=openpyxl.load_workbook(fn)
+            df_to_write=pd.read_excel(fn,sheet_name='训练情况')
+            df_new=pd.concat([df_to_write,df_data])
+            writer = pd.ExcelWriter(fn,engine='openpyxl')#可以向不同的sheet写入数据      
+            writer.book=book
+            writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+            df_rows = df_to_write.shape[0] #获取原数据的行数
+            df_data.to_excel(writer, sheet_name='训练情况',startrow=df_rows+1, index=False, header=False)#将数据写入excel中的aa表,从第一个空行开始写
+            writer.save()#保存
+            writer.close()
+
+            wb=openpyxl.load_workbook(fn)
+            sht=wb['训练情况']
+            cols_d_e=sht['D:E']
+            cols_f_h=sht['F:H']
+
+            #日期格式
+            cols_a=sht['A']
+            for cell in sht['A']:
+                # for cell in cells:                            
+                cell.number_format= 'YYYY-MM-DD'
+
+            # 单元格填充背景色
+            bg_color_blue = openpyxl.styles.PatternFill(fgColor='DAEEF3', fill_type='solid')
+            bg_color_orange = openpyxl.styles.PatternFill(fgColor='FDE9D9', fill_type='solid')
+            for cells in cols_d_e:
+                for cell in cells:
+                    cell.fill=bg_color_blue
+            
+            for cells in cols_f_h:
+                for cell in cells:
+                    cell.fill=bg_color_orange
+
+            
+            
+            wb.save(fn)
+
+        print('完成')
+
+
 class FitData2Pic:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
@@ -901,6 +978,10 @@ class cals:
             bfr=1.2*bmi+0.23*age-5.4-10.8*k
 
 
+        adj_bfr=input('\n计算出的体脂率为 {}，如需修改请直接输入体脂率（如：12.46%），不需要修改请直接按回车——\n\n'.format(str('{:.2%}'.format(bfr))))
+        if adj_bfr:
+            bfr=float(adj_bfr[:-1])/100
+
         return bfr
 
 class Vividict(dict):
@@ -911,13 +992,16 @@ class Vividict(dict):
 if __name__=='__main__':
     #根据训练数据生成阶段报告
     p=MingHu()
-    p.draw(cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20200315',end_time='20210320')
+    p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
     # p.auto_cus_xls()
 
     # 根据多次体测数据生成折线图
     fitdata=FitData2Pic()
     fitdata.to_pic()
 
+    #分组录入数据
+    # p=GroupDataInput()
+    # p.data_input()
     #计算体脂率
     # my=cals()
     # print(my.bfr(age=40,sex='男',ht=170,wt=63.8,waist=82,formula=1))
