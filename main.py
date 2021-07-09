@@ -774,11 +774,12 @@ class GroupDataInput:
 
             book=openpyxl.load_workbook(fn)
             df_to_write=pd.read_excel(fn,sheet_name='训练情况')
-            df_new=pd.concat([df_to_write,df_data])
+            # df_new=pd.concat([df_to_write,df_data])
+            # print(df_new)
             writer = pd.ExcelWriter(fn,engine='openpyxl')#可以向不同的sheet写入数据      
             writer.book=book
             writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-            df_rows = df_to_write.shape[0] #获取原数据的行数
+            df_rows = df_to_write.dropna(axis=0,how='all').shape[0] #去除所有为na的行，然后获取原数据的行数
             df_data.to_excel(writer, sheet_name='训练情况',startrow=df_rows+1, index=False, header=False)#将数据写入excel中的aa表,从第一个空行开始写
             writer.save()#保存
             writer.close()
@@ -991,8 +992,8 @@ class Vividict(dict):
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    p=MingHu()
-    p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
+    # p=MingHu()
+    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
     # p.auto_cus_xls()
 
     # 根据多次体测数据生成折线图
@@ -1000,8 +1001,9 @@ if __name__=='__main__':
     # fitdata.to_pic()
 
     #分组录入数据
-    # p=GroupDataInput()
-    # p.data_input()
+    p=GroupDataInput()
+    p.data_input()
+
     #计算体脂率
     # my=cals()
     # print(my.bfr(age=40,sex='男',ht=170,wt=63.8,waist=82,formula=1))
