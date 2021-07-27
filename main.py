@@ -7,6 +7,7 @@ import pic_transfer
 import days_cal
 import readconfig
 import composing
+import get_data
 import json
 import openpyxl
 # from openpyxl import load_workbook
@@ -169,132 +170,6 @@ class MingHu:
                 m+=1
                 n+=1
 
-    def read_excel(self,cus='MH001韦美霜'):
-        xls_name=os.path.join(self.cus_file_dir,cus+'.xlsx')
-        df_basic=pd.read_excel(xls_name,sheet_name='基本情况')    
-        df_body=pd.read_excel(xls_name,sheet_name='身体数据')
-        df_infos=pd.read_excel(xls_name,sheet_name='训练情况',skiprows=2,header=None)
-        return [df_basic,df_body,df_infos]
-
-    def exp_cus_prd(self,cus='MH001韦美霜',start_time='20150101',end_time=''):
-        df=self.read_excel(cus=cus)
-        df_basic=df[0] #基本情况
-        df_body=df[1] #身体围度
-        infos=df[2] #训练情况
-
-        #------------基本情况--------
-        out=Vividict()       
-
-        if end_time=='':
-            end_time=datetime.now()
-        else:
-            end_time=datetime.strptime('-'.join([end_time[0:4],end_time[4:6],end_time[6:]]),'%Y-%m-%d')
-        start_time=datetime.strptime('-'.join([start_time[0:4],start_time[4:6],start_time[6:]]),'%Y-%m-%d')
-        
-        
-        # df_basic=pd.read_excel(xls_name,sheet_name='基本情况')        
-        out['nickname']=df_basic['昵称'].tolist()[0] #昵称
-        out['sex']=df_basic['性别'].tolist()[0] #性别
-
-        #年龄
-        if not df_basic['出生年月'].empty:
-            birth=df_basic['出生年月'].tolist()[0]
-            if len(str(birth))==4:
-                birth=str(birth)+'0101'
-                age=days_cal.calculate_age(birth)
-                out['age']=age
-            elif len(str(birth))==6:
-                birth=str(birth)+'01'
-                age=days_cal.calculate_age(birth)
-                out['age']=age
-            elif len(str(birth))==8:
-                age=days_cal.calculate_age(str(birth))
-                out['age']=age
-            else:
-                out['age']=''            
-        else:
-            out['age']='' 
-        
-
-        #------------身体数据--------
-        # df_body=pd.read_excel(xls_name,sheet_name='身体数据')
-        # df_body=df_body[(df_body['时间']>=start_time) & (df_body['时间']<=end_time)] #根据时间段筛选记录
-        df_body=df_body[df_body['时间']<=end_time] #根据时间段筛选记录
-        df_body=df_body.fillna(0)
-        if df_body.empty:
-            out['body']=''
-        else:
-            body_recent=df_body[df_body['时间']==df_body['时间'].max()].values.tolist()[0]       
-            out['body']['time']=body_recent[0]
-            out['body']['ht']=body_recent[1]
-            out['body']['wt']=body_recent[2]
-            out['body']['bfr']=body_recent[3]
-            out['body']['chest']=body_recent[4]
-            out['body']['l_arm']=body_recent[5]
-            out['body']['r_arm']=body_recent[6]
-            out['body']['waist']=body_recent[7]
-            out['body']['hip']=body_recent[8]
-            out['body']['l_leg']=body_recent[9]
-            out['body']['r_leg']=body_recent[10]
-            out['body']['l_calf']=body_recent[11]
-            out['body']['r_calf']=body_recent[12]
-            out['body']['ht_lung']=body_recent[13]
-            out['body']['balance']=body_recent[14]
-            out['body']['power']=body_recent[15]
-            out['body']['flexibility']=body_recent[16]
-            out['body']['core']=body_recent[17]
-
-            bfr_data=cals()
-            bfr=bfr_data.bfr(age=age,sex=out['sex'],ht=out['body']['ht'],wt=out['body']['wt'],waist=out['body']['waist'],formula=1)
-            out['body']['bfr']=bfr
-
-        #------------训练数据--------
-        # infos=pd.read_excel(xls_name,sheet_name='训练情况',skiprows=2,header=None)
-        infos=infos.iloc[:,0:10] #取前10列
-        infos.columns=['时间','形式','目标肌群','有氧项目','有氧时长','力量内容','重量','次数','教练姓名','教练评语']
-        # print(infos.dropna(how='all'))
-        if infos.dropna(how='all').shape[0]!=0:
-            infos=infos[(infos['时间']>=start_time) & (infos['时间']<=end_time)] #根据时间段筛选记录      
-
-            # print('168 line:',infos)
-
-            #起止日期
-            out['interval']=[infos['时间'].min(),infos['时间'].max()]  
-            out['interval_input']=[start_time,end_time]
-
-            #次数
-            train_times=infos.groupby(['时间'],as_index=False).nunique()['时间'].nunique()
-            out['train_times']=train_times
-
-            #抗阻训练
-            train_dates=infos.groupby(['时间','目标肌群'])
-            # print(train_dates)
-            train_big_type=[]
-            for dt,itm in train_dates:
-                train_big_type.append(list(dt))
-            df_train_big_type=pd.DataFrame(train_big_type)    
-            if not df_train_big_type.empty:   
-                df_train_big_type.columns=['时间','目标肌群']
-                _sum_train_items=df_train_big_type.groupby(['目标肌群'],as_index=False)
-                sum_train_items=pd.DataFrame(_sum_train_items.count())  
-                sum_train_items.dropna(axis=0, how='any', inplace=True)
-                sum_train_items=sum_train_items[sum_train_items['目标肌群']!=' '].values
-                if len(sum_train_items)>0:
-                    for itm in sum_train_items:
-                        out['train']['muscle'][itm[0]]=itm[1]
-                else:
-                    out['train']['muscle']=''
-            else:
-                out['train']['muscle']=''
-        
-            #有氧训练总时长
-            out['train']['oxy_time']=infos['有氧时长'].apply(lambda x:int(x) if isinstance(x,str) else x).sum()
-        else:
-            out['train']=''
-
-        # print('201 line:',out)
-        return out
-
     def draw(self,cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20150101',end_time=''):
         
         def slogan():
@@ -316,7 +191,9 @@ class MingHu:
             return ins_inf
 
         def txts():
-            infos=self.exp_cus_prd(cus=cus,start_time=start_time,end_time=end_time)        
+            cus_data=get_data.ReadAndExportData()
+            infos=cus_data.exp_cus_prd(cus_file_dir=self.cus_file_dir,cus=cus,start_time=start_time,end_time=end_time)    
+                
             # print(infos) 
             txts=Vividict()
             #文字
@@ -812,6 +689,68 @@ class GroupDataInput:
 
         print('完成')
 
+class FeedBackAfterClass:
+    def __init__(self):
+        self.dir=os.path.dirname(os.path.abspath(__file__))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        self.cus_file_dir=config['会员档案文件夹']
+        self.material_dir=config['素材文件夹']
+        self.ins_dir=config['教练文件夹']
+        self.slogan_dir=config['文案文件夹']
+        self.save_dir=config['输出文件夹']
+
+
+    def export(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
+        start_time=date_input
+        end_time=date_input
+        cus_data=get_data.ReadAndExportDataNew()
+        data=cus_data.exp_cus_prd(cus_file_dir=self.cus_file_dir,cus=cus,start_time=start_time,end_time=end_time)
+        return data
+
+    def draw(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
+        #文字内容
+        data=self.export(cus=cus,ins=ins,date_input=date_input)
+        # print(data)
+        #日期
+        txt_date=date_input[:4]+'年'+date_input[4:6]+'月'+date_input[6:]+'日'
+        #姓名
+        nickname=data['nickname']
+        #性别
+        sex=data['sex']
+        if sex=='女':
+            sex='女士'
+        elif sex=='男':
+            sex='先生'
+        else:
+            sex=''
+        
+
+        #抗阻内容
+        txt_train_muscle=''
+        for mscl_item in data['train']['muscle_item']:
+            txt_train_muscle=txt_train_muscle+mscl_item[0]+'  '+str(int(mscl_item[2]))+'个'+'\n'
+        txt_train_muscle.strip()
+
+        #有氧内容
+        txt_train_oxy=''
+        for oxy_item in  data['train']['oxy_infos']:
+
+            txt_train_oxy=txt_train_oxy+oxy_item[0]+'  '+str(int(oxy_item[1]//60))+'分'+'\n'
+        txt_train_oxy.strip()
+
+        #消耗热量
+        txt_calories='消耗热量   '+str(int(data['train']['calories']))+'千卡'
+        
+        #教练
+        ins=ins[8:]
+
+        print(nickname,sex,'\n',txt_date,'\n',txt_train_muscle,txt_train_oxy,txt_calories,'\n',ins)
+
+        #背景
+        
+
+
+
 
 class FitData2Pic:
     def __init__(self):
@@ -945,45 +884,6 @@ class FitData2Pic:
         plt.show()
         return plt
             
-class cals:
-    def bfr(self,age,sex,ht,wt,waist,formula=1):
-            # 女：
-            # 参数a=腰围（cm）×0.74
-            # 参数b=体重（kg）×0.082+34.89
-            # 体脂肪重量（kg）=a－b
-            # 体脂率=（身体脂肪总重量÷体重）×100%
-            # 男：
-            # 参数a=腰围（cm）×0.74
-            # 参数b=体重（kg）×0.082+44.74
-            # 体脂肪重量（kg）=a－b
-            # 体脂率=（身体脂肪总重量÷体重）×100%
-        if formula==1:
-            if sex=='女':
-                k=34.89
-            if sex=='男':
-                k=44.74
-            a=waist*0.74
-            b=wt*0.082+k
-            fat=a-b
-
-            bfr=fat/wt
-
-        elif formula==2:
-            # 1.2×BMI+0.23×年龄-5.4-10.8×性别（男为1，女为0）
-            if sex=='女':
-                k=0
-            if sex=='男':
-                k=1
-
-            bmi=wt/((ht/100)*(ht/100))
-            bfr=1.2*bmi+0.23*age-5.4-10.8*k
-
-
-        adj_bfr=input('\n计算出的体脂率为 {}，如需修改请直接输入体脂率（如：12.46%），不需要修改请直接按回车——\n\n'.format(str('{:.2%}'.format(bfr))))
-        if adj_bfr:
-            bfr=float(adj_bfr[:-1])/100
-
-        return bfr
 
 class Vividict(dict):
     def __missing__(self, key):
@@ -996,13 +896,17 @@ if __name__=='__main__':
     # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
     # p.auto_cus_xls()
 
+    #当天报告
+    p=FeedBackAfterClass()
+    p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210623')
+
     # 根据多次体测数据生成折线图
     # fitdata=FitData2Pic()
     # fitdata.to_pic()
 
     #分组录入数据
-    p=GroupDataInput()
-    p.data_input()
+    # p=GroupDataInput()
+    # p.data_input()
 
     #计算体脂率
     # my=cals()
