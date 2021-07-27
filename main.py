@@ -34,6 +34,7 @@ class MingHu:
         self.ins_dir=config['教练文件夹']
         self.slogan_dir=config['文案文件夹']
         self.save_dir=config['输出文件夹']
+        self.public_dir=config['公共素材文件夹']
 
     def auto_cus_xls(self):
         cus_name_input=''
@@ -526,7 +527,7 @@ class MingHu:
                     # img.paste(pic_teach,())   x_l+40,y_train+200,x_r-40,y_train+200+s_train_content
 
                 #logo
-                logo=Image.open(os.path.join(self.ins_dir,'minghulogo.png'))
+                logo=Image.open(os.path.join(self.public_dir,'logo及二维码','logo.png'))
                 w_logo,h_logo=logo.size
                 logo=logo.resize((300,int(h_logo*300/w_logo)))
                 r4,g4,b4,a4=logo.split()
@@ -698,6 +699,7 @@ class FeedBackAfterClass:
         self.ins_dir=config['教练文件夹']
         self.slogan_dir=config['文案文件夹']
         self.save_dir=config['输出文件夹']
+        self.public_dir=config['公共素材文件夹']
 
 
     def export(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
@@ -892,13 +894,13 @@ class Vividict(dict):
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    # p=MingHu()
-    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
+    p=MingHu()
+    p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
     # p.auto_cus_xls()
 
     #当天报告
-    p=FeedBackAfterClass()
-    p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210623')
+    # p=FeedBackAfterClass()
+    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210623')
 
     # 根据多次体测数据生成折线图
     # fitdata=FitData2Pic()
