@@ -1,6 +1,5 @@
 import os
 import sys
-
 # from openpyxl.reader.excel import load_workbook
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'modules'))
 import pic_transfer
@@ -700,6 +699,7 @@ class FeedBackAfterClass:
         self.slogan_dir=config['文案文件夹']
         self.save_dir=config['输出文件夹']
         self.public_dir=config['公共素材文件夹']
+        self.font_config=os.path.join(self.dir,'configs','fontList.minghu')
 
 
     def export(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
@@ -726,6 +726,9 @@ class FeedBackAfterClass:
         else:
             sex=''
         
+        #标题框文字
+        txt_title_box='看看今天你的汗水洒在哪里？'
+        
 
         #抗阻内容
         txt_train_muscle=''
@@ -740,19 +743,232 @@ class FeedBackAfterClass:
             txt_train_oxy=txt_train_oxy+oxy_item[0]+'  '+str(int(oxy_item[1]//60))+'分'+'\n'
         txt_train_oxy.strip()
 
+
+        txt_train=txt_train_muscle+txt_train_oxy
+
         #消耗热量
-        txt_calories='消耗热量   '+str(int(data['train']['calories']))+'千卡'
+        txt_burn='消耗热量 '+str(int(data['train']['calories']))+' 千卡'
         
         #教练
-        ins=ins[8:]
+        ins=ins[8:][0]+'教练'
 
-        print(nickname,sex,'\n',txt_date,'\n',txt_train_muscle,txt_train_oxy,txt_calories,'\n',ins)
+        #建议
+        txt_suggest_title=ins+'给你的饮食建议'
+        txt_suggest='补充足够的碳水化合物：健身训练时能量主要由糖原提供，摄入的碳水化合物可以补充糖原，供给能量，并防止训练造成的肌肉分解'
+
+        #slogan
+        txt_slogan='让健身变得有趣'
+
+        # print(nickname,sex,'\n',txt_date,'\n',txt_train,txt_calories,'\n',ins,txt_suggest,slogan)
+
+
+        ftsz_train=42
+        ftsz_suggest=40
 
         #背景
+
+        def cal_ht():
+
+            size={
+                'wid':{
+                    'total':720,
+                    'small':640,
+                    'third':600
+                },
+                'ht':{
+                    'total':1280,
+                    'title':300,
+                    'title_box':260,
+                    'train':300,
+                    'burn':200,
+                    'suggest':300,
+                    'suggest_title':120,
+                    'bottom':200,
+                    'gap':10
+                }
+            }
+            
+            #重写训练内容高度
+            ht_train_cal=composing.split_txt_Chn_eng(wid=size['wid']['small']-40,font_size=ftsz_train,txt_input=txt_train,Indent='no')
+            # ht_train=800
+            ht_train=int(ftsz_train*ht_train_cal[1]*1.8)
+            size['ht']['train']=ht_train
+
+            #重写建议内容高度
+            ht_suggest_cal=composing.split_txt_Chn_eng(wid=size['wid']['third']-20,font_size=ftsz_suggest,txt_input=txt_suggest,Indent='yes')
+            ht_suggest=int(ftsz_suggest*ht_suggest_cal[1]*1.9)+size['ht']['suggest_title']
+            size['ht']['suggest']=ht_suggest
+
+            total_ht=size['ht']['title']+size['ht']['train']+size['ht']['burn']+size['ht']['suggest']+size['ht']['bottom']+size['ht']['gap']*2*4
+            size['ht']['total']=total_ht
+ 
+            # print(size)
+            return size 
         
+        def color_list():
+            color={
+                'block':{
+                    'bg':'#fffcf9',
+                    'title':'#ff8ddf',
+                    'train':'#fee8ff',
+                    'train_bar':'#fecaff',
+                    'burn':'#ffffff',
+                    'suggest':'#f1fcff',
+                    'suggest_small_box':'#ffffff',
+                },
+                'edge':{
+                    'title_box':'#fac1f1',
+                    'burn':'#ef7f4e',
+                    'suggest_small_box':'#808081',
+                },
+                'font':{
+                    'title':'#ffffff',
+                    'train':'#ff8ddf',
+                    'burn':'#ef4700',
+                    'suggest_title':'#595757',
+                    'suggest':'#143f00',
+                    'slogan':'#ad5a28'
+                }
 
 
+            }
 
+            return color
+
+        def draw_blocks():
+            size=cal_ht()
+            color=color_list()
+
+            p_title_block=(0,0,size['wid']['total'],size['ht']['title'])
+            p_title_box=(p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2,
+                        p_title_block[1]+(size['ht']['title']-size['ht']['title_box'])//2,
+                        p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2+size['wid']['small'],
+                        p_title_block[1]+(size['ht']['title']-size['ht']['title'])//2+size['ht']['title_box'])
+
+
+            p_train=(p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2,
+                        p_title_block[3]+size['ht']['gap']*2,
+                        p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2+size['wid']['small'],
+                        p_title_block[3]+size['ht']['train'])
+            p_train_bar=(p_train[0]+50,p_train[1]+18,p_train[0]+30+10,p_train[3]-15)
+            p_train_txt=[p_train_bar[0]+35,p_train_bar[1]+10]
+            p_burn=(p_train[0],
+                    p_train[3]+size['ht']['gap']*2,
+                    p_train[2],
+                    p_train[3]+size['ht']['burn'])
+            
+            p_flame=[p_burn[0]+20,p_burn[1]+30]
+                    
+            p_suggest=(p_burn[0],
+                    p_burn[3]+size['ht']['gap']*2,
+                    p_burn[2],
+                    p_burn[3]+size['ht']['gap']*2+size['ht']['suggest'])
+
+            p_suggest_small=(p_suggest[0]+(size['wid']['small']-size['wid']['third'])//2,
+                    p_suggest[1]+size['ht']['suggest_title'],
+                    p_suggest[0]+(size['wid']['small']-size['wid']['third'])//2+size['wid']['third'],
+                    p_suggest[1]+size['ht']['suggest_title']+(size['ht']['suggest']-size['ht']['suggest_title'])-20)
+
+            p_suggest_txt=[p_suggest_small[0]+18,p_suggest_small[1]+20]
+            
+            p_logo=[p_suggest[0]+20,p_suggest[3]+size['ht']['gap']*2+(size['ht']['bottom']-120)//2]
+            
+
+            bg=Image.new('RGBA',(size['wid']['total'],size['ht']['total']),color=color['block']['bg'])
+            
+            draw=ImageDraw.Draw(bg)
+
+            #标题框
+            draw.rectangle(p_title_block,fill=color['block']['title'])
+            draw.rounded_rectangle(xy=p_title_box,radius=10,fill=None,width=3,outline=color['edge']['title_box'])
+
+
+            #训练内容框
+            draw.rounded_rectangle(xy=p_train,radius=10,fill=color['block']['train'],width=3,outline=None)
+            draw.rectangle(xy=p_train_bar,fill=color['block']['train_bar'])
+
+            #燃烧
+            draw.rounded_rectangle(xy=p_burn,radius=10,fill=color['block']['burn'],width=3,outline=color['edge']['burn'])
+
+            #教练建议
+            draw.rectangle(xy=p_suggest,fill=color['block']['suggest'])
+            draw.rounded_rectangle(xy=p_suggest_small,radius=10,fill=color['block']['suggest_small_box'],
+                                    width=3,outline=color['edge']['suggest_small_box'])
+
+
+            #图片
+            #火焰图片
+            _flame=Image.open(os.path.join(self.public_dir,'flame.png'))
+            flame=_flame.resize((_flame.size[0]*120//_flame.size[1],120))
+            a_flame=flame.split()[3]
+            # bg.paste(a_flame,p_flame)
+            bg.paste(flame,p_flame,mask=a_flame)
+
+            #logo
+            _logo=Image.open(os.path.join(self.public_dir,'logo及二维码','logo.png'))
+            logo=_logo.resize((_logo.size[0]*120//_logo.size[1],120))
+            a_logo=logo.split()[3]
+            bg.paste(logo,p_logo,mask=a_logo)
+
+            #文字
+            font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.minghu')
+            #姓名
+            draw.text((p_title_box[0]+50,p_title_box[1]+30),
+                        nickname+sex,
+                        fill=color['font']['title'],
+                        font=composing.fonts('方正韵动粗黑',60,config=font_config_file))
+            #日期
+            draw.text((p_title_box[0]+50,p_title_box[1]+110),
+                        txt_date,
+                        fill=color['font']['title'],
+                        font=composing.fonts('方正韵动粗黑',40,config=font_config_file))
+            #标题栏内其他文字
+            draw.text((p_title_box[0]+50,p_title_box[1]+176),
+                        txt_title_box,
+                        fill=color['font']['title'],
+                        font=composing.fonts('方正韵动粗黑',40,config=font_config_file))
+
+            #训练内容
+            composing.put_txt_img(draw=draw,
+                                    tt=txt_train,
+                                    total_dis=int((p_train[2]-p_train_bar[0])*0.8),
+                                    xy=p_train_txt,
+                                    dis_line=int(ftsz_train*0.4),
+                                    fill=color['font']['train'],
+                                    font_name='汉仪糯米团',
+                                    font_size=ftsz_train,
+                                    addSPC='no')
+
+            #燃烧热量
+            draw.text((p_burn[0]+130,p_burn[1]+52),
+                        txt_burn,
+                        fill=color['font']['burn'],
+                        font=composing.fonts('汉仪糯米团',54,config=font_config_file))
+
+            #教练建议
+            draw.text((p_suggest[0]+98,p_suggest[1]+36),
+                        txt_suggest_title,
+                        fill=color['font']['suggest_title'],
+                        font=composing.fonts('汉仪糯米团',44,config=font_config_file))
+
+            composing.put_txt_img(draw=draw,
+                                    tt=txt_suggest,
+                                    total_dis=int((p_suggest_small[2]-p_suggest_small[0])*0.94),
+                                    xy=p_suggest_txt,
+                                    dis_line=int(ftsz_suggest*0.5),
+                                    fill=color['font']['suggest'],
+                                    font_name='汉仪字酷堂义山楷w',
+                                    font_size=ftsz_train,
+                                    addSPC='add_2spaces')
+
+            #slogan
+            draw.text((p_logo[0]+255,p_logo[1]+28),txt_slogan,
+                        fill=color['font']['slogan'],font=composing.fonts('华康海报体W12(p)',52))
+
+            bg.show()
+
+
+        draw_blocks()
 
 class FitData2Pic:
     def __init__(self):
@@ -894,13 +1110,13 @@ class Vividict(dict):
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    p=MingHu()
-    p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
+    # p=MingHu()
+    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
     # p.auto_cus_xls()
 
     #当天报告
-    # p=FeedBackAfterClass()
-    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210623')
+    p=FeedBackAfterClass()
+    p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210623')
 
     # 根据多次体测数据生成折线图
     # fitdata=FitData2Pic()
