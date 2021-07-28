@@ -929,6 +929,7 @@ class FeedBackAfterClass:
                         font=composing.fonts('方正韵动粗黑',40,config=font_config_file))
 
             #训练内容
+            print()
             composing.put_txt_img(draw=draw,
                                     tt=txt_train,
                                     total_dis=int((p_train[2]-p_train_bar[0])*0.8),
@@ -937,7 +938,8 @@ class FeedBackAfterClass:
                                     fill=color['font']['train'],
                                     font_name='汉仪糯米团',
                                     font_size=ftsz_train,
-                                    addSPC='no')
+                                    addSPC='no',
+                                    font_config_file=font_config_file)
 
             #燃烧热量
             draw.text((p_burn[0]+130,p_burn[1]+52),
@@ -959,11 +961,12 @@ class FeedBackAfterClass:
                                     fill=color['font']['suggest'],
                                     font_name='汉仪字酷堂义山楷w',
                                     font_size=ftsz_train,
-                                    addSPC='add_2spaces')
+                                    addSPC='add_2spaces',
+                                    font_config_file=font_config_file)
 
             #slogan
             draw.text((p_logo[0]+255,p_logo[1]+28),txt_slogan,
-                        fill=color['font']['slogan'],font=composing.fonts('华康海报体W12(p)',52))
+                        fill=color['font']['slogan'],font=composing.fonts('华康海报体W12(p)',52,config=font_config_file))
 
             bg.show()
 
