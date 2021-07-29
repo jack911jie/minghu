@@ -269,8 +269,12 @@ class ReadAndExportDataNew:
             # 有氧细项
             _df_oxy_data=infos[['有氧项目','有氧时长']]
             df_oxy_data=_df_oxy_data.dropna(axis=0,how='all')
+            oxy_time_group_sum=df_oxy_data.groupby(['有氧项目'])
+            oxy_time_group=pd.DataFrame(oxy_time_group_sum.sum())
+            oxy_data=[]
+            for num_oxy,oxy_time in enumerate(oxy_time_group['有氧时长'].apply(lambda x:int(x)).values.tolist()):
+                oxy_data.append([oxy_time_group.index.tolist()[num_oxy],oxy_time])
             
-            oxy_data=df_oxy_data.values.tolist()
             out['train']['oxy_infos']=oxy_data
 
             #消耗热量
@@ -349,9 +353,9 @@ class Vividict(dict):
         return value
 
 if __name__=='__main__':
-    # p=ReadAndExportDataNew()
-    # res=p.exp_cus_prd(cus_file_dir="d:\\temp\\铭湖健身测试\\会员",cus='MH024刘婵桢',start_time='20210623',end_time='20210623')
-    # # print(res)
-    p=ReadDiet()
-    su=p.exp_diet_suggests()
-    print(random.choice(su))
+    p=ReadAndExportDataNew()
+    res=p.exp_cus_prd(cus_file_dir="D:\\Documents\\WXWork\\1688851376227744\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料",cus='MH003吕雅颖',start_time='20210727',end_time='20210727')
+    print(res)
+    # p=ReadDiet()
+    # su=p.exp_diet_suggests()
+    # print(random.choice(su))

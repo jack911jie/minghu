@@ -713,7 +713,7 @@ class FeedBackAfterClass:
         data=cus_data.exp_cus_prd(cus_file_dir=self.cus_file_dir,cus=cus,start_time=start_time,end_time=end_time)
         return data
 
-    def draw(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
+    def draw(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324',open_dir='yes'):
         #文字内容
         data=self.export(cus=cus,ins=ins,date_input=date_input)
         # print(data)
@@ -743,8 +743,11 @@ class FeedBackAfterClass:
         #有氧内容
         txt_train_oxy=''
         for oxy_item in  data['train']['oxy_infos']:
-
-            txt_train_oxy=txt_train_oxy+oxy_item[0]+'  '+str(int(oxy_item[1]//60))+'分'+'\n'
+            if oxy_item[1]%60==0:
+                txt_train_oxy=txt_train_oxy+oxy_item[0]+'  '+str(int(oxy_item[1]//60))+'分'+'\n'
+            else:
+                # txt_train_oxy=txt_train_oxy+oxy_item[0]+'  '+str(int(oxy_item[1]//60))+'分'+'\n'
+                txt_train_oxy=txt_train_oxy+oxy_item[0]+'  '+str(int(oxy_item[1]//60))+'分'+str(int(oxy_item[1]%60))+'秒\n'
         txt_train_oxy.strip()
 
 
@@ -983,11 +986,35 @@ class FeedBackAfterClass:
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
             bg.save(os.path.join(save_dir,save_name),quality=90,subsampling=0)
-            os.startfile(save_dir)
-            print('完成')
+            
+            if open_dir=='yes':
+                os.startfile(save_dir)
+
+
+            print('完成\n')
 
 
         draw_blocks()
+
+    def group_afterclass(self,ins='MHINS002韦越棋',date_input='20210324',open_dir='no'):
+        grp_file=os.path.join(self.cus_file_dir,'00-团课分班录入表.xlsx')
+        df_grp_pre=pd.read_excel(grp_file,sheet_name='分组',skiprows=1)
+        df_grp=df_grp_pre.iloc[:,4:]
+        df_grp_names=df_grp.columns.tolist()
+        #需录入数据的名单
+        df_real_list=df_grp_pre['Unnamed: 0'].dropna()           
+
+        if df_real_list.empty:
+            exit('未录入数据')
+        else:
+            # cus_list=df_real_list.apply(lambda x:x+'.xlsx').tolist()
+            cus_list=df_real_list.tolist()
+
+        for cus_name in cus_list:
+            fn=os.path.join(self.cus_file_dir,cus_name)    
+            print('正在生成 {} 的课后反馈……'.format(cus_name),end='')
+            self.draw(cus=cus_name,ins=ins,date_input=date_input,open_dir=open_dir)
+
 
 class FitData2Pic:
     def __init__(self):
@@ -1135,7 +1162,8 @@ if __name__=='__main__':
 
     #当天报告
     p=FeedBackAfterClass()
-    p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210623')
+    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210623')
+    p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
     # 根据多次体测数据生成折线图
     # fitdata=FitData2Pic()
