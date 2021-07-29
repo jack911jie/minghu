@@ -3,6 +3,7 @@ import sys
 import pandas as pd
 import days_cal
 from datetime import datetime
+import random
 
 
 class ReadAndExportData:
@@ -327,6 +328,19 @@ class cals:
 
         return bfr
 
+class ReadDiet:
+    def __init__(self,fn_diet='D:\\Documents\\WXWork\\1688851376227744\\WeDrive\\铭湖健身工作室\\05-专业资料\\减脂饮食建议表.xlsx'):
+        self.fn_diet=fn_diet
+    
+    def exp_diet_suggests(self):
+        df=pd.read_excel(self.fn_diet,sheet_name='饮食建议')
+        df.dropna(how='any',inplace=True)
+        diet_suggests=df['饮食建议'].apply(lambda x:str(x).strip()).values.tolist()
+        # print(diet_suggests) 
+
+        return diet_suggests
+
+
 
 
 class Vividict(dict):
@@ -335,6 +349,9 @@ class Vividict(dict):
         return value
 
 if __name__=='__main__':
-    p=ReadAndExportDataNew()
-    res=p.exp_cus_prd(cus_file_dir="d:\\temp\\铭湖健身测试\\会员",cus='MH024刘婵桢',start_time='20210623',end_time='20210623')
-    # print(res)
+    # p=ReadAndExportDataNew()
+    # res=p.exp_cus_prd(cus_file_dir="d:\\temp\\铭湖健身测试\\会员",cus='MH024刘婵桢',start_time='20210623',end_time='20210623')
+    # # print(res)
+    p=ReadDiet()
+    su=p.exp_diet_suggests()
+    print(random.choice(su))

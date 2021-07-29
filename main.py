@@ -1,5 +1,6 @@
 import os
 import sys
+import random
 # from openpyxl.reader.excel import load_workbook
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'modules'))
 import pic_transfer
@@ -250,7 +251,8 @@ class MingHu:
                                 if _oxy_time%60==0:
                                     _oxy_time='有氧训练    '+str(int(_oxy_time//60))+'分钟\n'
                                 else:
-                                    _oxy_time='有氧训练    '+str(int(_oxy_time//60))+'分钟'+str(int(_oxy_time%60))+'秒\n'
+                                    _oxy_time='有氧训练    '+str(int(_oxy_time//60))+'分钟'
+                                    # _oxy_time='有氧训练    '+str(int(_oxy_time//60))+'分钟'+str(int(_oxy_time%60))+'秒\n'
                             t_oxy=t_oxy+_oxy_time
                             t_oxy.rstrip()
                         else:
@@ -699,6 +701,8 @@ class FeedBackAfterClass:
         self.slogan_dir=config['文案文件夹']
         self.save_dir=config['输出文件夹']
         self.public_dir=config['公共素材文件夹']
+        self.exp_knlg_dir=config['专业资料文件夹']
+        self.save_dir=config['课后反馈文件夹']
         self.font_config=os.path.join(self.dir,'configs','fontList.minghu')
 
 
@@ -754,7 +758,11 @@ class FeedBackAfterClass:
 
         #建议
         txt_suggest_title=ins+'给你的饮食建议'
-        txt_suggest='补充足够的碳水化合物：健身训练时能量主要由糖原提供，摄入的碳水化合物可以补充糖原，供给能量，并防止训练造成的肌肉分解'
+        # txt_suggest='补充足够的碳水化合物：健身训练时能量主要由糖原提供，摄入的碳水化合物可以补充糖原，供给能量，并防止训练造成的肌肉分解'
+        exp_knlg_fn=os.path.join(self.exp_knlg_dir,'减脂饮食建议表.xlsx')
+        _diet_suggests=get_data.ReadDiet(exp_knlg_fn)
+        diet_suggests=_diet_suggests.exp_diet_suggests()
+        txt_suggest=random.choice(diet_suggests)
 
         #slogan
         txt_slogan='让健身变得有趣'
@@ -796,7 +804,7 @@ class FeedBackAfterClass:
 
             #重写建议内容高度
             ht_suggest_cal=composing.split_txt_Chn_eng(wid=size['wid']['third']-20,font_size=ftsz_suggest,txt_input=txt_suggest,Indent='yes')
-            ht_suggest=int(ftsz_suggest*ht_suggest_cal[1]*1.9)+size['ht']['suggest_title']
+            ht_suggest=int(ftsz_suggest*ht_suggest_cal[1]*2)+size['ht']['suggest_title']
             size['ht']['suggest']=ht_suggest
 
             total_ht=size['ht']['title']+size['ht']['train']+size['ht']['burn']+size['ht']['suggest']+size['ht']['bottom']+size['ht']['gap']*2*4
@@ -955,7 +963,7 @@ class FeedBackAfterClass:
 
             composing.put_txt_img(draw=draw,
                                     tt=txt_suggest,
-                                    total_dis=int((p_suggest_small[2]-p_suggest_small[0])*0.94),
+                                    total_dis=int((p_suggest_small[2]-p_suggest_small[0])*0.9),
                                     xy=p_suggest_txt,
                                     dis_line=int(ftsz_suggest*0.5),
                                     fill=color['font']['suggest'],
@@ -969,6 +977,14 @@ class FeedBackAfterClass:
                         fill=color['font']['slogan'],font=composing.fonts('华康海报体W12(p)',52,config=font_config_file))
 
             bg.show()
+            # bg=bg.convert('RGB')
+            # save_name=date_input+'_'+cus+'.jpg'
+            # save_dir=os.path.join(self.save_dir,cus)
+            # if not os.path.exists(save_dir):
+            #     os.makedirs(save_dir)
+            # bg.save(os.path.join(save_dir,save_name),quality=90,subsampling=0)
+            # os.startfile(save_dir)
+            # print('完成')
 
 
         draw_blocks()
