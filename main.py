@@ -976,15 +976,15 @@ class FeedBackAfterClass:
             draw.text((p_logo[0]+255,p_logo[1]+28),txt_slogan,
                         fill=color['font']['slogan'],font=composing.fonts('华康海报体W12(p)',52,config=font_config_file))
 
-            bg.show()
-            # bg=bg.convert('RGB')
-            # save_name=date_input+'_'+cus+'.jpg'
-            # save_dir=os.path.join(self.save_dir,cus)
-            # if not os.path.exists(save_dir):
-            #     os.makedirs(save_dir)
-            # bg.save(os.path.join(save_dir,save_name),quality=90,subsampling=0)
-            # os.startfile(save_dir)
-            # print('完成')
+            # bg.show()
+            bg=bg.convert('RGB')
+            save_name=date_input+'_'+cus+'.jpg'
+            save_dir=os.path.join(self.save_dir,cus)
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+            bg.save(os.path.join(save_dir,save_name),quality=90,subsampling=0)
+            os.startfile(save_dir)
+            print('完成')
 
 
         draw_blocks()
