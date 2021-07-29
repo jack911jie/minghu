@@ -57,7 +57,7 @@ class MingHu:
         else:
             xls_name='MH'+new_num+cus_name_input
         
-        wb=openpyxl.load_workbook(os.path.join(self.cus_file_dir,'模板.xlsx'))
+        wb=openpyxl.load_workbook(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsx'))
         sht=wb['基本情况']
         sht['A2']=xls_name[0:5]
         sht['B2']=cus_name_input
