@@ -88,8 +88,8 @@ class ReadAndExportData:
 
         #------------训练数据--------
         # infos=pd.read_excel(xls_name,sheet_name='训练情况',skiprows=2,header=None)
-        infos=infos.iloc[:,0:10] #取前10列
-        infos.columns=['时间','形式','目标肌群','有氧项目','有氧时长','力量内容','重量','次数','教练姓名','教练评语']
+        infos=infos.iloc[:,0:12] #取前11列
+        infos.columns=['时间','形式','目标肌群','有氧项目','有氧时长','力量内容','重量','距离','次数','消耗热量','教练姓名','教练评语']
         # print(infos.dropna(how='all'))
         if infos.dropna(how='all').shape[0]!=0:
             infos=infos[(infos['时间']>=start_time) & (infos['时间']<=end_time)] #根据时间段筛选记录      
@@ -216,8 +216,8 @@ class ReadAndExportDataNew:
 
         #------------训练数据--------
         # infos=pd.read_excel(xls_name,sheet_name='训练情况',skiprows=2,header=None)
-        infos=infos.iloc[:,0:11] #取前10列
-        infos.columns=['时间','形式','目标肌群','有氧项目','有氧时长','力量内容','重量','次数','消耗热量','教练姓名','教练评语']
+        infos=infos.iloc[:,0:12] #取前10列
+        infos.columns=['时间','形式','目标肌群','有氧项目','有氧时长','力量内容','重量','距离','次数','消耗热量','教练姓名','教练评语']
         # print(infos.dropna(how='all'))
         if infos.dropna(how='all').shape[0]!=0:
             infos=infos[(infos['时间']>=start_time) & (infos['时间']<=end_time)] #根据时间段筛选记录      
