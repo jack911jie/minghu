@@ -135,6 +135,10 @@ class ReadAndExportData:
         return out
 
 class ReadAndExportDataNew:
+    def __init__(self,adj_bfr_que='yes'):
+        self.adj_bfr_que=adj_bfr_que
+
+
     def read_excel(self,cus_file_dir,cus='MH001韦美霜'):
         xls_name=os.path.join(cus_file_dir,cus+'.xlsx')
         df_basic=pd.read_excel(xls_name,sheet_name='基本情况')    
@@ -212,7 +216,7 @@ class ReadAndExportDataNew:
             out['body']['core']=body_recent[17]
 
             bfr_data=cals()
-            bfr=bfr_data.bfr(age=age,sex=out['sex'],ht=out['body']['ht'],wt=out['body']['wt'],waist=out['body']['waist'],formula=1)
+            bfr=bfr_data.bfr(age=age,sex=out['sex'],ht=out['body']['ht'],wt=out['body']['wt'],waist=out['body']['waist'],adj_que=self.adj_bfr_que,formula=1)
             out['body']['bfr']=bfr
 
         #------------训练数据--------
@@ -293,7 +297,7 @@ class ReadAndExportDataNew:
 
 
 class cals:
-    def bfr(self,age,sex,ht,wt,waist,formula=1):
+    def bfr(self,age,sex,ht,wt,waist,adj_que='yes',formula=1):
             # 女：
             # 参数a=腰围（cm）×0.74
             # 参数b=体重（kg）×0.082+34.89
@@ -325,10 +329,11 @@ class cals:
             bmi=wt/((ht/100)*(ht/100))
             bfr=1.2*bmi+0.23*age-5.4-10.8*k
 
-
-        # adj_bfr=input('\n计算出的体脂率为 {}，如需修改请直接输入体脂率（如：12.46%），不需要修改请直接按回车——\n\n'.format(str('{:.2%}'.format(bfr))))
-        # if adj_bfr:
-        #     bfr=float(adj_bfr[:-1])/100
+        if adj_que=='yes':
+            adj_bfr=input('\n计算出的体脂率为 {}，如需修改请直接输入体脂率（如：12.46%），不需要修改请直接按回车——\n\n'.format(str('{:.2%}'.format(bfr))))
+            if adj_bfr:
+                bfr=float(adj_bfr[:-1])/100
+        
 
         return bfr
 
@@ -353,7 +358,7 @@ class Vividict(dict):
         return value
 
 if __name__=='__main__':
-    p=ReadAndExportDataNew()
+    p=ReadAndExportDataNew(adj_bfr_que='yes')
     res=p.exp_cus_prd(cus_file_dir="D:\\Documents\\WXWork\\1688851376227744\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料",cus='MH003吕雅颖',start_time='20210727',end_time='20210727')
     print(res)
     # p=ReadDiet()

@@ -709,7 +709,7 @@ class FeedBackAfterClass:
     def export(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
         start_time=date_input
         end_time=date_input
-        cus_data=get_data.ReadAndExportDataNew()
+        cus_data=get_data.ReadAndExportDataNew(adj_bfr_que='no')
         data=cus_data.exp_cus_prd(cus_file_dir=self.cus_file_dir,cus=cus,start_time=start_time,end_time=end_time)
         return data
 
