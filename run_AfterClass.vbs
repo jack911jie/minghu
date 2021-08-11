@@ -1,0 +1,1 @@
+CreateObject("WScript.Shell").Run "cmd /c python d:/py/minghu/minghu_GUI.py",0
