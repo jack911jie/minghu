@@ -26,7 +26,7 @@ import matplotlib.font_manager as fm
 plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 
 class MingHu:
-    def __init__(self):
+    def __init__(self,adj_bfr='yes',adj_src='prg',gui=''):
         self.dir=os.path.dirname(os.path.abspath(__file__))
         config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
         self.cus_file_dir=config['会员档案文件夹']
@@ -35,6 +35,9 @@ class MingHu:
         self.slogan_dir=config['文案文件夹']
         self.save_dir=config['输出文件夹']
         self.public_dir=config['公共素材文件夹']
+        self.adj_bfr=adj_bfr
+        self.adj_src=adj_src
+        self.gui=gui
 
     def auto_cus_xls(self):
         cus_name_input=''
@@ -192,7 +195,7 @@ class MingHu:
             return ins_inf
 
         def txts():
-            cus_data=get_data.ReadAndExportData()
+            cus_data=get_data.ReadAndExportData(adj_bfr=self.adj_bfr,adj_src=self.adj_src,gui=self.gui)
             infos=cus_data.exp_cus_prd(cus_file_dir=self.cus_file_dir,cus=cus,start_time=start_time,end_time=end_time)    
                 
             # print(infos) 
@@ -709,7 +712,7 @@ class FeedBackAfterClass:
     def export(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
         start_time=date_input
         end_time=date_input
-        cus_data=get_data.ReadAndExportDataNew(adj_bfr_que='no')
+        cus_data=get_data.ReadAndExportDataNew(adj_bfr='no',)
         data=cus_data.exp_cus_prd(cus_file_dir=self.cus_file_dir,cus=cus,start_time=start_time,end_time=end_time)
         return data
 

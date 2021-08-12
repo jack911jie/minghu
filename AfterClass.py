@@ -5,7 +5,6 @@ import main
 
 
 class FeedBack:
-
     def today_feedback(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
         p=main.FeedBackAfterClass()
         p.draw(cus=cus,ins=ins,date_input=date_input)
