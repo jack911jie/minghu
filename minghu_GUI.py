@@ -1,29 +1,38 @@
 import os
 import sys
+from tkinter.constants import CENTER
 sys.path.append(os.path.join(os.path.dirname(__file__),'modules'))
 import readconfig
 import run
 import AfterClass
 import tkinter as tk
 from datetime import date
+from PIL import Image,ImageTk
 import re
 
 class GUI:
     def __init__(self):
         config=readconfig.exp_json(os.path.join(os.path.dirname(__file__),'configs','main.config'))
         self.cus_dir=config['会员档案文件夹']
+        self.public_dir=config['公共素材文件夹']
         
     def creat_gui(self):
-        global window,fr_grp
+        global fr_grp
         window =tk.Tk()
         window.title('铭湖健身会员课后反馈')
         window.geometry('500x600')
 
-        # main_title=tk.Text(window,width=100,height=5)
-        # main_title.insert('insert','铭湖健身')
-        # main_title.pack()
-
         fr_grp=tk.Frame(window)
+
+        cover_im=Image.open(os.path.join(self.public_dir,'logo及二维码','logo.jpg'))
+        cover_im=cover_im.resize((200,200))
+        cover_img=ImageTk.PhotoImage(cover_im)
+        cover_label=tk.Label(fr_grp,image=cover_img)
+        # cover_label.place(x=150,y=200,width=300,height=300,anchor=CENTER)
+        cover_label.pack(pady=30)
+        cover_txt=tk.Label(fr_grp,text='让健身变得有趣',font=('幼圆',18),fg='#665B2C')
+        cover_txt.pack()
+
 
         menubar=tk.Menu(window)
         after_class_menu=tk.Menu(menubar,tearoff=0)
