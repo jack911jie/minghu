@@ -5,8 +5,8 @@ import main
 
 # print(os.path.join(os.path.dirname(__file__),'modules'))
 
-def cus_feedback(cus='MH017李俊娴',ins='MHINS001陆伟杰',start_time='20210526',end_time='20210701'):
-    p=main.MingHu()
+def cus_feedback(cus='MH017李俊娴',ins='MHINS001陆伟杰',start_time='20210526',end_time='20210701',adj_bfr='yes',adj_src='prg',gui=''):
+    p=main.MingHu(adj_bfr=adj_bfr,adj_src=adj_src,gui=gui)
     p.draw(cus=cus,ins=ins,start_time=start_time,end_time=end_time)
 
 def group_input():
@@ -20,13 +20,13 @@ def today_feedback(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='2021
 
 if __name__=='__main__':
     #反馈
-    # cus_feedback(cus='MH017李俊娴',ins='MHINS001陆伟杰',start_time='20210526',end_time='20210701')
+    cus_feedback(cus='MH017李俊娴',ins='MHINS001陆伟杰',start_time='20210526',end_time='20210701')
 
     #批量录入
     # group_input()
 
     #当天课后生成
-    today_feedback(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210619')
+    # today_feedback(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210619')
 
 
 
