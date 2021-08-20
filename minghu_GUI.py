@@ -9,6 +9,9 @@ import tkinter as tk
 from datetime import date
 from PIL import Image,ImageTk
 import re
+import warnings
+
+warnings.filterwarnings('ignore')
 
 class GUI:
     def __init__(self):
@@ -41,6 +44,8 @@ class GUI:
         after_class_menu.add_cascade(label='个人',command=self.after_individual)        
 
         menubar.add_cascade(label='生成会员总结',command=self.cus_summary_menu)
+        menubar.add_cascade(label='批量录入会员训练信息',command=self.gp_input_train_menu)
+        menubar.add_cascade(label='生成新的会员资料表',command=self.new_cus_excel)
         fr_grp.pack()
         
 
@@ -59,6 +64,14 @@ class GUI:
     def cus_summary_menu(self):
         self.fr_destroy(fr_grp)
         self.cus_summary(fr_grp)
+
+    def gp_input_train_menu(self):
+        self.fr_destroy(fr_grp)
+        self.group_train_input(fr_grp)
+
+    def new_cus_excel(self):
+        self.fr_destroy(fr_grp)
+        self.add_new_cus(fr_grp)
 
     def fr_destroy(self,fr):
         for widget in fr.winfo_children():
@@ -188,6 +201,44 @@ class GUI:
         btn.pack()
         feed_back.pack()
 
+    #批量录入团课训练信息
+    def group_train_input(self,window):
+        feed_back_gp_input=tk.Text(window)
+        def gp_input_train():            
+            feed_back_gp_input.delete('1.0','end')
+            fd_screen=myStdout(feed_back_gp_input)
+            run.group_input()
+            fd_screen.restoreStd()        
+        
+        btn_gp_input=tk.Button(window,text='点击开始\n批量录入训练信息',font=('黑体',12),width=18,command=gp_input_train)
+        btn_gp_input.pack()
+        feed_back_gp_input.pack()
+
+    def add_new_cus(self,window):
+            lb_title=tk.Label(window,text='生成新的会员表',bg='#F3D7AC',font=('幼圆',13),width=500,height=3)
+            lb_title.pack() 
+            lb_cus=tk.Label(window,text='请输入新的会员姓名',bg='#FFFFEE',font=('黑体',12),width=500,height=2)
+            lb_cus.pack()
+            value_cus_name=tk.StringVar()
+            cus_name_input=tk.Entry(window,textvariable=value_cus_name,font=('黑体',12),width=8)
+            cus_name_input.pack()
+            msg_box=tk.Text(window)
+
+            def new_cus():
+                msg_box.delete('1.0','end')
+                if value_cus_name.get():
+                    new_msg=myStdout(msg_box)
+                    run.auto_xls(cus_name_input=value_cus_name.get(),mode='gui',gui=msg_box)
+                    new_msg.restoreStd()                    
+                else:
+                    msg_box.insert('insert','请输入姓名')
+
+            btn_add_new=tk.Button(window,text='新增会员',font=('黑体',12),width=18,command=new_cus)
+            btn_add_new.pack()
+            msg_box.pack()
+
+
+            
 
     def isValidDate(self,year, month, day):
         try:

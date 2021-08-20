@@ -22,6 +22,7 @@ from PIL import Image,ImageDraw,ImageFont
 import random
 import matplotlib.pyplot as plt 
 import matplotlib.font_manager as fm
+from tkinter import simpledialog
 # from matplotlib.backends.backend_agg import FigureCanvasAgg
 plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 
@@ -39,12 +40,15 @@ class MingHu:
         self.adj_src=adj_src
         self.gui=gui
 
-    def auto_cus_xls(self):
-        cus_name_input=''
-        while cus_name_input=='':
-            cus_name_input=input('请输入新会员姓名：')
-            if cus_name_input=='exit':
-                exit(0)
+    def auto_cus_xls(self,cus_name_input='',mode='prgrm',gui=''):
+        # cus_name_input=''
+        if mode=='prgrm':
+            while cus_name_input=='':
+                cus_name_input=input('请输入新会员姓名：')
+                if cus_name_input=='exit':
+                    exit(0)
+        elif mode=='gui':
+            cus_name_input=cus_name_input
  
         nums=[]
         for fn in os.listdir(self.cus_file_dir):
@@ -55,7 +59,24 @@ class MingHu:
                         nums.append(num)
 
         new_num=str(max(nums)+1).zfill(3)
-        verify=input('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format('MH'+new_num+cus_name_input))
+        if mode=='prgrm':
+            verify=input('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format('MH'+new_num+cus_name_input))
+        elif mode=='gui':
+            gui.delete('1.0','end')
+            print('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format('MH'+new_num+cus_name_input))
+            # verify=''
+            while True:
+                verify = simpledialog.askstring(title="是否修改编号？",
+                                                    prompt="请输入新编号（三位数字）")
+                if not verify:
+                    break
+                else:
+                    if len(verify)==3 and re.match(r'\d\d\d',verify):
+                        break                        
+                    else:
+                        gui.delete('1.0','end')
+                        print('编号格式错误，请输入三位数字。')          
+            gui.delete('1.0','end')
         if verify:
             xls_name='MH'+verify+cus_name_input
         else:
