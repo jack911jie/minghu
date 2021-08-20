@@ -36,9 +36,9 @@ class GUI:
 
         menubar=tk.Menu(window)
         after_class_menu=tk.Menu(menubar,tearoff=0)
-        menubar.add_cascade(label='课后录入',menu=after_class_menu)
-        after_class_menu.add_cascade(label='批量录入',command=self.after_batch)        
-        after_class_menu.add_cascade(label='个人录入',command=self.after_individual)        
+        menubar.add_cascade(label='课后反馈生成',menu=after_class_menu)
+        after_class_menu.add_cascade(label='批量',command=self.after_batch)        
+        after_class_menu.add_cascade(label='个人',command=self.after_individual)        
 
         menubar.add_cascade(label='生成会员总结',command=self.cus_summary_menu)
         fr_grp.pack()
@@ -67,9 +67,9 @@ class GUI:
     #课后生成反馈图片
     def feedback_after_class(self,window,group='yes'):
         if group=='yes':
-            title='团课批量录入'
+            title='团课批量课后反馈'
         else:
-            title='个人录入'
+            title='个人课后反馈'
         lb_title=tk.Label(window,text=title,bg='#F3D7AC',font=('幼圆',13),width=500,height=3)
         lb_title.pack()
         lb_ins=tk.Label(window,text='选择教练',bg='#FFFFEE',font=('黑体',12),width=500,height=2)
