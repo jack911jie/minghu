@@ -22,7 +22,7 @@ class GUI:
     def creat_gui(self):
         global fr_grp
         window =tk.Tk()
-        window.title('铭湖健身会员课后反馈')
+        window.title('铭湖健身会员管理及反馈小程序')
         window.geometry('500x600')
 
         fr_grp=tk.Frame(window)
