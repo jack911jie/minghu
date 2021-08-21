@@ -20,10 +20,10 @@ def today_feedback(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='2021
 
 if __name__=='__main__':
     #反馈
-    cus_feedback(cus='MH017李俊娴',ins='MHINS001陆伟杰',start_time='20210526',end_time='20210701')
+    # cus_feedback(cus='MH017李俊娴',ins='MHINS001陆伟杰',start_time='20210526',end_time='20210701')
 
     #批量录入
-    # group_input()
+    group_input()
 
     #当天课后生成
     # today_feedback(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210619')
