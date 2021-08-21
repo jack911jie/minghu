@@ -9,6 +9,9 @@ import tkinter as tk
 from datetime import date
 from PIL import Image,ImageTk
 import re
+import warnings
+
+warnings.filterwarnings('ignore')
 
 class GUI:
     def __init__(self):
@@ -19,7 +22,7 @@ class GUI:
     def creat_gui(self):
         global fr_grp
         window =tk.Tk()
-        window.title('铭湖健身会员课后反馈')
+        window.title('铭湖健身会员管理及反馈小程序')
         window.geometry('500x600')
 
         fr_grp=tk.Frame(window)
@@ -41,6 +44,8 @@ class GUI:
         after_class_menu.add_cascade(label='个人',command=self.after_individual)        
 
         menubar.add_cascade(label='生成会员总结',command=self.cus_summary_menu)
+        menubar.add_cascade(label='批量录入会员训练信息',command=self.gp_input_train_menu)
+        menubar.add_cascade(label='生成新的会员资料表',command=self.new_cus_excel)
         fr_grp.pack()
         
 
@@ -60,6 +65,14 @@ class GUI:
         self.fr_destroy(fr_grp)
         self.cus_summary(fr_grp)
 
+    def gp_input_train_menu(self):
+        self.fr_destroy(fr_grp)
+        self.group_train_input(fr_grp)
+
+    def new_cus_excel(self):
+        self.fr_destroy(fr_grp)
+        self.add_new_cus(fr_grp)
+
     def fr_destroy(self,fr):
         for widget in fr.winfo_children():
             widget.destroy()
@@ -70,9 +83,9 @@ class GUI:
             title='团课批量课后反馈'
         else:
             title='个人课后反馈'
-        lb_title=tk.Label(window,text=title,bg='#F3D7AC',font=('幼圆',13),width=500,height=3)
+        lb_title=tk.Label(window,text=title,bg='#F3D7AC',font=('黑体',13),fg='#246e4c',width=500,height=3)
         lb_title.pack()
-        lb_ins=tk.Label(window,text='选择教练',bg='#FFFFEE',font=('黑体',12),width=500,height=2)
+        lb_ins=tk.Label(window,text='选择教练',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
         lb_ins.pack()
 
         # today_feedback(cus='MH024刘婵桢',ins='MHINS001陆伟杰',date_input='20210623')
@@ -86,17 +99,17 @@ class GUI:
 
         if group!='yes':
             # print('individual')
-            lb_cus=tk.Label(window,text='录入会员姓名（MH000李铭湖）',bg='#FFFFEE',font=('黑体',12),width=500,height=2)
+            lb_cus=tk.Label(window,text='录入会员姓名（MH000李铭湖）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
             lb_cus.pack()
             var_cus_name=tk.StringVar()
-            cus_name_input=tk.Entry(window,textvariable=var_cus_name,show=None,font=('楷体', 14),width=15)
+            cus_name_input=tk.Entry(window,textvariable=var_cus_name,show=None,font=('宋体', 14),width=15)
             cus_name_input.pack()
 
-        lb_date=tk.Label(window,text='输入日期（YYYYMMDD）',bg='#FFFFEE',font=('黑体',12),width=500,height=2,pady=6)
+        lb_date=tk.Label(window,text='输入日期（YYYYMMDD）',bg='#FFFFEE',font=('楷体',12),width=500,height=2,pady=6)
         lb_date.pack()
 
         var_date=tk.StringVar()
-        date_input=tk.Entry(window, textvariable=var_date,show=None, font=('Arial', 14),width=8)
+        date_input=tk.Entry(window, textvariable=var_date,show=None, font=('宋体', 14),width=8)
         date_input.pack()
 
         feed_back=tk.Text(window)
@@ -125,16 +138,16 @@ class GUI:
                 
                 #在窗口界面设置放置Button按键
         
-        b = tk.Button(window, text='生成课后反馈图', font=('黑体', 8), width=18, height=2, command=exp_feedback_after_class)
+        b = tk.Button(window, text='生成课后反馈图', font=('幼圆', 8), width=18, height=2, command=exp_feedback_after_class)
         b.pack()
 
         feed_back.pack() 
 
     # 私教会员生成训练总结图片
     def cus_summary(self,window):
-        lb_title=tk.Label(window,text='生成会员总结',bg='#F3D7AC',font=('幼圆',13),width=500,height=3)
+        lb_title=tk.Label(window,text='生成会员总结',bg='#F3D7AC',font=('黑体',13),fg='#246e4c',width=500,height=3)
         lb_title.pack()
-        lb_ins=tk.Label(window,text='选择教练',bg='#FFFFEE',font=('黑体',12),width=500,height=2)
+        lb_ins=tk.Label(window,text='选择教练',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
         lb_ins.pack()
 
         # today_feedback(cus='MH024刘婵桢',ins='MHINS001陆伟杰',date_input='20210623')
@@ -146,18 +159,18 @@ class GUI:
         ins2 = tk.Radiobutton(window, text='韦越棋', variable=ins, value='MHINS002韦越棋')
         ins2.pack()
 
-        lb_cus=tk.Label(window,text='录入会员姓名（MH000李铭湖）',bg='#FFFFEE',font=('黑体',12),width=500,height=2)
+        lb_cus=tk.Label(window,text='输入会员编号及姓名（MH000李铭湖）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
         lb_cus.pack()
         var_cus_name=tk.StringVar()
-        cus_name=tk.Entry(window,textvariable=var_cus_name,font=('楷体',12),width=18)
+        cus_name=tk.Entry(window,textvariable=var_cus_name,font=('宋体',12),width=18)
         cus_name.pack()
 
         var_date_start=tk.StringVar()
         var_date_end=tk.StringVar()
-        date_start=tk.Entry(window,textvariable=var_date_start,font=('黑体',12),width=8)
-        date_end=tk.Entry(window,textvariable=var_date_end,font=('黑体',12),width=8)
-        date_start_title=tk.Label(window,text='输入起始日期',bg='#ffffee',font=('幼圆',13),width=500,height=2)
-        date_end_title=tk.Label(window,text='输入结束日期',bg='#ffffee',font=('幼圆',13),width=500,height=2)
+        date_start=tk.Entry(window,textvariable=var_date_start,font=('宋体',12),width=8)
+        date_end=tk.Entry(window,textvariable=var_date_end,font=('宋体',12),width=8)
+        date_start_title=tk.Label(window,text='输入起始日期',bg='#ffffee',font=('楷体',13),width=500,height=2)
+        date_end_title=tk.Label(window,text='输入结束日期',bg='#ffffee',font=('楷体',13),width=500,height=2)
         date_start_title.pack()
         date_start.pack()
         date_end_title.pack()
@@ -184,10 +197,50 @@ class GUI:
                 mystd.restoreStd()
             else:
                 feed_back.insert('insert','日期错误：'+date_s+','+date_e)
-        btn=tk.Button(window,text='生成会员训练总结',font=('黑体',12),width=18,command=exp_cus_summary)
+        btn=tk.Button(window,text='生成会员训练总结',font=('幼圆',12),width=18,command=exp_cus_summary)
         btn.pack()
         feed_back.pack()
 
+    #批量录入团课训练信息
+    def group_train_input(self,window):
+        txt_grp=tk.Label(window,text='请先在“00-团课分班录入表”中录入会会员资料\n并保存',font=('黑体',13),fg='#246e4c',bg='#f3d7ac',padx=10,pady=20)
+        txt_grp.pack()
+        feed_back_gp_input=tk.Text(window)
+        def gp_input_train():            
+            feed_back_gp_input.delete('1.0','end')
+            fd_screen=myStdout(feed_back_gp_input)
+            run.group_input()
+            fd_screen.restoreStd()        
+        
+        btn_gp_input=tk.Button(window,text='点击开始\n批量录入训练信息',font=('幼圆',12),width=18,command=gp_input_train)
+        btn_gp_input.pack()
+        feed_back_gp_input.pack()
+
+    def add_new_cus(self,window):
+            lb_title=tk.Label(window,text='生成新的会员表',bg='#F3D7AC',font=('黑体',13),fg='#246e4c',width=500,height=3)
+            lb_title.pack() 
+            lb_cus=tk.Label(window,text='请输入新的会员姓名',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
+            lb_cus.pack()
+            value_cus_name=tk.StringVar()
+            cus_name_input=tk.Entry(window,textvariable=value_cus_name,font=('宋体',12),width=8)
+            cus_name_input.pack()
+            msg_box=tk.Text(window)
+
+            def new_cus():
+                msg_box.delete('1.0','end')
+                if value_cus_name.get():
+                    new_msg=myStdout(msg_box)
+                    run.auto_xls(cus_name_input=value_cus_name.get(),mode='gui',gui=msg_box)
+                    new_msg.restoreStd()                    
+                else:
+                    msg_box.insert('insert','请输入姓名')
+
+            btn_add_new=tk.Button(window,text='新增会员',font=('幼圆',12),width=18,command=new_cus)
+            btn_add_new.pack()
+            msg_box.pack()
+
+
+            
 
     def isValidDate(self,year, month, day):
         try:

@@ -17,6 +17,10 @@ def today_feedback(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='2021
     p=main.FeedBackAfterClass()
     p.draw(cus=cus,ins=ins,date_input=date_input)
 
+def auto_xls(cus_name_input='',mode='prgrm',gui=''):
+    p=main.MingHu()
+    p.auto_cus_xls(cus_name_input=cus_name_input,mode=mode,gui=gui)
+
 
 if __name__=='__main__':
     #反馈
@@ -27,6 +31,9 @@ if __name__=='__main__':
 
     #当天课后生成
     # today_feedback(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210619')
+
+    #新增会员
+    # auto_xls(cus_name_input='测试',mode='prgrm',gui='')
 
 
 
