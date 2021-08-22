@@ -139,7 +139,7 @@ class GUI:
                 #在窗口界面设置放置Button按键
         
         b = tk.Button(window, text='生成课后反馈图', font=('幼圆', 8), width=18, height=2, command=exp_feedback_after_class)
-        b.pack()
+        b.pack(pady=10)
 
         feed_back.pack() 
 
@@ -198,7 +198,7 @@ class GUI:
             else:
                 feed_back.insert('insert','日期错误：'+date_s+','+date_e)
         btn=tk.Button(window,text='生成会员训练总结',font=('幼圆',12),width=18,command=exp_cus_summary)
-        btn.pack()
+        btn.pack(pady=10)
         feed_back.pack()
 
     #批量录入团课训练信息
@@ -210,11 +210,18 @@ class GUI:
             feed_back_gp_input.delete('1.0','end')
             fd_screen=myStdout(feed_back_gp_input)
             run.group_input()
-            fd_screen.restoreStd()        
+            fd_screen.restoreStd()     
+
+        def open_gp_list():
+                gp_list_src=os.path.join(self.cus_dir,'00-团课分班录入表.xlsx')
+                os.startfile(gp_list_src)
+            
+        btn_open_gp_list=tk.Button(window,text='打开“00-团课分班录入表”',font=('幼圆',10),width=28,command=open_gp_list)
+        btn_open_gp_list.pack(pady=10)   
         
         btn_gp_input=tk.Button(window,text='点击开始\n批量录入训练信息',font=('幼圆',12),width=18,command=gp_input_train)
         btn_gp_input.pack()
-        feed_back_gp_input.pack()
+        feed_back_gp_input.pack(pady=10)
 
     def add_new_cus(self,window):
             lb_title=tk.Label(window,text='生成新的会员表',bg='#F3D7AC',font=('黑体',13),fg='#246e4c',width=500,height=3)
@@ -234,9 +241,10 @@ class GUI:
                     new_msg.restoreStd()                    
                 else:
                     msg_box.insert('insert','请输入姓名')
+            
 
             btn_add_new=tk.Button(window,text='新增会员',font=('幼圆',12),width=18,command=new_cus)
-            btn_add_new.pack()
+            btn_add_new.pack(pady=10)
             msg_box.pack()
 
 
