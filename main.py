@@ -94,6 +94,8 @@ class MingHu:
         wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsx'))
         print('\n生成新的会员档案文件：{}'.format(self.cus_file_dir+'\\'+xls_name+'.xlsx'))
 
+        return xls_name
+
 
     def fonts(self,font_name,font_size):
         fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))

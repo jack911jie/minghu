@@ -19,7 +19,8 @@ def today_feedback(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='2021
 
 def auto_xls(cus_name_input='',mode='prgrm',gui=''):
     p=main.MingHu()
-    p.auto_cus_xls(cus_name_input=cus_name_input,mode=mode,gui=gui)
+    new_cus_fn=p.auto_cus_xls(cus_name_input=cus_name_input,mode=mode,gui=gui)
+    return new_cus_fn
 
 
 if __name__=='__main__':

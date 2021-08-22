@@ -3,6 +3,7 @@ import sys
 from tkinter.constants import CENTER
 sys.path.append(os.path.join(os.path.dirname(__file__),'modules'))
 import readconfig
+from days_cal import calculate_days_2
 import run
 import AfterClass
 import tkinter as tk
@@ -85,11 +86,22 @@ class GUI:
             title='个人课后反馈'
         lb_title=tk.Label(window,text=title,bg='#F3D7AC',font=('黑体',13),fg='#246e4c',width=500,height=3)
         lb_title.pack()
+        txt_grp=tk.Label(window,text='请先在“00-团课分班录入表”中录入会员名单\n并保存',font=('宋体',13),fg='#246e4c',bg='#FFFFEE',width=500,padx=10,pady=20)
+        txt_grp.pack()
+
+        def open_gp_list():
+            gp_list_src=os.path.join(self.cus_dir,'00-团课分班录入表.xlsx')
+            os.startfile(gp_list_src)
+            
+        btn_open_gp_list=tk.Button(window,text='打开“00-团课分班录入表”',font=('幼圆',10),width=28,command=open_gp_list)
+        btn_open_gp_list.pack(pady=10)
+        
+        # today_feedback(cus='MH024刘婵桢',ins='MHINS001陆伟杰',date_input='20210623')
+
         lb_ins=tk.Label(window,text='选择教练',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
         lb_ins.pack()
 
-        # today_feedback(cus='MH024刘婵桢',ins='MHINS001陆伟杰',date_input='20210623')
-        
+       
         ins = tk.StringVar()    # 定义一个var用来将radiobutton的值和Label的值联系在一起.
         ins.set('MHINS001陆伟杰')
         ins1= tk.Radiobutton(window, text='陆伟杰', variable=ins, value='MHINS001陆伟杰')
@@ -104,6 +116,18 @@ class GUI:
             var_cus_name=tk.StringVar()
             cus_name_input=tk.Entry(window,textvariable=var_cus_name,show=None,font=('宋体', 14),width=15)
             cus_name_input.pack()
+
+            cus_list=self.get_cus_list()
+            def open_cus_file():
+                cus_name=var_cus_name.get().upper()
+                if cus_name in cus_list:
+                    os.startfile(os.path.join(self.cus_dir,cus_name+'.xlsx'))
+                else:
+                    feed_back.delete('1.0','end')
+                    feed_back.insert('insert','会员ID不在列表内，请检查。')
+
+            btn_open_cus_file=tk.Button(window,text='打开会员文件',command=open_cus_file)
+            btn_open_cus_file.pack(pady=10)
 
         lb_date=tk.Label(window,text='输入日期（YYYYMMDD）',bg='#FFFFEE',font=('楷体',12),width=500,height=2,pady=6)
         lb_date.pack()
@@ -125,7 +149,7 @@ class GUI:
                 if group=='yes':
                     ac.today_feedback_group(ins=ins.get(),date_input=date_txt,open_dir='no')
                 else:
-                    cus_name=var_cus_name.get()
+                    cus_name=var_cus_name.get().upper()
                     cus_list=self.get_cus_list()
                     if cus_name in cus_list:
                         ac.today_feedback(cus=cus_name,ins=ins.get(),date_input=date_txt)
@@ -150,6 +174,7 @@ class GUI:
         lb_ins=tk.Label(window,text='选择教练',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
         lb_ins.pack()
 
+        feed_back=tk.Text(window)
         # today_feedback(cus='MH024刘婵桢',ins='MHINS001陆伟杰',date_input='20210623')
         
         ins = tk.StringVar()    # 定义一个var用来将radiobutton的值和Label的值联系在一起.
@@ -163,7 +188,21 @@ class GUI:
         lb_cus.pack()
         var_cus_name=tk.StringVar()
         cus_name=tk.Entry(window,textvariable=var_cus_name,font=('宋体',12),width=18)
-        cus_name.pack()
+        cus_name.pack(pady=10)
+
+        
+        cus_list=self.get_cus_list()
+            
+        # print(cus_name,cus_list)
+        def open_cus_file():
+            cus_name=var_cus_name.get().upper()
+            if cus_name in cus_list:
+                os.startfile(os.path.join(self.cus_dir,cus_name+'.xlsx'))
+            else:
+                feed_back.insert('insert','会员ID不在列表内，请检查。')
+
+        btn_open_cus_file=tk.Button(window,text='打开会员文件',command=open_cus_file)
+        btn_open_cus_file.pack(pady=10)
 
         var_date_start=tk.StringVar()
         var_date_end=tk.StringVar()
@@ -177,25 +216,28 @@ class GUI:
         date_end.pack()
 
 
-        feed_back=tk.Text(window)
+        
 
         def exp_cus_summary():
             date_s=date_start.get()
             date_e=date_end.get()
             if len(date_s)==8 and len(date_e)==8 and self.isValidDate(int(date_s[0:4]),int(date_s[4:6]),int(date_s[6:])) and \
-                                self.isValidDate(int(date_e[0:4]),int(date_e[4:6]),int(date_e[6:])):               
+                                self.isValidDate(int(date_e[0:4]),int(date_e[4:6]),int(date_e[6:])) and \
+                                calculate_days_2(date_s,date_e)>=0:               
 
                 mystd = myStdout(feed_back)	# 实例化重定向类                
                 # cus_feedback(cus='MH017李俊娴',ins='MHINS001陆伟杰',start_time='20210526',end_time='20210701')
-                cus_name=var_cus_name.get()
-                cus_list=self.get_cus_list()
+                cus_name=var_cus_name.get().upper()
                 if cus_name in cus_list:
+                    feed_back.delete('1.0','end')
                     print('正在生成会员训练总结')
                     run.cus_feedback(cus=cus_name,ins=ins.get(),start_time=date_s,end_time=date_e,adj_bfr='yes',adj_src='gui',gui=window)
                 else:
+                    feed_back.delete('1.0','end')
                     print('会员ID不在列表内，请检查。')
                 mystd.restoreStd()
             else:
+                feed_back.delete('1.0','end')
                 feed_back.insert('insert','日期错误：'+date_s+','+date_e)
         btn=tk.Button(window,text='生成会员训练总结',font=('幼圆',12),width=18,command=exp_cus_summary)
         btn.pack(pady=10)
@@ -237,17 +279,18 @@ class GUI:
                 msg_box.delete('1.0','end')
                 if value_cus_name.get():
                     new_msg=myStdout(msg_box)
-                    run.auto_xls(cus_name_input=value_cus_name.get(),mode='gui',gui=msg_box)
+                    new_cus_fn=run.auto_xls(cus_name_input=value_cus_name.get().upper(),mode='gui',gui=msg_box)
+                    print(new_cus_fn)
+                    if new_cus_fn:
+                        print('正在打开文件……')
+                        os.startfile(os.path.join(self.cus_dir,new_cus_fn+'.xlsx'))
                     new_msg.restoreStd()                    
                 else:
-                    msg_box.insert('insert','请输入姓名')
-            
+                    msg_box.insert('insert','请输入姓名')            
 
             btn_add_new=tk.Button(window,text='新增会员',font=('幼圆',12),width=18,command=new_cus)
             btn_add_new.pack(pady=10)
             msg_box.pack()
-
-
             
 
     def isValidDate(self,year, month, day):

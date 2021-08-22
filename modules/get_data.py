@@ -350,7 +350,9 @@ class cals:
                 print('\n计算出的体脂率为 {}，如需修改请直接输入体脂率（如：12.46%），不需要修改请直接按回车——\n\n'.format(str('{:.2%}'.format(bfr))))
                 adj_bfr_value = simpledialog.askstring(title="输入体脂率",
                                                 prompt="请输入体脂率(仅输入数字):")
-                print('修正体脂率为 {}%'.format(adj_bfr_value))
+                if adj_bfr_value:
+                    print('修正体脂率为 {}%'.format(adj_bfr_value))
+                
             if adj_bfr_value:
                 if '%' in adj_bfr_value:
                     bfr=float(adj_bfr_value[:-1])/100
