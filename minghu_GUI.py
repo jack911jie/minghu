@@ -3,6 +3,7 @@ import sys
 from tkinter.constants import CENTER
 sys.path.append(os.path.join(os.path.dirname(__file__),'modules'))
 import readconfig
+import menu_style
 from days_cal import calculate_days_2
 import run
 import AfterClass
@@ -23,7 +24,7 @@ class GUI:
     def creat_gui(self):
         global fr_grp
         window =tk.Tk()
-        window.title('铭湖健身会员管理及反馈小程序')
+        window.title('铭湖健身会员管理及反馈小程序 v1.0')
         window.geometry('500x600')
 
         fr_grp=tk.Frame(window)
@@ -118,6 +119,13 @@ class GUI:
             cus_name_input.pack()
 
             cus_list=self.get_cus_list()
+            # print(cus_list)
+            LB1 = tk.Listbox(window, height=4)
+            cus_listbox=menu_style.CusLists(LB1,cus_name_input,x=328,y=316)
+            cus_name_input.bind('<Key>', cus_listbox.handlerAdaptor(cus_listbox.text_change,cus_list))    
+            LB1.bind('<Double-Button-1>', cus_listbox.send)
+            # cus_name.place(x=50, y=30)
+            cus_name_input.pack(pady=10)
             def open_cus_file():
                 cus_name=var_cus_name.get().upper()
                 if cus_name in cus_list:
@@ -188,10 +196,18 @@ class GUI:
         lb_cus.pack()
         var_cus_name=tk.StringVar()
         cus_name=tk.Entry(window,textvariable=var_cus_name,font=('宋体',12),width=18)
-        cus_name.pack(pady=10)
+        # cus_name.pack(pady=10)
 
         
         cus_list=self.get_cus_list()
+        # print(cus_list)
+        LB1 = tk.Listbox(window, height=4)
+        cus_listbox=menu_style.CusLists(LB1,cus_name,x=328,y=196)
+        cus_name.bind('<Key>', cus_listbox.handlerAdaptor(cus_listbox.text_change,cus_list))    
+        LB1.bind('<Double-Button-1>', cus_listbox.send)
+        # cus_name.place(x=50, y=30)
+        cus_name.pack(pady=10)
+        
             
         # print(cus_name,cus_list)
         def open_cus_file():
