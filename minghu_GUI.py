@@ -261,7 +261,7 @@ class GUI:
 
     #批量录入团课训练信息
     def group_train_input(self,window):
-        txt_grp=tk.Label(window,text='请先在“00-团课分班录入表”中录入会会员资料\n并保存',font=('黑体',13),fg='#246e4c',bg='#f3d7ac',padx=10,pady=20)
+        txt_grp=tk.Label(window,text='请先在“00-团课分班录入表”中录入会员资料\n并保存',font=('黑体',13),fg='#246e4c',bg='#f3d7ac',padx=10,pady=20)
         txt_grp.pack()
         feed_back_gp_input=tk.Text(window)
         def gp_input_train():            
