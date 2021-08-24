@@ -828,7 +828,9 @@ class FeedBackAfterClass:
             #重写训练内容高度
             ht_train_cal=composing.split_txt_Chn_eng(wid=size['wid']['small']-40,font_size=ftsz_train,txt_input=txt_train,Indent='no')
             # ht_train=800
-            ht_train=int(ftsz_train*ht_train_cal[1]*1.8)
+            # ht_train=int(ftsz_train*ht_train_cal[1]*1.8)
+            ht_train=int(ftsz_train*ht_train_cal[1]*1.6)
+            print(ht_train)
             size['ht']['train']=ht_train
 
             #重写建议内容高度
@@ -1188,7 +1190,8 @@ if __name__=='__main__':
 
     #当天报告
     p=FeedBackAfterClass()
-    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210623')
+    # p.draw(cus='MH031梁丽峰',ins='MHINS002韦越棋',date_input='20210623')
+    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210323')
     p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
     # 根据多次体测数据生成折线图

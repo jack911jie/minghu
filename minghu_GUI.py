@@ -87,15 +87,18 @@ class GUI:
             title='个人课后反馈'
         lb_title=tk.Label(window,text=title,bg='#F3D7AC',font=('黑体',13),fg='#246e4c',width=500,height=3)
         lb_title.pack()
-        txt_grp=tk.Label(window,text='请先在“00-团课分班录入表”中录入会员名单\n并保存',font=('宋体',13),fg='#246e4c',bg='#FFFFEE',width=500,padx=10,pady=20)
-        txt_grp.pack()
+
 
         def open_gp_list():
             gp_list_src=os.path.join(self.cus_dir,'00-团课分班录入表.xlsx')
             os.startfile(gp_list_src)
+
+        if group=='yes':
+            txt_grp=tk.Label(window,text='请先在“00-团课分班录入表”中录入会员名单\n并保存',font=('宋体',13),fg='#246e4c',bg='#FFFFEE',width=500,padx=10,pady=20)
+            txt_grp.pack()
             
-        btn_open_gp_list=tk.Button(window,text='打开“00-团课分班录入表”',font=('幼圆',10),width=28,command=open_gp_list)
-        btn_open_gp_list.pack(pady=10)
+            btn_open_gp_list=tk.Button(window,text='打开“00-团课分班录入表”',font=('幼圆',10),width=28,command=open_gp_list)
+            btn_open_gp_list.pack(pady=10)
         
         # today_feedback(cus='MH024刘婵桢',ins='MHINS001陆伟杰',date_input='20210623')
 
@@ -121,7 +124,7 @@ class GUI:
             cus_list=self.get_cus_list()
             # print(cus_list)
             LB1 = tk.Listbox(window, height=4)
-            cus_listbox=menu_style.PullDownBox(LB1,cus_name_input,x=328,y=316)
+            cus_listbox=menu_style.PullDownBox(LB1,cus_name_input,x=328,y=196)
             cus_name_input.bind('<Key>', cus_listbox.handlerAdaptor(cus_listbox.text_entry_box_change,cus_list))    
             LB1.bind('<Double-Button-1>', cus_listbox.send)
             # cus_name.place(x=50, y=30)
