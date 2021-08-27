@@ -27,7 +27,7 @@ from tkinter import simpledialog
 plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 
 class MingHu:
-    def __init__(self,place='minghu',adj_bfr='yes',adj_src='prg',gui=''):
+    def __init__(self,place='qq',adj_bfr='yes',adj_src='prg',gui=''):
         self.dir=os.path.dirname(os.path.abspath(__file__))
         config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'))
         self.cus_file_dir=config['会员档案文件夹']
@@ -354,7 +354,7 @@ class MingHu:
         def save_pic_name(cus):
             save_dir=os.path.join(self.save_dir,cus)
             if not os.path.exists(save_dir):
-                os.mkdir(save_dir)
+                os.makedirs(save_dir)
             _date=datetime.strftime(datetime.now(),"%Y%m%d_%H%M%S")
             save_name=os.path.join(save_dir,_date+'_'+cus+'.jpg')
             print('文件名：'+save_name)
@@ -1126,13 +1126,13 @@ class Vividict(dict):
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    # p=MingHu()
-    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
+    p=MingHu(place='seven')
+    p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # p.auto_cus_xls()
 
     #当天报告
-    p=FeedBackAfterClass()
-    p.draw(cus='MH031梁丽峰',ins='MHINS002韦越棋',date_input='20210623')
+    # p=FeedBackAfterClass(place='qq')
+    # p.draw(cus='QQ001测试',ins='QQINS001周颖鑫',date_input='20210623')
     # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210323')
     # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
