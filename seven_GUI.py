@@ -376,6 +376,6 @@ class myStdout():	# 重定向类
         sys.stderr = self.stderrbak
 
 if __name__=='__main__':
-    minghu_gui=GUI(place='minghu')
+    minghu_gui=GUI(place='seven')
     minghu_gui.creat_gui()
     # minghu_gui.get_cus_list()
