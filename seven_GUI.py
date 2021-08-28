@@ -7,6 +7,7 @@ import menu_style
 from days_cal import calculate_days_2
 import run
 import AfterClass
+import pandas as pd
 import tkinter as tk
 from datetime import date
 from PIL import Image,ImageTk
@@ -19,21 +20,31 @@ class GUI:
     def __init__(self,place='seven'):
         config=readconfig.exp_json(os.path.join(os.path.dirname(__file__),'configs','main_'+place+'.config'))
         self.cus_dir=config['会员档案文件夹']
+        self.material_dir=config['素材文件夹']
         self.public_dir=config['公共素材文件夹']
-        if place=='seven':
-            self.place=place
-            self.prefix='SV'
-        elif place=='minghu':
-            self.place=place
-            self.prefix='MH'
-        else:
-            pass
+        self.ins_dir=config['教练文件夹']
+        self.df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'),sheet_name='教练信息')
+        self.place=place
+        with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
+            self.txt_public=txt_pub.readlines()
+        self.cus_instance_name=self.txt_public[5].strip()
+        self.prefix=self.cus_instance_name[0:2]
+        self.gym_name=self.txt_public[4]
+        self.gym_addr=self.txt_public[3]
+        if '%' in self.gym_addr:
+            self.gym_addr=''
+        self.txt_ins_word=self.txt_public[2]
+        self.txt_mini_title=self.txt_public[1]
+        self.txt_slogan=self.txt_public[0]
+
         
     def creat_gui(self):
         global fr_grp
         window =tk.Tk()
-        window.title('铭湖健身会员管理及反馈小程序 v1.0')
+        window.title(self.gym_name+' | 会员管理及反馈小程序 v1.0')
         window.geometry('500x600')
+        window.attributes("-toolwindow", 2)
+        window.resizable(0,0)
 
         fr_grp=tk.Frame(window)
 
@@ -43,7 +54,7 @@ class GUI:
         cover_label=tk.Label(fr_grp,image=cover_img)
         # cover_label.place(x=150,y=200,width=300,height=300,anchor=CENTER)
         cover_label.pack(pady=30)
-        cover_txt=tk.Label(fr_grp,text='让健身变得有趣',font=('幼圆',18),fg='#665B2C')
+        cover_txt=tk.Label(fr_grp,text=self.txt_slogan,font=('幼圆',18),fg='#665B2C')
         cover_txt.pack()
 
 
@@ -114,16 +125,17 @@ class GUI:
         lb_ins.pack()
 
        
+        ins_list=self.get_ins_list()
+
         ins = tk.StringVar()    # 定义一个var用来将radiobutton的值和Label的值联系在一起.
-        ins.set('SVINS001周颖鑫')
-        ins1= tk.Radiobutton(window, text='周颖鑫', variable=ins, value='QQINS001周颖鑫')
-        ins1.pack()
-        # ins2 = tk.Radiobutton(window, text='韦越棋', variable=ins, value='MHINS002韦越棋')
-        # ins2.pack()
+        for ins_name in ins_list:        
+            ins.set(ins_list[0])
+            ins1= tk.Radiobutton(window, text=ins_name[8:], variable=ins, value=ins_name)
+            ins1.pack()
 
         if group!='yes':
             # print('individual')
-            lb_cus=tk.Label(window,text='录入会员姓名（SV000李铭湖）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
+            lb_cus=tk.Label(window,text='录入会员姓名（'+self.cus_instance_name+'）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
             lb_cus.pack()
             var_cus_name=tk.StringVar()
             cus_name_input=tk.Entry(window,textvariable=var_cus_name,show=None,font=('宋体', 14),width=15)
@@ -132,7 +144,8 @@ class GUI:
             cus_list=self.get_cus_list()
             # print(cus_list)
             LB1 = tk.Listbox(window, height=4)
-            cus_listbox=menu_style.PullDownBox(LB1,cus_name_input,x=328,y=196)
+            y_pdbox=169+(len(ins_list)-1)*27
+            cus_listbox=menu_style.PullDownBox(LB1,cus_name_input,x=328,y=y_pdbox)
             cus_name_input.bind('<Key>', cus_listbox.handlerAdaptor(cus_listbox.text_entry_box_change,cus_list))    
             LB1.bind('<Double-Button-1>', cus_listbox.send)
             # cus_name.place(x=50, y=30)
@@ -196,14 +209,15 @@ class GUI:
         feed_back=tk.Text(window)
         # today_feedback(cus='MH024刘婵桢',ins='MHINS001陆伟杰',date_input='20210623')
         
-        ins = tk.StringVar()    # 定义一个var用来将radiobutton的值和Label的值联系在一起.
-        ins.set('SVINS001周颖鑫')
-        ins1= tk.Radiobutton(window, text='周颖鑫', variable=ins, value='SVINS001周颖鑫')
-        ins1.pack()
-        # ins2 = tk.Radiobutton(window, text='韦越棋', variable=ins, value='MHINS002韦越棋')
-        # ins2.pack()
+        ins_list=self.get_ins_list()
 
-        lb_cus=tk.Label(window,text='输入会员编号及姓名（SV000李铭湖）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
+        ins = tk.StringVar()    # 定义一个var用来将radiobutton的值和Label的值联系在一起.
+        for ins_name in ins_list:        
+            ins.set(ins_list[0])
+            ins1= tk.Radiobutton(window, text=ins_name[8:], variable=ins, value=ins_name)
+            ins1.pack()
+
+        lb_cus=tk.Label(window,text='输入会员编号及姓名（'+self.cus_instance_name+'）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
         lb_cus.pack()
         var_cus_name=tk.StringVar()
         cus_name=tk.Entry(window,textvariable=var_cus_name,font=('宋体',12),width=18)
@@ -213,7 +227,8 @@ class GUI:
         cus_list=self.get_cus_list()
         # print(cus_list)
         LB1 = tk.Listbox(window, height=4)
-        cus_listbox=menu_style.PullDownBox(LB1,cus_name,x=328,y=196)
+        y_pdbox=169+(len(ins_list)-1)*27
+        cus_listbox=menu_style.PullDownBox(LB1,cus_name,x=328,y=y_pdbox)
         cus_name.bind('<Key>', cus_listbox.handlerAdaptor(cus_listbox.text_entry_box_change,cus_list))    
         LB1.bind('<Double-Button-1>', cus_listbox.send)
         # cus_name.place(x=50, y=30)
@@ -319,6 +334,10 @@ class GUI:
             btn_add_new.pack(pady=10)
             msg_box.pack()
             
+    def get_ins_list(self):        
+        df_ins_list=self.df_ins['员工编号']+self.df_ins['姓名']
+        ins_list=df_ins_list.tolist()
+        return ins_list
 
     def isValidDate(self,year, month, day):
         try:
@@ -357,6 +376,6 @@ class myStdout():	# 重定向类
         sys.stderr = self.stderrbak
 
 if __name__=='__main__':
-    minghu_gui=GUI(place='seven')
+    minghu_gui=GUI(place='minghu')
     minghu_gui.creat_gui()
     # minghu_gui.get_cus_list()

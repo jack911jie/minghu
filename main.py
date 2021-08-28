@@ -40,9 +40,17 @@ class MingHu:
         self.adj_src=adj_src
         self.gui=gui
         self.place=place
+        self.df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'),sheet_name='教练信息')
         self.color_config_fn=os.path.join(os.path.dirname(__file__),'configs','colors.config')
         with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
             self.txt_public=txt_pub.readlines()
+        self.cus_instance_name=self.txt_public[5].strip()[0:2]
+        self.prefix=self.cus_instance_name[0:2]
+        self.gym_name=self.txt_public[4]
+        self.gym_addr=self.txt_public[3]
+        self.txt_ins_word=self.txt_public[2]
+        self.txt_mini_title=self.txt_public[1]
+        self.txt_slogan=self.txt_public[0]
 
     def auto_cus_xls(self,cus_name_input='',mode='prgrm',gui=''):
         # cus_name_input=''
@@ -589,9 +597,9 @@ class MingHu:
                 # addr
                 #地址
                 x_add=x_l+(block_wid-composing.char_len(self.txt_public[3])*30)//2
-                draw.text((x_add,y_logo+240),self.txt_public[3],fill=color['gym_info'],font=self.fonts('微软雅黑',30))
+                draw.text((x_add,y_logo+240),self.gym_addr,fill=color['gym_info'],font=self.fonts('微软雅黑',30))
                 #slogan
-                draw.text((x_l+125,y_logo+310),self.txt_public[0],fill=color['gym_info'],font=self.fonts('丁永康硬笔楷书',60))
+                draw.text((x_l+125,y_logo+310),self.txt_slogan,fill=color['gym_info'],font=self.fonts('丁永康硬笔楷书',60))
 
                 ins=ins_info()
                 draw.text((x_l+255,y_logo+570),ins['nickname'],fill=color['gym_info'],font=self.fonts('丁永康硬笔楷书',50))
@@ -696,7 +704,17 @@ class FeedBackAfterClass:
         self.exp_knlg_dir=config['专业资料文件夹']
         self.save_dir=config['课后反馈文件夹']
         self.font_config=os.path.join(self.dir,'configs','fontList.minghu')
+        self.df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'),sheet_name='教练信息')
         self.color_config_fn=os.path.join(os.path.dirname(__file__),'configs','colors.config')
+        with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
+            self.txt_public=txt_pub.readlines()
+        self.cus_instance_name=self.txt_public[5].strip()[0:2]
+        self.prefix=self.cus_instance_name[0:2]
+        self.gym_name=self.txt_public[4]
+        self.gym_addr=self.txt_public[3]
+        self.txt_ins_word=self.txt_public[2]
+        self.txt_mini_title=self.txt_public[1]
+        self.txt_slogan=self.txt_public[0]
 
 
     def export(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
@@ -708,8 +726,8 @@ class FeedBackAfterClass:
 
     def draw(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324',open_dir='yes'):
         #公共文字
-        with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
-            txt_public=txt_pub.readlines()
+        # with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
+        #     txt_public=txt_pub.readlines()
 
         #文字内容
         data=self.export(cus=cus,ins=ins,date_input=date_input)
@@ -729,7 +747,7 @@ class FeedBackAfterClass:
         
         #标题框文字
         # txt_title_box='看看今天你的汗水洒在哪里？'
-        txt_title_box=txt_public[1].strip()
+        txt_title_box=self.txt_mini_title
         
 
         #抗阻内容
@@ -755,7 +773,8 @@ class FeedBackAfterClass:
         txt_burn='消耗热量 '+str(int(data['train']['calories']))+' 千卡'
         
         #教练
-        ins=ins[8:][0]+'教练'
+        # ins=ins[8:][0]+'教练'
+        ins=self.df_ins.loc[self.df_ins['员工编号']==ins[0:8]]['昵称'].values[0]
 
         #建议
         txt_suggest_title=ins+'给你的饮食建议'
@@ -767,7 +786,7 @@ class FeedBackAfterClass:
 
         #slogan
         # txt_slogan='让健身变得有趣'
-        txt_slogan= txt_public[0].strip()
+        txt_slogan= self.txt_slogan.strip()
 
         # print(nickname,sex,'\n',txt_date,'\n',txt_train,txt_calories,'\n',ins,txt_suggest,slogan)
 

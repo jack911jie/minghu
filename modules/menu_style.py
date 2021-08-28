@@ -33,6 +33,7 @@ class PullDownBox:
         # print("-----------------------------")
         # print(result)
         self.pull_down_box.delete(0, tk.END)
+        # print(result)
         for res in result:
             # 总数据中包含输入框中的内容
             if len(re.findall(current,res))>0:
