@@ -27,9 +27,9 @@ from tkinter import simpledialog
 plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 
 class MingHu:
-    def __init__(self,adj_bfr='yes',adj_src='prg',gui=''):
+    def __init__(self,place='qq',adj_bfr='yes',adj_src='prg',gui=''):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -39,6 +39,7 @@ class MingHu:
         self.adj_bfr=adj_bfr
         self.adj_src=adj_src
         self.gui=gui
+        self.color_config_fn=os.path.join(os.path.dirname(__file__),'configs','colors.config')
 
     def auto_cus_xls(self,cus_name_input='',mode='prgrm',gui=''):
         # cus_name_input=''
@@ -103,60 +104,18 @@ class MingHu:
         return ImageFont.truetype(fontList[font_name],font_size)
 
     def color_list(self,sex='美女',color_name=''):
+        color_config=readconfig.exp_json(self.color_config_fn)
+        # print(color_config['light_pink'])
 
         if sex=='美女':
             if color_name=='':
-                color_name='light_pink'
-            if color_name=='light_orange':
-                colors={
-                    'comment_bg':'#fff4ee',
-                    'title_bg':'#fff4ee',
-                    'logo_bg':'#fff4ee',
-                    'train_content_bg':'#ffffff',
-                    'txt_person':'#ff6667',
-                    'txt_title':'#ff9c6c',
-                    'txt_date':'#ff9c6c',
-                    'txt_fix':'#898886',
-                    'txt_dimension':'#000000',
-                    'txt_train':'#ff9c6c',
-                    'txt_slogan':'#cd8c52',
-                    'gym_info':'#693607'
-                }
-            elif color_name=='light_pink':
-                colors={
-                    'comment_bg':'#fdf7f9',
-                    'title_bg':'#dfcbe4',
-                    'logo_bg':'#fbfbfb',
-                    'train_content_bg':'#ffffff',
-                    'txt_person':'#d584d0',
-                    'txt_title':'#ffffff',
-                    'txt_date':'#cf86cd',
-                    'txt_fix':'#717171',
-                    'txt_dimension':'#000000',
-                    'txt_train':'#cf86cd',
-                    'txt_slogan':'#b0b0b0',
-                    'gym_info':'#b0b0b0'
-                }
+                color_name='light_pink'           
         elif sex=='帅哥':
             if color_name=='':
                 color_name='strong_blue'
-            if color_name=='strong_blue':
-                colors={
-                    'comment_bg':'#e5f5fd',
-                    'title_bg':'#e5f5fd',
-                    'logo_bg':'#e5f5fd',
-                    'train_content_bg':'#ffffff',
-                    'txt_person':'#3c5ebb',
-                    'txt_title':'#3c5ebb',
-                    'txt_date':'#3c5ebb',
-                    'txt_fix':'#9c9fa0',
-                    'txt_dimension':'#000000',
-                    'txt_train':'#3c5ebb',
-                    'txt_slogan':'#8da8db',
-                    'gym_info':'#2c2e35'
-                }
         else:
             pass
+        colors=color_config['Summary'][color_name]
 
         return colors
 
@@ -395,7 +354,7 @@ class MingHu:
         def save_pic_name(cus):
             save_dir=os.path.join(self.save_dir,cus)
             if not os.path.exists(save_dir):
-                os.mkdir(save_dir)
+                os.makedirs(save_dir)
             _date=datetime.strftime(datetime.now(),"%Y%m%d_%H%M%S")
             save_name=os.path.join(save_dir,_date+'_'+cus+'.jpg')
             print('文件名：'+save_name)
@@ -718,9 +677,9 @@ class GroupDataInput:
         print('完成')
 
 class FeedBackAfterClass:
-    def __init__(self):
+    def __init__(self,place='minghu'):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -730,6 +689,7 @@ class FeedBackAfterClass:
         self.exp_knlg_dir=config['专业资料文件夹']
         self.save_dir=config['课后反馈文件夹']
         self.font_config=os.path.join(self.dir,'configs','fontList.minghu')
+        self.color_config_fn=os.path.join(os.path.dirname(__file__),'configs','colors.config')
 
 
     def export(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
@@ -740,6 +700,10 @@ class FeedBackAfterClass:
         return data
 
     def draw(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324',open_dir='yes'):
+        #公共文字
+        with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
+            txt_public=txt_pub.readlines()
+
         #文字内容
         data=self.export(cus=cus,ins=ins,date_input=date_input)
         # print(data)
@@ -757,7 +721,8 @@ class FeedBackAfterClass:
             sex=''
         
         #标题框文字
-        txt_title_box='看看今天你的汗水洒在哪里？'
+        # txt_title_box='看看今天你的汗水洒在哪里？'
+        txt_title_box=txt_public[1].strip()
         
 
         #抗阻内容
@@ -794,7 +759,8 @@ class FeedBackAfterClass:
         txt_suggest=random.choice(diet_suggests)
 
         #slogan
-        txt_slogan='让健身变得有趣'
+        # txt_slogan='让健身变得有趣'
+        txt_slogan= txt_public[0].strip()
 
         # print(nickname,sex,'\n',txt_date,'\n',txt_train,txt_calories,'\n',ins,txt_suggest,slogan)
 
@@ -846,33 +812,8 @@ class FeedBackAfterClass:
             return size 
         
         def color_list():
-            color={
-                'block':{
-                    'bg':'#fffcf9',
-                    'title':'#ff8ddf',
-                    'train':'#fee8ff',
-                    'train_bar':'#fecaff',
-                    'burn':'#ffffff',
-                    'suggest':'#f1fcff',
-                    'suggest_small_box':'#ffffff',
-                },
-                'edge':{
-                    'title_box':'#fac1f1',
-                    'burn':'#ef7f4e',
-                    'suggest_small_box':'#808081',
-                },
-                'font':{
-                    'title':'#ffffff',
-                    'train':'#ff8ddf',
-                    'burn':'#ef4700',
-                    'suggest_title':'#595757',
-                    'suggest':'#143f00',
-                    'slogan':'#ad5a28'
-                }
-
-
-            }
-
+            color_config=readconfig.exp_json(self.color_config_fn)
+            color=color_config['AfterClass']['pink']
             return color
 
         def draw_blocks():
@@ -1185,15 +1126,15 @@ class Vividict(dict):
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    # p=MingHu()
-    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
+    p=MingHu(place='seven')
+    p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # p.auto_cus_xls()
 
     #当天报告
-    p=FeedBackAfterClass()
-    # p.draw(cus='MH031梁丽峰',ins='MHINS002韦越棋',date_input='20210623')
+    # p=FeedBackAfterClass(place='qq')
+    # p.draw(cus='QQ001测试',ins='QQINS001周颖鑫',date_input='20210623')
     # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210323')
-    p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
+    # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
     # 根据多次体测数据生成折线图
     # fitdata=FitData2Pic()

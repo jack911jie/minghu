@@ -5,16 +5,16 @@ import main
 
 # print(os.path.join(os.path.dirname(__file__),'modules'))
 
-def cus_feedback(cus='MH017李俊娴',ins='MHINS001陆伟杰',start_time='20210526',end_time='20210701',adj_bfr='yes',adj_src='prg',gui=''):
-    p=main.MingHu(adj_bfr=adj_bfr,adj_src=adj_src,gui=gui)
+def cus_feedback(place='minghu',cus='MH017李俊娴',ins='MHINS001陆伟杰',start_time='20210526',end_time='20210701',adj_bfr='yes',adj_src='prg',gui=''):
+    p=main.MingHu(place=place,adj_bfr=adj_bfr,adj_src=adj_src,gui=gui)
     p.draw(cus=cus,ins=ins,start_time=start_time,end_time=end_time)
 
 def group_input():
     p=main.GroupDataInput()
     p.data_input()
 
-def today_feedback(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
-    p=main.FeedBackAfterClass()
+def today_feedback(place='minghu',cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
+    p=main.FeedBackAfterClass(place=place)
     p.draw(cus=cus,ins=ins,date_input=date_input)
 
 def auto_xls(cus_name_input='',mode='prgrm',gui=''):
