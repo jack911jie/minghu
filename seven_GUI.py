@@ -123,7 +123,7 @@ class GUI:
 
         if group!='yes':
             # print('individual')
-            lb_cus=tk.Label(window,text='录入会员姓名（QQ000李铭湖）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
+            lb_cus=tk.Label(window,text='录入会员姓名（SV000李铭湖）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
             lb_cus.pack()
             var_cus_name=tk.StringVar()
             cus_name_input=tk.Entry(window,textvariable=var_cus_name,show=None,font=('宋体', 14),width=15)

@@ -27,7 +27,7 @@ from tkinter import simpledialog
 plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 
 class MingHu:
-    def __init__(self,place='qq',adj_bfr='yes',adj_src='prg',gui=''):
+    def __init__(self,place='minghu',adj_bfr='yes',adj_src='prg',gui=''):
         self.dir=os.path.dirname(os.path.abspath(__file__))
         config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'))
         self.cus_file_dir=config['会员档案文件夹']
@@ -39,7 +39,10 @@ class MingHu:
         self.adj_bfr=adj_bfr
         self.adj_src=adj_src
         self.gui=gui
+        self.place=place
         self.color_config_fn=os.path.join(os.path.dirname(__file__),'configs','colors.config')
+        with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
+            self.txt_public=txt_pub.readlines()
 
     def auto_cus_xls(self,cus_name_input='',mode='prgrm',gui=''):
         # cus_name_input=''
@@ -401,7 +404,7 @@ class MingHu:
                 gap_train=0
 
             slogan_txt=slogan()
-            slogan_txt=slogan_txt+'\n期待您在铭湖健身遇见更好的自己。'
+            slogan_txt=slogan_txt+'\n'+self.txt_public[2]
             dis_line_slogan=15
             ft_size_slogan=36
             # print('327 line',slogan_txt)
@@ -570,8 +573,9 @@ class MingHu:
                         draw.text((x_days,y_train+85), t['intervals_train_1'], fill =color['txt_train'],font=self.fonts('aa楷体',ft_size_days))  #XX天里（居中）
                         draw.text((x_l+180,y_train+140), '完成了下面的训练内容', fill = color['txt_fix'],font=self.fonts('aa楷体',32))  #完成了下面的训练内容
                         self.put_txt_img(img,t=t['train_content'],total_dis=420,xy=[x_l+95,y_train+230],dis_line=16,fill=color['txt_train'],font_name='杨任东石竹体',font_size=38)
-                        percent=random.randint(70,93)
-                        draw.text((x_l+145,y_train_content_bottom+20), '击败了铭湖健身 {} 的会员!'.format(str(percent)+'%'), fill = color['txt_train'],font=self.fonts('aa楷体',32))  #击败了
+                        if self.place=='minghu':
+                            percent=random.randint(70,93)
+                            draw.text((x_l+145,y_train_content_bottom+20), '击败了铭湖健身 {} 的会员!'.format(str(percent)+'%'), fill = color['txt_train'],font=self.fonts('aa楷体',32))  #击败了
                     else:
                         draw.text((x_l+145,y_train+45), t['intervals_train_0'], fill = color['txt_fix'],font=self.fonts('aa楷体',40))  #您在。。。
                         draw.text((x_l+160,y_train+85), t['intervals_train_1'], fill = color['txt_train'],font=self.fonts('aa楷体',40))  #XX天里
@@ -583,8 +587,11 @@ class MingHu:
                 draw.text((x_l+20,y_slogan+15),slogan_txt,fill=color['txt_slogan'],font=self.fonts('优设标题黑',ft_size_slogan))
 
                 # addr
-                draw.text((x_l+10,y_logo+240),'南宁市青秀区民族大道88-1号铭湖经典A座802室',fill=color['gym_info'],font=self.fonts('微软雅黑',30))
-                draw.text((x_l+125,y_logo+310),'让健身变得有趣',fill=color['gym_info'],font=self.fonts('丁永康硬笔楷书',60))
+                #地址
+                x_add=x_l+(block_wid-composing.char_len(self.txt_public[3])*30)//2
+                draw.text((x_add,y_logo+240),self.txt_public[3],fill=color['gym_info'],font=self.fonts('微软雅黑',30))
+                #slogan
+                draw.text((x_l+125,y_logo+310),self.txt_public[0],fill=color['gym_info'],font=self.fonts('丁永康硬笔楷书',60))
 
                 ins=ins_info()
                 draw.text((x_l+255,y_logo+570),ins['nickname'],fill=color['gym_info'],font=self.fonts('丁永康硬笔楷书',50))
@@ -606,9 +613,9 @@ class MingHu:
         # ins_info()
 
 class GroupDataInput:
-    def __init__(self):
+    def __init__(self,place):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'))
         self.grp_dir=config['会员档案文件夹']
 
     def data_input(self):

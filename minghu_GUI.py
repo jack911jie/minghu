@@ -16,8 +16,8 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class GUI:
-    def __init__(self):
-        config=readconfig.exp_json(os.path.join(os.path.dirname(__file__),'configs','main.config'))
+    def __init__(self,place='minghu'):
+        config=readconfig.exp_json(os.path.join(os.path.dirname(__file__),'configs','main_'+place+'.config'))
         self.cus_dir=config['会员档案文件夹']
         self.public_dir=config['公共素材文件夹']
         
@@ -349,6 +349,6 @@ class myStdout():	# 重定向类
         sys.stderr = self.stderrbak
 
 if __name__=='__main__':
-    minghu_gui=GUI()
+    minghu_gui=GUI(place='minghu')
     minghu_gui.creat_gui()
     # minghu_gui.get_cus_list()
