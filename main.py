@@ -48,6 +48,8 @@ class MingHu:
         self.prefix=self.cus_instance_name[0:2]
         self.gym_name=self.txt_public[4]
         self.gym_addr=self.txt_public[3]
+        if '%' in self.gym_addr:
+            self.gym_addr=''
         self.txt_ins_word=self.txt_public[2]
         self.txt_mini_title=self.txt_public[1]
         self.txt_slogan=self.txt_public[0]
