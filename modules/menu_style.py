@@ -10,8 +10,6 @@ class PullDownBox:
 # 输入框文字改变事件监听
     def text_entry_box_change(self,event,result):
         current = self.text_entry_box.get()
-        current=current.upper()
-        # print(current)
 
         #event.char 获取最近一次键盘事件输入的值
         current_value = event.char
@@ -21,8 +19,9 @@ class PullDownBox:
         else:
             current += current_value
         # print('current 2=',current)
-        if current.strip()!= "":
-            self.handlerResult(current,result)
+        if current.strip()!= "": 
+            #输入小写字母的时候转为大写
+            self.handlerResult(current.upper(),result)
         else:
             # place_forget隐藏控件
             self.pull_down_box.place_forget()
