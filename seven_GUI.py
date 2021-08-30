@@ -321,7 +321,7 @@ class GUI:
                 msg_box.delete('1.0','end')
                 if value_cus_name.get():
                     new_msg=myStdout(msg_box)
-                    new_cus_fn=run.auto_xls(cus_name_input=value_cus_name.get().upper(),mode='gui',gui=msg_box)
+                    new_cus_fn=run.auto_xls(place=self.place,cus_name_input=value_cus_name.get().upper(),mode='gui',gui=msg_box)
                     print(new_cus_fn)
                     if new_cus_fn:
                         print('正在打开文件……')
@@ -376,6 +376,6 @@ class myStdout():	# 重定向类
         sys.stderr = self.stderrbak
 
 if __name__=='__main__':
-    minghu_gui=GUI(place='seven')
+    minghu_gui=GUI(place='minghu')
     minghu_gui.creat_gui()
     # minghu_gui.get_cus_list()

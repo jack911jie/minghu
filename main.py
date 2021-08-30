@@ -67,21 +67,20 @@ class MingHu:
         nums=[]
         for fn in os.listdir(self.cus_file_dir):
             if len(fn)<16:
-                if re.match(r'MH\d\d\d.*.xlsx',fn):
+                if re.match(self.prefix+r'\d\d\d.*.xlsx',fn):
                     num=int(fn[2:5])
                     if num not in nums:
                         nums.append(num)
 
         new_num=str(max(nums)+1).zfill(3)
         if mode=='prgrm':
-            verify=input('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format('MH'+new_num+cus_name_input))
+            verify=input('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format(self.prefix+new_num+cus_name_input))
         elif mode=='gui':
             gui.delete('1.0','end')
-            print('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format('MH'+new_num+cus_name_input))
+            print('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format(self.prefix+new_num+cus_name_input))
             # verify=''
             while True:
-                verify = simpledialog.askstring(title="是否修改编号？",
-                                                    prompt="请输入新编号（三位数字）")
+                verify = simpledialog.askstring(title="是否修改编号？",prompt="请输入新编号（三位数字）")
                 if not verify:
                     break
                 else:
@@ -92,9 +91,9 @@ class MingHu:
                         print('编号格式错误，请输入三位数字。')          
             gui.delete('1.0','end')
         if verify:
-            xls_name='MH'+verify+cus_name_input
+            xls_name=self.prefix+verify+cus_name_input
         else:
-            xls_name='MH'+new_num+cus_name_input
+            xls_name=self.prefix+new_num+cus_name_input
         
         wb=openpyxl.load_workbook(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsx'))
         sht=wb['基本情况']
