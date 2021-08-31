@@ -293,7 +293,7 @@ class GUI:
         def gp_input_train():            
             feed_back_gp_input.delete('1.0','end')
             fd_screen=myStdout(feed_back_gp_input)
-            run.group_input()
+            run.group_input(place=self.place)
             fd_screen.restoreStd()     
 
         def open_gp_list():

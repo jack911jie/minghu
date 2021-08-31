@@ -10,8 +10,8 @@ def cus_feedback(place='minghu',cus='MH017李俊娴',ins='MHINS001陆伟杰',sta
     p=main.MingHu(place=place,adj_bfr=adj_bfr,adj_src=adj_src,gui=gui)
     p.draw(cus=cus,ins=ins,start_time=start_time,end_time=end_time)
 
-def group_input():
-    p=main.GroupDataInput()
+def group_input(place='minghu'):
+    p=main.GroupDataInput(place=place)
     p.data_input()
 
 def today_feedback(place='minghu',cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
@@ -43,7 +43,7 @@ if __name__=='__main__':
     # auto_xls(cus_name_input='测试',mode='prgrm',gui='')
 
     #运行最新版本的gui
-    run_seven_gui(place='minghu')
+    run_seven_gui(place='seven')
 
 
 
