@@ -1,5 +1,6 @@
 import os
 import sys
+import numpy as np
 from tkinter.constants import CENTER
 sys.path.append(os.path.join(os.path.dirname(__file__),'modules'))
 import readconfig
@@ -216,9 +217,10 @@ class GUI:
 
         ins = tk.StringVar()    # 定义一个var用来将radiobutton的值和Label的值联系在一起.
         for ins_name in ins_list:        
-            ins.set(ins_list[0])
-            ins1= tk.Radiobutton(window, text=ins_name[8:], variable=ins, value=ins_name)
-            ins1.pack()
+            if ins_name!=np.nan:   
+                ins.set(ins_list[0])
+                ins1= tk.Radiobutton(window, text=ins_name[8:], variable=ins, value=ins_name)
+                ins1.pack()
 
         lb_cus=tk.Label(window,text='输入会员编号及姓名（'+self.cus_instance_name+'）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
         lb_cus.pack()
@@ -339,6 +341,7 @@ class GUI:
             
     def get_ins_list(self):        
         df_ins_list=self.df_ins['员工编号']+self.df_ins['姓名']
+        df_ins_list.dropna(how=any,axis=0,inplace=True)
         ins_list=df_ins_list.tolist()
         return ins_list
 
