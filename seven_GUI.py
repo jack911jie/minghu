@@ -23,6 +23,7 @@ class GUI:
         self.material_dir=config['素材文件夹']
         self.public_dir=config['公共素材文件夹']
         self.ins_dir=config['教练文件夹']
+        self.output_dir=config['课后反馈文件夹']
         self.df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'),sheet_name='教练信息')
         self.place=place
         with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
@@ -179,12 +180,14 @@ class GUI:
                 mystd = myStdout(feed_back)	# 实例化重定向类
                 ac=AfterClass.FeedBack()
                 if group=='yes':
-                    ac.today_feedback_group(ins=ins.get(),date_input=date_txt,open_dir='no')
+                    ac.today_feedback_group(place=self.place,ins=ins.get(),date_input=date_txt,open_dir='no')
+                    os.startfile(self.output_dir)
                 else:
                     cus_name=var_cus_name.get().upper()
                     cus_list=self.get_cus_list()
                     if cus_name in cus_list:
                         ac.today_feedback(place=self.place,cus=cus_name,ins=ins.get(),date_input=date_txt)
+                        os.startfile(os.path.join(self.output_dir,cus_name))
                     else:
                         print('会员ID不在列表内，请检查。')
                 mystd.restoreStd()

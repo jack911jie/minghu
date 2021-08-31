@@ -775,6 +775,7 @@ class FeedBackAfterClass:
         
         #教练
         # ins=ins[8:][0]+'教练'
+        # print(self.df_ins)
         ins=self.df_ins.loc[self.df_ins['员工编号']==ins[0:8]]['昵称'].values[0]
 
         #建议

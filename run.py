@@ -18,8 +18,8 @@ def today_feedback(place='minghu',cus='MH024刘婵桢',ins='MHINS002韦越棋',d
     p=main.FeedBackAfterClass(place=place)
     p.draw(cus=cus,ins=ins,date_input=date_input)
 
-def auto_xls(cus_name_input='',mode='prgrm',gui=''):
-    p=main.MingHu()
+def auto_xls(place='seven',cus_name_input='',mode='prgrm',gui=''):
+    p=main.MingHu(place=place)
     new_cus_fn=p.auto_cus_xls(cus_name_input=cus_name_input,mode=mode,gui=gui)
     return new_cus_fn
 
@@ -43,7 +43,7 @@ if __name__=='__main__':
     # auto_xls(cus_name_input='测试',mode='prgrm',gui='')
 
     #运行最新版本的gui
-    run_seven_gui(place='seven')
+    run_seven_gui(place='minghu')
 
 
 
