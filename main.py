@@ -840,7 +840,10 @@ class FeedBackAfterClass:
         
         def color_list():
             color_config=readconfig.exp_json(self.color_config_fn)
-            color=color_config['AfterClass']['pink']
+            if data['sex']=='女':
+                color=color_config['AfterClass']['pink']
+            elif data['sex']=='男':
+                color=color_config['AfterClass']['blue']
             return color
 
         def draw_blocks():
@@ -1153,14 +1156,14 @@ class Vividict(dict):
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    p=MingHu(place='seven')
-    p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
+    # p=MingHu(place='seven')
+    # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # p.auto_cus_xls()
 
     #当天报告
-    # p=FeedBackAfterClass(place='qq')
+    p=FeedBackAfterClass(place='minghu')
     # p.draw(cus='QQ001测试',ins='QQINS001周颖鑫',date_input='20210623')
-    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210323')
+    p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210623')
     # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
     # 根据多次体测数据生成折线图
