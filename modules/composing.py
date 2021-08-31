@@ -1,4 +1,5 @@
 import re
+import json
 from PIL import Image,ImageFont,ImageDraw
 import logging
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(funcName)s-%(lineno)d - %(message)s')
@@ -12,22 +13,35 @@ def char_len(txt):
     total=ziShu_z+ziShu_e*0.5
     return total
 
-def fonts(font_name,font_size):
-    fontList={
-        '腾祥金砖黑简':'c:\\windows\\fonts\\腾祥金砖黑简.TTF',
-        '汉仪糯米团':'j:\\fonts\\HYNuoMiTuanW.ttf',
-        '丁永康硬笔楷书':'j:\\fonts\\2012DingYongKangYingBiKaiShuXinBan-2.ttf',
-        '微软雅黑':'i:\\py\\msyh.ttf',
-        '鸿蒙印品':'j:\\fonts\\hongMengHei.ttf',
-        '优设标题':'j:\\fonts\\yousheTitleHei.ttf',
-        '汉仪超级战甲':'j:\\fonts\\HYChaoJiZhanJiaW-2.ttf',
-        '汉仪心海行楷w':'j:\\fonts\\HYXinHaiXingKaiW.ttf',
-        '华康海报体W12(p)':'j:\\fonts\\HuaKangHaiBaoTiW12-P-1.ttf',
-        '汉仪锐智w':'j:\\fonts\\HYRuiZhiW.ttf',
-        '杨任东竹石体':'j:\\fonts\\yangrendongzhushi-Regular.ttf',
-        '楷体':'C:\\Windows\\Fonts\\simkai.ttf',
-        '汉仪字酷堂义山楷w':'j:\\fonts\\HYZiKuTangYiShanKaiW-2.ttf'                    
-    }
+def fonts(font_name,font_size,config=''):
+    if config=='':
+        fontList={
+            '腾祥金砖黑简':'c:\\windows\\fonts\\腾祥金砖黑简.TTF',
+            '汉仪糯米团':'j:\\fonts\\HYNuoMiTuanW.ttf',
+            '丁永康硬笔楷书':'j:\\fonts\\2012DingYongKangYingBiKaiShuXinBan-2.ttf',
+            '微软雅黑':'i:\\py\\msyh.ttf',
+            '鸿蒙印品':'j:\\fonts\\hongMengHei.ttf',
+            '优设标题':'j:\\fonts\\yousheTitleHei.ttf',
+            '汉仪超级战甲':'j:\\fonts\\HYChaoJiZhanJiaW-2.ttf',
+            '汉仪心海行楷w':'j:\\fonts\\HYXinHaiXingKaiW.ttf',
+            '华康海报体W12(p)':'j:\\fonts\\HuaKangHaiBaoTiW12-P-1.ttf',
+            '汉仪锐智w':'j:\\fonts\\HYRuiZhiW.ttf',
+            '杨任东竹石体':'j:\\fonts\\yangrendongzhushi-Regular.ttf',
+            '楷体':'C:\\Windows\\Fonts\\simkai.ttf',
+            '汉仪字酷堂义山楷w':'j:\\fonts\\HYZiKuTangYiShanKaiW-2.ttf'                    
+        }
+    else:
+        with open (config,'r',encoding='utf-8') as f:
+            lines=f.readlines()
+            _line=''
+            for line in lines:
+                newLine=line.strip('\n')
+                _line=_line+newLine
+        # print(_line)
+        fontList=json.loads(_line) 
+    
+    # print(fontList)
+    # print(fontList[font_name])
 
     # ImageFont.truetype('j:\\fonts\\2012DingYongKangYingBiKaiShuXinBan-2.ttf',font_size)
 
@@ -77,7 +91,8 @@ def split_txt_Chn_eng(wid,font_size,txt_input,Indent='no'):
     
     if Indent=='yes':
         for i,t in enumerate(txts):
-            txts[i]=chr(12288)+chr(12288)+t
+            txts[i]=chr(12288)+t
+            # txts[i]=chr(12288)+chr(12288)+t
     
     # print('composing line 82:', txts)
     
@@ -118,23 +133,24 @@ def split_txt_Chn_eng(wid,font_size,txt_input,Indent='no'):
    
     return [outTxt,para_num] 
 
-def put_txt_img(draw,t,total_dis,xy,dis_line,fill,font_name,font_size,addSPC='None'):
+def put_txt_img(draw,tt,total_dis,xy,dis_line,fill,font_name,font_size,addSPC='None',font_config_file=''):
         
-    fontInput=fonts(font_name,font_size)            
+    fontInput=fonts(font_name,font_size,config=font_config_file)            
     if addSPC=='add_2spaces': 
         Indent='yes'
     else:
         Indent='no'
         
     # txt=self.split_txt(total_dis,font_size,t,Indent='no')
-    txt=split_txt_Chn_eng(total_dis,font_size,t,Indent='no')
+    txt=split_txt_Chn_eng(total_dis,font_size,tt,Indent=Indent)
+
     # font_sig = self.fonts('丁永康硬笔楷书',40)
     num=len(txt)   
     # draw=ImageDraw.Draw(img)
 
     logging.info(txt)
     n=0
-    for t in txt:              
+    for t in txt[0]:              
         m=0
         for tt in t:                  
             x,y=xy[0],xy[1]+(font_size+dis_line)*n
@@ -159,3 +175,6 @@ def put_txt_img(draw,t,total_dis,xy,dis_line,fill,font_name,font_size,addSPC='No
 def center_align_x(start_x=0,wide=720,ft_size=30,t='这是一条测试'):
     x=int(start_x+(wide-char_len(t)*ft_size)/2)
     return x
+
+if __name__=='__main__':
+    fonts('aa楷体',28,'d:\\py\\minghu\\configs\\FontList.minghu')

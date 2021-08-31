@@ -15,3 +15,8 @@ def calculate_days(date_input='20181215'):
     today=datetime.datetime.now()
     date_s = datetime.datetime.strptime(date_input, "%Y%m%d")    
     return (today-date_s).days
+
+def calculate_days_2(dates='20200301',datee='20210301'):
+    date_s=datetime.datetime.strptime(dates, "%Y%m%d")
+    date_e=datetime.datetime.strptime(datee, "%Y%m%d")
+    return (date_e-date_s).days

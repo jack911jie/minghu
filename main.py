@@ -1,12 +1,13 @@
 import os
 import sys
-
+import random
 # from openpyxl.reader.excel import load_workbook
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'modules'))
 import pic_transfer
 import days_cal
 import readconfig
 import composing
+import get_data
 import json
 import openpyxl
 # from openpyxl import load_workbook
@@ -21,11 +22,12 @@ from PIL import Image,ImageDraw,ImageFont
 import random
 import matplotlib.pyplot as plt 
 import matplotlib.font_manager as fm
+from tkinter import simpledialog
 # from matplotlib.backends.backend_agg import FigureCanvasAgg
 plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 
 class MingHu:
-    def __init__(self):
+    def __init__(self,adj_bfr='yes',adj_src='prg',gui=''):
         self.dir=os.path.dirname(os.path.abspath(__file__))
         config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
         self.cus_file_dir=config['会员档案文件夹']
@@ -33,13 +35,20 @@ class MingHu:
         self.ins_dir=config['教练文件夹']
         self.slogan_dir=config['文案文件夹']
         self.save_dir=config['输出文件夹']
+        self.public_dir=config['公共素材文件夹']
+        self.adj_bfr=adj_bfr
+        self.adj_src=adj_src
+        self.gui=gui
 
-    def auto_cus_xls(self):
-        cus_name_input=''
-        while cus_name_input=='':
-            cus_name_input=input('请输入新会员姓名：')
-            if cus_name_input=='exit':
-                exit(0)
+    def auto_cus_xls(self,cus_name_input='',mode='prgrm',gui=''):
+        # cus_name_input=''
+        if mode=='prgrm':
+            while cus_name_input=='':
+                cus_name_input=input('请输入新会员姓名：')
+                if cus_name_input=='exit':
+                    exit(0)
+        elif mode=='gui':
+            cus_name_input=cus_name_input
  
         nums=[]
         for fn in os.listdir(self.cus_file_dir):
@@ -50,13 +59,30 @@ class MingHu:
                         nums.append(num)
 
         new_num=str(max(nums)+1).zfill(3)
-        verify=input('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format('MH'+new_num+cus_name_input))
+        if mode=='prgrm':
+            verify=input('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format('MH'+new_num+cus_name_input))
+        elif mode=='gui':
+            gui.delete('1.0','end')
+            print('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format('MH'+new_num+cus_name_input))
+            # verify=''
+            while True:
+                verify = simpledialog.askstring(title="是否修改编号？",
+                                                    prompt="请输入新编号（三位数字）")
+                if not verify:
+                    break
+                else:
+                    if len(verify)==3 and re.match(r'\d\d\d',verify):
+                        break                        
+                    else:
+                        gui.delete('1.0','end')
+                        print('编号格式错误，请输入三位数字。')          
+            gui.delete('1.0','end')
         if verify:
             xls_name='MH'+verify+cus_name_input
         else:
             xls_name='MH'+new_num+cus_name_input
         
-        wb=openpyxl.load_workbook(os.path.join(self.cus_file_dir,'模板.xlsx'))
+        wb=openpyxl.load_workbook(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsx'))
         sht=wb['基本情况']
         sht['A2']=xls_name[0:5]
         sht['B2']=cus_name_input
@@ -67,6 +93,8 @@ class MingHu:
         
         wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsx'))
         print('\n生成新的会员档案文件：{}'.format(self.cus_file_dir+'\\'+xls_name+'.xlsx'))
+
+        return xls_name
 
 
     def fonts(self,font_name,font_size):
@@ -169,132 +197,6 @@ class MingHu:
                 m+=1
                 n+=1
 
-    def read_excel(self,cus='MH001韦美霜'):
-        xls_name=os.path.join(self.cus_file_dir,cus+'.xlsx')
-        df_basic=pd.read_excel(xls_name,sheet_name='基本情况')    
-        df_body=pd.read_excel(xls_name,sheet_name='身体数据')
-        df_infos=pd.read_excel(xls_name,sheet_name='训练情况',skiprows=2,header=None)
-        return [df_basic,df_body,df_infos]
-
-    def exp_cus_prd(self,cus='MH001韦美霜',start_time='20150101',end_time=''):
-        df=self.read_excel(cus=cus)
-        df_basic=df[0] #基本情况
-        df_body=df[1] #身体围度
-        infos=df[2] #训练情况
-
-        #------------基本情况--------
-        out=Vividict()       
-
-        if end_time=='':
-            end_time=datetime.now()
-        else:
-            end_time=datetime.strptime('-'.join([end_time[0:4],end_time[4:6],end_time[6:]]),'%Y-%m-%d')
-        start_time=datetime.strptime('-'.join([start_time[0:4],start_time[4:6],start_time[6:]]),'%Y-%m-%d')
-        
-        
-        # df_basic=pd.read_excel(xls_name,sheet_name='基本情况')        
-        out['nickname']=df_basic['昵称'].tolist()[0] #昵称
-        out['sex']=df_basic['性别'].tolist()[0] #性别
-
-        #年龄
-        if not df_basic['出生年月'].empty:
-            birth=df_basic['出生年月'].tolist()[0]
-            if len(str(birth))==4:
-                birth=str(birth)+'0101'
-                age=days_cal.calculate_age(birth)
-                out['age']=age
-            elif len(str(birth))==6:
-                birth=str(birth)+'01'
-                age=days_cal.calculate_age(birth)
-                out['age']=age
-            elif len(str(birth))==8:
-                age=days_cal.calculate_age(str(birth))
-                out['age']=age
-            else:
-                out['age']=''            
-        else:
-            out['age']='' 
-        
-
-        #------------身体数据--------
-        # df_body=pd.read_excel(xls_name,sheet_name='身体数据')
-        # df_body=df_body[(df_body['时间']>=start_time) & (df_body['时间']<=end_time)] #根据时间段筛选记录
-        df_body=df_body[df_body['时间']<=end_time] #根据时间段筛选记录
-        df_body=df_body.fillna(0)
-        if df_body.empty:
-            out['body']=''
-        else:
-            body_recent=df_body[df_body['时间']==df_body['时间'].max()].values.tolist()[0]       
-            out['body']['time']=body_recent[0]
-            out['body']['ht']=body_recent[1]
-            out['body']['wt']=body_recent[2]
-            out['body']['bfr']=body_recent[3]
-            out['body']['chest']=body_recent[4]
-            out['body']['l_arm']=body_recent[5]
-            out['body']['r_arm']=body_recent[6]
-            out['body']['waist']=body_recent[7]
-            out['body']['hip']=body_recent[8]
-            out['body']['l_leg']=body_recent[9]
-            out['body']['r_leg']=body_recent[10]
-            out['body']['l_calf']=body_recent[11]
-            out['body']['r_calf']=body_recent[12]
-            out['body']['ht_lung']=body_recent[13]
-            out['body']['balance']=body_recent[14]
-            out['body']['power']=body_recent[15]
-            out['body']['flexibility']=body_recent[16]
-            out['body']['core']=body_recent[17]
-
-            bfr_data=cals()
-            bfr=bfr_data.bfr(age=age,sex=out['sex'],ht=out['body']['ht'],wt=out['body']['wt'],waist=out['body']['waist'],formula=1)
-            out['body']['bfr']=bfr
-
-        #------------训练数据--------
-        # infos=pd.read_excel(xls_name,sheet_name='训练情况',skiprows=2,header=None)
-        infos=infos.iloc[:,0:10] #取前10列
-        infos.columns=['时间','形式','目标肌群','有氧项目','有氧时长','力量内容','重量','次数','教练姓名','教练评语']
-        # print(infos.dropna(how='all'))
-        if infos.dropna(how='all').shape[0]!=0:
-            infos=infos[(infos['时间']>=start_time) & (infos['时间']<=end_time)] #根据时间段筛选记录      
-
-            # print('168 line:',infos)
-
-            #起止日期
-            out['interval']=[infos['时间'].min(),infos['时间'].max()]  
-            out['interval_input']=[start_time,end_time]
-
-            #次数
-            train_times=infos.groupby(['时间'],as_index=False).nunique()['时间'].nunique()
-            out['train_times']=train_times
-
-            #抗阻训练
-            train_dates=infos.groupby(['时间','目标肌群'])
-            # print(train_dates)
-            train_big_type=[]
-            for dt,itm in train_dates:
-                train_big_type.append(list(dt))
-            df_train_big_type=pd.DataFrame(train_big_type)    
-            if not df_train_big_type.empty:   
-                df_train_big_type.columns=['时间','目标肌群']
-                _sum_train_items=df_train_big_type.groupby(['目标肌群'],as_index=False)
-                sum_train_items=pd.DataFrame(_sum_train_items.count())  
-                sum_train_items.dropna(axis=0, how='any', inplace=True)
-                sum_train_items=sum_train_items[sum_train_items['目标肌群']!=' '].values
-                if len(sum_train_items)>0:
-                    for itm in sum_train_items:
-                        out['train']['muscle'][itm[0]]=itm[1]
-                else:
-                    out['train']['muscle']=''
-            else:
-                out['train']['muscle']=''
-        
-            #有氧训练总时长
-            out['train']['oxy_time']=infos['有氧时长'].apply(lambda x:int(x) if isinstance(x,str) else x).sum()
-        else:
-            out['train']=''
-
-        # print('201 line:',out)
-        return out
-
     def draw(self,cus='MH001韦美霜',ins='MHINS002韦越棋',start_time='20150101',end_time=''):
         
         def slogan():
@@ -316,7 +218,9 @@ class MingHu:
             return ins_inf
 
         def txts():
-            infos=self.exp_cus_prd(cus=cus,start_time=start_time,end_time=end_time)        
+            cus_data=get_data.ReadAndExportData(adj_bfr=self.adj_bfr,adj_src=self.adj_src,gui=self.gui)
+            infos=cus_data.exp_cus_prd(cus_file_dir=self.cus_file_dir,cus=cus,start_time=start_time,end_time=end_time)    
+                
             # print(infos) 
             txts=Vividict()
             #文字
@@ -373,7 +277,8 @@ class MingHu:
                                 if _oxy_time%60==0:
                                     _oxy_time='有氧训练    '+str(int(_oxy_time//60))+'分钟\n'
                                 else:
-                                    _oxy_time='有氧训练    '+str(int(_oxy_time//60))+'分钟'+str(int(_oxy_time%60))+'秒\n'
+                                    _oxy_time='有氧训练    '+str(int(_oxy_time//60))+'分钟'
+                                    # _oxy_time='有氧训练    '+str(int(_oxy_time//60))+'分钟'+str(int(_oxy_time%60))+'秒\n'
                             t_oxy=t_oxy+_oxy_time
                             t_oxy.rstrip()
                         else:
@@ -649,7 +554,7 @@ class MingHu:
                     # img.paste(pic_teach,())   x_l+40,y_train+200,x_r-40,y_train+200+s_train_content
 
                 #logo
-                logo=Image.open(os.path.join(self.ins_dir,'minghulogo.png'))
+                logo=Image.open(os.path.join(self.public_dir,'logo及二维码','logo.png'))
                 w_logo,h_logo=logo.size
                 logo=logo.resize((300,int(h_logo*300/w_logo)))
                 r4,g4,b4,a4=logo.split()
@@ -774,11 +679,12 @@ class GroupDataInput:
 
             book=openpyxl.load_workbook(fn)
             df_to_write=pd.read_excel(fn,sheet_name='训练情况')
-            df_new=pd.concat([df_to_write,df_data])
+            # df_new=pd.concat([df_to_write,df_data])
+            # print(df_new)
             writer = pd.ExcelWriter(fn,engine='openpyxl')#可以向不同的sheet写入数据      
             writer.book=book
             writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-            df_rows = df_to_write.shape[0] #获取原数据的行数
+            df_rows = df_to_write.dropna(axis=0,how='all').shape[0] #去除所有为na的行，然后获取原数据的行数
             df_data.to_excel(writer, sheet_name='训练情况',startrow=df_rows+1, index=False, header=False)#将数据写入excel中的aa表,从第一个空行开始写
             writer.save()#保存
             writer.close()
@@ -810,6 +716,333 @@ class GroupDataInput:
             wb.save(fn)
 
         print('完成')
+
+class FeedBackAfterClass:
+    def __init__(self):
+        self.dir=os.path.dirname(os.path.abspath(__file__))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        self.cus_file_dir=config['会员档案文件夹']
+        self.material_dir=config['素材文件夹']
+        self.ins_dir=config['教练文件夹']
+        self.slogan_dir=config['文案文件夹']
+        self.save_dir=config['输出文件夹']
+        self.public_dir=config['公共素材文件夹']
+        self.exp_knlg_dir=config['专业资料文件夹']
+        self.save_dir=config['课后反馈文件夹']
+        self.font_config=os.path.join(self.dir,'configs','fontList.minghu')
+
+
+    def export(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
+        start_time=date_input
+        end_time=date_input
+        cus_data=get_data.ReadAndExportDataNew(adj_bfr='no',)
+        data=cus_data.exp_cus_prd(cus_file_dir=self.cus_file_dir,cus=cus,start_time=start_time,end_time=end_time)
+        return data
+
+    def draw(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324',open_dir='yes'):
+        #文字内容
+        data=self.export(cus=cus,ins=ins,date_input=date_input)
+        # print(data)
+        #日期
+        txt_date=date_input[:4]+'年'+date_input[4:6]+'月'+date_input[6:]+'日'
+        #姓名
+        nickname=data['nickname']
+        #性别
+        sex=data['sex']
+        if sex=='女':
+            sex='女士'
+        elif sex=='男':
+            sex='先生'
+        else:
+            sex=''
+        
+        #标题框文字
+        txt_title_box='看看今天你的汗水洒在哪里？'
+        
+
+        #抗阻内容
+        txt_train_muscle=''
+        for mscl_item in data['train']['muscle_item']:
+            txt_train_muscle=txt_train_muscle+mscl_item[0]+'  '+str(int(mscl_item[2]))+'个'+'\n'
+        txt_train_muscle.strip()
+
+        #有氧内容
+        txt_train_oxy=''
+        for oxy_item in  data['train']['oxy_infos']:
+            if oxy_item[1]%60==0:
+                txt_train_oxy=txt_train_oxy+oxy_item[0]+'  '+str(int(oxy_item[1]//60))+'分'+'\n'
+            else:
+                # txt_train_oxy=txt_train_oxy+oxy_item[0]+'  '+str(int(oxy_item[1]//60))+'分'+'\n'
+                txt_train_oxy=txt_train_oxy+oxy_item[0]+'  '+str(int(oxy_item[1]//60))+'分'+str(int(oxy_item[1]%60))+'秒\n'
+        txt_train_oxy.strip()
+
+
+        txt_train=txt_train_muscle+txt_train_oxy
+
+        #消耗热量
+        txt_burn='消耗热量 '+str(int(data['train']['calories']))+' 千卡'
+        
+        #教练
+        ins=ins[8:][0]+'教练'
+
+        #建议
+        txt_suggest_title=ins+'给你的饮食建议'
+        # txt_suggest='补充足够的碳水化合物：健身训练时能量主要由糖原提供，摄入的碳水化合物可以补充糖原，供给能量，并防止训练造成的肌肉分解'
+        exp_knlg_fn=os.path.join(self.exp_knlg_dir,'减脂饮食建议表.xlsx')
+        _diet_suggests=get_data.ReadDiet(exp_knlg_fn)
+        diet_suggests=_diet_suggests.exp_diet_suggests()
+        txt_suggest=random.choice(diet_suggests)
+
+        #slogan
+        txt_slogan='让健身变得有趣'
+
+        # print(nickname,sex,'\n',txt_date,'\n',txt_train,txt_calories,'\n',ins,txt_suggest,slogan)
+
+
+        ftsz_train=42
+        ftsz_suggest=40
+
+        #背景
+
+        def cal_ht():
+
+            size={
+                'wid':{
+                    'total':720,
+                    'small':640,
+                    'third':600
+                },
+                'ht':{
+                    'total':1280,
+                    'title':300,
+                    'title_box':260,
+                    'train':300,
+                    'burn':200,
+                    'suggest':300,
+                    'suggest_title':120,
+                    'bottom':200,
+                    'gap':10
+                }
+            }
+            
+            #重写训练内容高度
+            ht_train_cal=composing.split_txt_Chn_eng(wid=size['wid']['small']-40,font_size=ftsz_train,txt_input=txt_train,Indent='no')
+            # ht_train=800
+            ht_train=int(ftsz_train*ht_train_cal[1]*1.8)
+            if ht_train>=500:
+                ht_train=int(ftsz_train*ht_train_cal[1]*1.55)
+            # print(ht_train)
+            size['ht']['train']=ht_train
+
+            #重写建议内容高度
+            ht_suggest_cal=composing.split_txt_Chn_eng(wid=size['wid']['third']-20,font_size=ftsz_suggest,txt_input=txt_suggest,Indent='yes')
+            ht_suggest=int(ftsz_suggest*ht_suggest_cal[1]*2)+size['ht']['suggest_title']
+            size['ht']['suggest']=ht_suggest
+
+            total_ht=size['ht']['title']+size['ht']['train']+size['ht']['burn']+size['ht']['suggest']+size['ht']['bottom']+size['ht']['gap']*2*4
+            size['ht']['total']=total_ht
+ 
+            # print(size)
+            return size 
+        
+        def color_list():
+            color={
+                'block':{
+                    'bg':'#fffcf9',
+                    'title':'#ff8ddf',
+                    'train':'#fee8ff',
+                    'train_bar':'#fecaff',
+                    'burn':'#ffffff',
+                    'suggest':'#f1fcff',
+                    'suggest_small_box':'#ffffff',
+                },
+                'edge':{
+                    'title_box':'#fac1f1',
+                    'burn':'#ef7f4e',
+                    'suggest_small_box':'#808081',
+                },
+                'font':{
+                    'title':'#ffffff',
+                    'train':'#ff8ddf',
+                    'burn':'#ef4700',
+                    'suggest_title':'#595757',
+                    'suggest':'#143f00',
+                    'slogan':'#ad5a28'
+                }
+
+
+            }
+
+            return color
+
+        def draw_blocks():
+            size=cal_ht()
+            color=color_list()
+
+            p_title_block=(0,0,size['wid']['total'],size['ht']['title'])
+            p_title_box=(p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2,
+                        p_title_block[1]+(size['ht']['title']-size['ht']['title_box'])//2,
+                        p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2+size['wid']['small'],
+                        p_title_block[1]+(size['ht']['title']-size['ht']['title'])//2+size['ht']['title_box'])
+
+
+            p_train=(p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2,
+                        p_title_block[3]+size['ht']['gap']*2,
+                        p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2+size['wid']['small'],
+                        p_title_block[3]+size['ht']['train'])
+            p_train_bar=(p_train[0]+50,p_train[1]+18,p_train[0]+30+10,p_train[3]-15)
+            p_train_txt=[p_train_bar[0]+35,p_train_bar[1]+10]
+            p_burn=(p_train[0],
+                    p_train[3]+size['ht']['gap']*2,
+                    p_train[2],
+                    p_train[3]+size['ht']['burn'])
+            
+            p_flame=[p_burn[0]+20,p_burn[1]+30]
+                    
+            p_suggest=(p_burn[0],
+                    p_burn[3]+size['ht']['gap']*2,
+                    p_burn[2],
+                    p_burn[3]+size['ht']['gap']*2+size['ht']['suggest'])
+
+            p_suggest_small=(p_suggest[0]+(size['wid']['small']-size['wid']['third'])//2,
+                    p_suggest[1]+size['ht']['suggest_title'],
+                    p_suggest[0]+(size['wid']['small']-size['wid']['third'])//2+size['wid']['third'],
+                    p_suggest[1]+size['ht']['suggest_title']+(size['ht']['suggest']-size['ht']['suggest_title'])-20)
+
+            p_suggest_txt=[p_suggest_small[0]+18,p_suggest_small[1]+20]
+            
+            p_logo=[p_suggest[0]+20,p_suggest[3]+size['ht']['gap']*2+(size['ht']['bottom']-120)//2]
+            
+
+            bg=Image.new('RGBA',(size['wid']['total'],size['ht']['total']),color=color['block']['bg'])
+            
+            draw=ImageDraw.Draw(bg)
+
+            #标题框
+            draw.rectangle(p_title_block,fill=color['block']['title'])
+            draw.rounded_rectangle(xy=p_title_box,radius=10,fill=None,width=3,outline=color['edge']['title_box'])
+
+
+            #训练内容框
+            draw.rounded_rectangle(xy=p_train,radius=10,fill=color['block']['train'],width=3,outline=None)
+            draw.rectangle(xy=p_train_bar,fill=color['block']['train_bar'])
+
+            #燃烧
+            draw.rounded_rectangle(xy=p_burn,radius=10,fill=color['block']['burn'],width=3,outline=color['edge']['burn'])
+
+            #教练建议
+            draw.rectangle(xy=p_suggest,fill=color['block']['suggest'])
+            draw.rounded_rectangle(xy=p_suggest_small,radius=10,fill=color['block']['suggest_small_box'],
+                                    width=3,outline=color['edge']['suggest_small_box'])
+
+
+            #图片
+            #火焰图片
+            _flame=Image.open(os.path.join(self.public_dir,'flame.png'))
+            flame=_flame.resize((_flame.size[0]*120//_flame.size[1],120))
+            a_flame=flame.split()[3]
+            # bg.paste(a_flame,p_flame)
+            bg.paste(flame,p_flame,mask=a_flame)
+
+            #logo
+            _logo=Image.open(os.path.join(self.public_dir,'logo及二维码','logo.png'))
+            logo=_logo.resize((_logo.size[0]*120//_logo.size[1],120))
+            a_logo=logo.split()[3]
+            bg.paste(logo,p_logo,mask=a_logo)
+
+            #文字
+            font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.minghu')
+            #姓名
+            draw.text((p_title_box[0]+50,p_title_box[1]+30),
+                        nickname+sex,
+                        fill=color['font']['title'],
+                        font=composing.fonts('方正韵动粗黑',60,config=font_config_file))
+            #日期
+            draw.text((p_title_box[0]+50,p_title_box[1]+110),
+                        txt_date,
+                        fill=color['font']['title'],
+                        font=composing.fonts('方正韵动粗黑',40,config=font_config_file))
+            #标题栏内其他文字
+            draw.text((p_title_box[0]+50,p_title_box[1]+176),
+                        txt_title_box,
+                        fill=color['font']['title'],
+                        font=composing.fonts('方正韵动粗黑',40,config=font_config_file))
+
+            #训练内容
+            print()
+            composing.put_txt_img(draw=draw,
+                                    tt=txt_train,
+                                    total_dis=int((p_train[2]-p_train_bar[0])*0.8),
+                                    xy=p_train_txt,
+                                    dis_line=int(ftsz_train*0.4),
+                                    fill=color['font']['train'],
+                                    font_name='汉仪糯米团',
+                                    font_size=ftsz_train,
+                                    addSPC='no',
+                                    font_config_file=font_config_file)
+
+            #燃烧热量
+            draw.text((p_burn[0]+130,p_burn[1]+52),
+                        txt_burn,
+                        fill=color['font']['burn'],
+                        font=composing.fonts('汉仪糯米团',54,config=font_config_file))
+
+            #教练建议
+            draw.text((p_suggest[0]+98,p_suggest[1]+36),
+                        txt_suggest_title,
+                        fill=color['font']['suggest_title'],
+                        font=composing.fonts('汉仪糯米团',44,config=font_config_file))
+
+            composing.put_txt_img(draw=draw,
+                                    tt=txt_suggest,
+                                    total_dis=int((p_suggest_small[2]-p_suggest_small[0])*0.9),
+                                    xy=p_suggest_txt,
+                                    dis_line=int(ftsz_suggest*0.5),
+                                    fill=color['font']['suggest'],
+                                    font_name='汉仪字酷堂义山楷w',
+                                    font_size=ftsz_train,
+                                    addSPC='add_2spaces',
+                                    font_config_file=font_config_file)
+
+            #slogan
+            draw.text((p_logo[0]+255,p_logo[1]+28),txt_slogan,
+                        fill=color['font']['slogan'],font=composing.fonts('华康海报体W12(p)',52,config=font_config_file))
+
+            # bg.show()
+            bg=bg.convert('RGB')
+            save_name=date_input+'_'+cus+'.jpg'
+            save_dir=os.path.join(self.save_dir,cus)
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+            bg.save(os.path.join(save_dir,save_name),quality=90,subsampling=0)
+            
+            if open_dir=='yes':
+                os.startfile(save_dir)
+
+
+            print('完成\n')
+
+
+        draw_blocks()
+
+    def group_afterclass(self,ins='MHINS002韦越棋',date_input='20210324',open_dir='no'):
+        grp_file=os.path.join(self.cus_file_dir,'00-团课分班录入表.xlsx')
+        df_grp_pre=pd.read_excel(grp_file,sheet_name='分组',skiprows=1)
+        df_grp=df_grp_pre.iloc[:,4:]
+        df_grp_names=df_grp.columns.tolist()
+        #需录入数据的名单
+        df_real_list=df_grp_pre['Unnamed: 0'].dropna()           
+
+        if df_real_list.empty:
+            exit('未录入数据')
+        else:
+            # cus_list=df_real_list.apply(lambda x:x+'.xlsx').tolist()
+            cus_list=df_real_list.tolist()
+
+        for cus_name in cus_list:
+            fn=os.path.join(self.cus_file_dir,cus_name)    
+            print('正在生成 {} 的课后反馈……'.format(cus_name),end='')
+            self.draw(cus=cus_name,ins=ins,date_input=date_input,open_dir=open_dir)
 
 
 class FitData2Pic:
@@ -944,45 +1177,6 @@ class FitData2Pic:
         plt.show()
         return plt
             
-class cals:
-    def bfr(self,age,sex,ht,wt,waist,formula=1):
-            # 女：
-            # 参数a=腰围（cm）×0.74
-            # 参数b=体重（kg）×0.082+34.89
-            # 体脂肪重量（kg）=a－b
-            # 体脂率=（身体脂肪总重量÷体重）×100%
-            # 男：
-            # 参数a=腰围（cm）×0.74
-            # 参数b=体重（kg）×0.082+44.74
-            # 体脂肪重量（kg）=a－b
-            # 体脂率=（身体脂肪总重量÷体重）×100%
-        if formula==1:
-            if sex=='女':
-                k=34.89
-            if sex=='男':
-                k=44.74
-            a=waist*0.74
-            b=wt*0.082+k
-            fat=a-b
-
-            bfr=fat/wt
-
-        elif formula==2:
-            # 1.2×BMI+0.23×年龄-5.4-10.8×性别（男为1，女为0）
-            if sex=='女':
-                k=0
-            if sex=='男':
-                k=1
-
-            bmi=wt/((ht/100)*(ht/100))
-            bfr=1.2*bmi+0.23*age-5.4-10.8*k
-
-
-        adj_bfr=input('\n计算出的体脂率为 {}，如需修改请直接输入体脂率（如：12.46%），不需要修改请直接按回车——\n\n'.format(str('{:.2%}'.format(bfr))))
-        if adj_bfr:
-            bfr=float(adj_bfr[:-1])/100
-
-        return bfr
 
 class Vividict(dict):
     def __missing__(self, key):
@@ -991,9 +1185,15 @@ class Vividict(dict):
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    p=MingHu()
-    p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
+    # p=MingHu()
+    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
     # p.auto_cus_xls()
+
+    #当天报告
+    p=FeedBackAfterClass()
+    # p.draw(cus='MH031梁丽峰',ins='MHINS002韦越棋',date_input='20210623')
+    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210323')
+    p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
     # 根据多次体测数据生成折线图
     fitdata=FitData2Pic()
@@ -1002,6 +1202,7 @@ if __name__=='__main__':
     #分组录入数据
     # p=GroupDataInput()
     # p.data_input()
+
     #计算体脂率
     # my=cals()
     # print(my.bfr(age=40,sex='男',ht=170,wt=63.8,waist=82,formula=1))
