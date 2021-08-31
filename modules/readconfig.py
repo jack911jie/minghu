@@ -9,3 +9,13 @@ def exp_json(t):
     config=json.loads(_line) 
 
     return config
+
+def readColorConfig(fn):
+    with open(fn,'r',encoding='utf-8') as f:
+        lines=f.readlines()
+        _line=''
+        for line in lines:
+            newLine=line.strip('\n')
+            _line=_line+newLine
+        config=_line
+    return config
