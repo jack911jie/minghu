@@ -254,9 +254,9 @@ class ReadAndExportDataNew:
             train_muscle_info=[]
             train_muscle_data=infos.groupby(['力量内容'])
             for mscl_item,mscl_count in train_muscle_data:
-                train_muscle_info.append([mscl_item,mscl_count['重量'].sum(),mscl_count['次数'].sum()])
+                train_muscle_info.append([mscl_item,mscl_count['重量'].sum(),mscl_count['次数'].sum(),mscl_count['距离'].sum()])
             out['train']['muscle_item']=train_muscle_info
-            # print(out['train']['muscle_item'])   
+            print(out['train']['muscle_item'])   
 
             #大项
             train_dates=infos.groupby(['时间','目标肌群'])

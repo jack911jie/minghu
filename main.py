@@ -754,7 +754,10 @@ class FeedBackAfterClass:
         #抗阻内容
         txt_train_muscle=''
         for mscl_item in data['train']['muscle_item']:
-            txt_train_muscle=txt_train_muscle+mscl_item[0]+'  '+str(int(mscl_item[2]))+'个'+'\n'
+            if mscl_item[2]>0:
+                txt_train_muscle=txt_train_muscle+mscl_item[0]+'  '+str(int(mscl_item[2]))+'个'+'\n'
+            else:
+                txt_train_muscle=txt_train_muscle+mscl_item[0]+'  '+str(int(mscl_item[3]))+'米'+'\n'
         txt_train_muscle.strip()
 
         #有氧内容
@@ -1164,12 +1167,12 @@ if __name__=='__main__':
     #当天报告
     p=FeedBackAfterClass(place='minghu')
     # p.draw(cus='QQ001测试',ins='QQINS001周颖鑫',date_input='20210623')
-    p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210623')
+    p.draw(cus='MH037廖程',ins='MHINS002韦越棋',date_input='20210824')
     # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
     # 根据多次体测数据生成折线图
-    fitdata=FitData2Pic()
-    fitdata.to_pic()
+    # fitdata=FitData2Pic()
+    # fitdata.to_pic()
 
     #分组录入数据
     # p=GroupDataInput()
