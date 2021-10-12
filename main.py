@@ -40,6 +40,7 @@ class MingHu:
         self.adj_src=adj_src
         self.gui=gui
         self.place=place
+        print(os.path.join(self.dir,'configs','main_'+place+'.config'),self.ins_dir,self.cus_file_dir)
         self.df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'),sheet_name='教练信息')
         self.color_config_fn=os.path.join(os.path.dirname(__file__),'configs','colors.config')
         with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
@@ -703,7 +704,7 @@ class FeedBackAfterClass:
         self.save_dir=config['输出文件夹']
         self.public_dir=config['公共素材文件夹']
         self.exp_knlg_dir=config['专业资料文件夹']
-        self.save_dir=config['课后反馈文件夹']
+        self.save_dir_feedback=config['课后反馈文件夹']
         self.font_config=os.path.join(self.dir,'configs','fontList.minghu')
         self.df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'),sheet_name='教练信息')
         self.color_config_fn=os.path.join(os.path.dirname(__file__),'configs','colors.config')
@@ -986,7 +987,7 @@ class FeedBackAfterClass:
             # bg.show()
             bg=bg.convert('RGB')
             save_name=date_input+'_'+cus+'.jpg'
-            save_dir=os.path.join(self.save_dir,cus)
+            save_dir=os.path.join(self.save_dir_feedback,cus)
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
             bg.save(os.path.join(save_dir,save_name),quality=90,subsampling=0)
@@ -1160,14 +1161,14 @@ class Vividict(dict):
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    # p=MingHu(place='seven')
+    p=MingHu(place='seven')
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
-    # p.auto_cus_xls()
+    p.auto_cus_xls()
 
     #当天报告
-    p=FeedBackAfterClass(place='minghu')
+    # p=FeedBackAfterClass(place='minghu')
     # p.draw(cus='QQ001测试',ins='QQINS001周颖鑫',date_input='20210623')
-    p.draw(cus='MH037廖程',ins='MHINS002韦越棋',date_input='20210824')
+    # p.draw(cus='MH037廖程',ins='MHINS002韦越棋',date_input='20210824')
     # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
     # 根据多次体测数据生成折线图

@@ -1,5 +1,8 @@
+import os
+import sys
 import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib
+from matplotlib import pyplot as plt 
 import matplotlib.font_manager as fm
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from PIL import Image,ImageDraw
@@ -72,7 +75,7 @@ def round_corner(img,method='in'):
 
 if __name__=='__main__':
     # img=Image.open('E:\\健身项目\\素材\\男性头像01.jpg')
-    img=Image.open('E:\\铭湖健身\\素材\\女性头像02.jpg')
+    img=Image.open('f:\\铭湖健身\\素材\\女性头像02.jpg')
     imgg=round_corner(img,method='in')
-    imgg.save('E:\\铭湖健身\\素材\\tt.png')
+    # imgg.save('E:\\铭湖健身\\素材\\tt.png')
     imgg.show()

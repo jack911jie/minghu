@@ -49,6 +49,7 @@ class GUI:
         global fr_grp
         window =tk.Tk()
         window.title('铭湖健身会员管理及反馈小程序 v1.0')
+        # window.title(self.ins_dir)
         window.geometry('500x600')
         window.attributes("-toolwindow", 2)
         window.resizable(0,0)
@@ -327,7 +328,7 @@ class GUI:
                 msg_box.delete('1.0','end')
                 if value_cus_name.get():
                     new_msg=myStdout(msg_box)
-                    new_cus_fn=run.auto_xls(cus_name_input=value_cus_name.get().upper(),mode='gui',gui=msg_box)
+                    new_cus_fn=run.auto_xls(place=self.place,cus_name_input=value_cus_name.get().upper(),mode='gui',gui=msg_box)
                     print(new_cus_fn)
                     if new_cus_fn:
                         print('正在打开文件……')
