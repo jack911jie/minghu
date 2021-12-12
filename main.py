@@ -29,7 +29,7 @@ plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 class MingHu:
     def __init__(self,adj_bfr='yes',adj_src='prg',gui=''):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_minghu.config'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -649,7 +649,7 @@ class MingHu:
 class GroupDataInput:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_minghu.config'))
         self.grp_dir=config['会员档案文件夹']
 
     def data_input(self):
@@ -720,7 +720,7 @@ class GroupDataInput:
 class FeedBackAfterClass:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_minghu.config'))
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -1049,7 +1049,7 @@ class FitData2Pic:
     def __init__(self):
         self.dir=os.path.dirname(os.path.abspath(__file__))
         self.default_title='会员健身数据比较'
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_minghu.config'))
         self.fn=os.path.join(config['会员档案文件夹'],'MH000唐青剑.xlsx')
         # self.fn='D:\\Documents\\WXWork\\1688851376227744\WeDrive\\铭湖健身工作室\\铭湖健身工作室\\会员MH000唐青剑.xlsx'
         # self.font='/home/jack/data/健身项目/minghu/fonts/msyh.ttc'

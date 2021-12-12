@@ -17,7 +17,7 @@ warnings.filterwarnings('ignore')
 
 class GUI:
     def __init__(self):
-        config=readconfig.exp_json(os.path.join(os.path.dirname(__file__),'configs','main.config'))
+        config=readconfig.exp_json(os.path.join(os.path.dirname(__file__),'configs','main_minghu.config'))
         self.cus_dir=config['会员档案文件夹']
         self.public_dir=config['公共素材文件夹']
         
