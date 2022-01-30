@@ -23,7 +23,9 @@ from PIL import Image,ImageDraw,ImageFont
 import random
 import matplotlib.pyplot as plt 
 import matplotlib.font_manager as fm
+import matplotlib.ticker as mticker
 from tkinter import simpledialog
+
 # from matplotlib.backends.backend_agg import FigureCanvasAgg
 plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 
@@ -1020,141 +1022,7 @@ class FeedBackAfterClass:
             fn=os.path.join(self.cus_file_dir,cus_name)    
             print('正在生成 {} 的课后反馈……'.format(cus_name),end='')
             self.draw(cus=cus_name,ins=ins,date_input=date_input,open_dir=open_dir)
-
-
-class FitData2Pic:
-    def __init__(self):
-        self.dir=os.path.dirname(os.path.abspath(__file__))
-        self.default_title='会员健身数据比较'
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
-        self.fn=os.path.join(config['会员档案文件夹'],'MH022骆莹莹.xlsx')
-        # self.fn='D:\\Documents\\WXWork\\1688851376227744\WeDrive\\铭湖健身工作室\\铭湖健身工作室\\会员MH000唐青剑.xlsx'
-        # self.font='/home/jack/data/健身项目/minghu/fonts/msyh.ttc'
-        self.font='j:\\fonts\\msyh.ttc'
-
-    def to_pic(self,title='',fn='',d_font=''):
-        if title=='':
-            title=self.default_title
-        if fn=='':
-            fn=self.fn
-        if d_font=='':
-            d_font=self.font
-        
-        myfont = fm.FontProperties(fname=d_font) # 设置字体
-
-        df=pd.read_excel(fn,sheet_name='身体数据')
-
-        x=[datetime.strftime(d,'%Y-%m-%d') for d in df['时间'].tolist()]
-        y_wt=df['体重'].tolist()
-        y_chest=df['胸围'].tolist()
-        y_waist=df['腰围'].tolist()
-        y_l_arm=df['左臂围'].tolist()
-        y_r_arm=df['右臂围'].tolist()
-        y_hip=df['臀围'].tolist()
-        y_l_leg=df['左腿围'].tolist()
-        y_r_leg=df['右腿围'].tolist()
-        y_l_calf=df['左小腿围'].tolist()
-        y_r_calf=df['右小腿围'].tolist()
-
-        fig=plt.figure(figsize=(9,20))
-
-        ax1=fig.add_axes([0.1, 0.08, 0.8, 0.12],facecolor='#FFF5FB')
-        ax1.plot(x,y_wt,'o-',color='#FF4747',label='体重')
-        ax1.set_ylabel('体重(Kg)',fontproperties=myfont,color='#FF4747')
-        ax1.tick_params(axis='y',colors='#FF4747')
-        ax1.tick_params(axis='x',colors='#A65817')
-        ax1.set_xticklabels(x,rotation=25)
-        # ax1.legend(prop=myfont)
-        ax1.set_ylim(min(y_wt)*0.98,max(y_wt)*1.02)
-        for xy in list(zip(x,y_wt)):
-            ax1.text(xy[0],xy[1]+0.5,xy[1],color='#FF4747')
-
-        ax2=fig.add_axes([0.1, 0.20, 0.8, 0.12],facecolor='#F5F6FF')
-        ax2.plot(x,y_r_calf,marker='s',color='#4D85A6',label='右小腿围')
-        ax2.plot(x,y_l_calf,marker='s',color='violet',label='左小腿围')
-        ax2.set_ylabel('小腿围(cm)',fontproperties=myfont,color='#4D85A6')
-        ax2.tick_params(axis='y',colors='#4D85A6')
-        ax2.set_xticks([])
-        ax2.legend(prop=myfont)
-        ax2.set_ylim(min(y_r_calf)*0.95,max(y_r_calf)*1.05)
-        for xy in list(zip(x,y_r_calf)):
-            ax2.text(xy[0],xy[1]+0.4,xy[1],color='#4D85A6')
-        for xy in list(zip(x,y_l_calf)):
-            ax2.text(xy[0],xy[1]-0.9,xy[1],color='violet')
-
-        ax3=fig.add_axes([0.1, 0.32, 0.8, 0.12],facecolor='#F5F6FF')
-        ax3.plot(x,y_r_leg,marker='s',color='#4D85A6',label='右大腿围')
-        ax3.plot(x,y_l_leg,marker='s',color='violet',label='左大腿围')
-        ax3.set_ylabel('大腿围(cm)',fontproperties=myfont,color='#4D85A6')
-        ax3.tick_params(axis='y',colors='#4D85A6')
-        ax3.set_xticks([])
-        ax3.legend(prop=myfont)
-        ax3.set_ylim(min(y_r_leg)*0.95,max(y_r_leg)*1.05)
-        for xy in list(zip(x,y_r_leg)):
-            ax3.text(xy[0],xy[1]+0.4,xy[1],color='#4D85A6')
-        for xy in list(zip(x,y_l_leg)):
-            ax3.text(xy[0],xy[1]-1.2,xy[1],color='violet')
-
-        ax4=fig.add_axes([0.1, 0.44, 0.8, 0.12],facecolor='#F5F6FF')
-        ax4.plot(x,y_r_arm,marker='s',color='#4D85A6',label='右臂围')
-        ax4.plot(x,y_l_arm,marker='s',color='violet',label='左臂围')
-        ax4.set_ylabel('臂围(cm)',fontproperties=myfont,color='#4D85A6')
-        ax4.tick_params(axis='y',colors='#4D85A6')
-        ax4.set_xticks([])
-        ax4.legend(prop=myfont)
-        ax4.set_ylim(min(y_r_arm)*0.95,max(y_r_arm)*1.05)
-        for xy in list(zip(x,y_r_arm)):
-            ax4.text(xy[0],xy[1]+0.3,xy[1],color='#4D85A6')
-        for xy in list(zip(x,y_l_arm)):
-            ax4.text(xy[0],xy[1]-0.8,xy[1],color='violet')
-
-
-        ax5=fig.add_axes([0.1, 0.56, 0.8, 0.12],facecolor='#FFFAF4')
-        ax5.plot(x,y_waist,marker='s',color='orange',label='腰围')
-        ax5.set_ylabel('腰围(cm)',fontproperties=myfont,color='orange')
-        ax5.tick_params(axis='y',colors='orange')
-        ax5.set_xticks([])
-        # ax5.legend(prop=myfont)
-        ax5.set_ylim(min(y_waist)*0.95,max(y_waist)*1.05)
-        for xy in list(zip(x,y_waist)):
-            ax5.text(xy[0],xy[1]+0.5,xy[1],color='orange')
-
-        ax6=fig.add_axes([0.1, 0.68, 0.8, 0.12],facecolor='#FFFAF4')
-        ax6.plot(x,y_hip,marker='s',color='orange',label='臀围')
-        ax6.set_ylabel('臀围(cm)',fontproperties=myfont,color='orange')
-        ax6.tick_params(axis='y',colors='orange')
-        ax6.set_xticks([])
-        # ax6.legend(prop=myfont)
-        ax6.set_ylim(min(y_hip)*0.95,max(y_hip)*1.05)
-        for xy in list(zip(x,y_hip)):
-            ax6.text(xy[0],xy[1]+0.5,xy[1],color='orange')
-
-
-
-        ax7=fig.add_axes([0.1, 0.80, 0.8, 0.12],facecolor='#FFFAF4')
-        ax7.plot(x,y_chest,marker='s',color='orange',label='胸围')
-        ax7.set_ylabel('胸围(cm)',fontproperties=myfont,color='orange')
-        ax7.tick_params(axis='y',colors='orange')
-        ax7.set_xticks([])
-        # ax4.legend(prop=myfont)
-        ax7.set_ylim(min(y_chest)*0.95,max(y_chest)*1.05)
-        for xy in list(zip(x,y_chest)):
-            ax7.text(xy[0],xy[1]+0.5,xy[1],color='orange')
-
-
-        ax7.set_title(title,fontproperties=myfont,y=1.1,fontsize=20,color='#BF8D30')
-
-        for ax in fig.axes:
-            clr='#BF8D30'
-            for bdr in ['left','right','bottom','top']:
-                ax.spines[bdr].set_color(clr)
-
-
-        # plt.savefig('/home/jack/data/temp/mhdata.jpg')
-        plt.show()
-        return plt
-            
-
+  
 class Vividict(dict):
     def __missing__(self, key):
         value = self[key] = type(self)()
@@ -1170,6 +1038,7 @@ class PeroidSummary:
         self.slogan_dir=config['文案文件夹']
         self.save_dir=config['输出文件夹']
         self.public_dir=config['公共素材文件夹']
+        self.font_dir=config['字体文件夹']
         self.adj_bfr=adj_bfr
         self.adj_src=adj_src
         self.gui=gui
@@ -1200,6 +1069,9 @@ class PeroidSummary:
         else:
             txt_cus_sex='先生'
         cus_birthday=df_basic['出生年月'].tolist()[0]
+        #起止日期
+        txt_period=start_date[:4]+'年'+start_date[4:6]+'月'+start_date[6:]+'日 —— '+end_date[:4]+'年'+end_date[4:6]+'月'+end_date[6:]
+
         #标准化生日
         if len(str(cus_birthday))==4:
             cus_birthday=int(str(cus_birthday)+'0101')
@@ -1329,11 +1201,18 @@ class PeroidSummary:
         radar=draw_pic.DrawRadar()
         pic_radar=radar.draw(physical_fitness_data)
         pic_radar.show()
+
+
+        #围度变化曲线
+    
+        body_measure_data=draw_pic.PeriodChart(font_fn=os.path.join(self.font_dir,'msyh.ttc'))
+        body_measure_chart=body_measure_data.to_pic(cus_dir=self.cus_file_dir,cus_fn='MH003吕雅颖.xlsx',d_font='',title='',items=['waist','hip','chest'])
+        body_measure_chart.show()
                                 
 
         # print(latest_msr_date,txt_wt,txt_bmi,txt_bmr,txt_bfr)
-        print(txt_calories)
-
+        # print(txt_calories)
+        return {''}
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
@@ -1349,7 +1228,7 @@ if __name__=='__main__':
 
     # 根据多次体测数据生成折线图
     # fitdata=FitData2Pic()
-    # fitdata.to_pic()
+    # fitdata.to_pic(items=['chest','waist','hip'])
 
     #分组录入数据
     # p=GroupDataInput()
