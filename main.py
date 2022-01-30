@@ -8,6 +8,7 @@ import days_cal
 import readconfig
 import composing
 import get_data
+import draw_pic
 import json
 import openpyxl
 # from openpyxl import load_workbook
@@ -1159,11 +1160,186 @@ class Vividict(dict):
         value = self[key] = type(self)()
         return value
 
+class PeroidSummary:
+    def __init__(self,place='minghu',adj_bfr='yes',adj_src='prg',gui=''):
+        self.dir=os.path.dirname(os.path.abspath(__file__))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'))
+        self.cus_file_dir=config['会员档案文件夹']
+        self.material_dir=config['素材文件夹']
+        self.ins_dir=config['教练文件夹']
+        self.slogan_dir=config['文案文件夹']
+        self.save_dir=config['输出文件夹']
+        self.public_dir=config['公共素材文件夹']
+        self.adj_bfr=adj_bfr
+        self.adj_src=adj_src
+        self.gui=gui
+        self.place=place
+        print(os.path.join(self.dir,'configs','main_'+place+'.config'),self.ins_dir,self.cus_file_dir)
+        self.df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'),sheet_name='教练信息')
+        self.color_config_fn=os.path.join(os.path.dirname(__file__),'configs','colors.config')
+        with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
+            self.txt_public=txt_pub.readlines()
+        self.cus_instance_name=self.txt_public[5].strip()[0:2]
+        self.prefix=self.cus_instance_name[0:2]
+        self.gym_name=self.txt_public[4]
+        self.gym_addr=self.txt_public[3]
+        if '%' in self.gym_addr:
+            self.gym_addr=''
+        self.txt_ins_word=self.txt_public[2]
+        self.txt_mini_title=self.txt_public[1]
+        self.txt_slogan=self.txt_public[0]
+
+    def cal_data(self,cus_name_input='MH003吕雅颖',start_date='20210729',end_date='20220201'):
+        df_basic=pd.read_excel(os.path.join(self.cus_file_dir,cus_name_input+'.xlsx'),sheet_name='基本情况')
+        cus_name=df_basic['姓名'].tolist()[0]
+        cus_nickname=df_basic['昵称'].tolist()[0]
+        cus_sex=df_basic['性别'].tolist()[0]
+        #称呼
+        if cus_sex=='女':
+            txt_cus_sex='女士'
+        else:
+            txt_cus_sex='先生'
+        cus_birthday=df_basic['出生年月'].tolist()[0]
+        #标准化生日
+        if len(str(cus_birthday))==4:
+            cus_birthday=int(str(cus_birthday)+'0101')
+        elif len(str(cus_birthday))==6:
+            cus_birthday=int(str(cus_birthday)+'01')
+
+        e_date=datetime(int(end_date[0:4]),int(end_date[4:6]),int(end_date[6:8]))
+        s_date=datetime(int(start_date[0:4]),int(start_date[4:6]),int(start_date[6:8]))
+        interval=e_date-s_date
+        prd=interval.days
+
+        if prd>365:
+            if prd//365==prd/365:
+               txt_prd_0=str(prd//365)+'年'
+            else:
+                txt_prd_0=str(prd//365)+'年零'+str(prd%365)+'天'
+        elif prd>30:
+            if prd//30==prd/30:
+                txt_prd_0=str(prd//30)+'个月'
+            else:
+                txt_prd_0=str(prd//30)+'个月零'+str(prd%30)+'天'
+        else:
+            txt_prd_0=str(prd)+'天'
+
+        df_train=pd.read_excel(os.path.join(self.cus_file_dir,cus_name_input+'.xlsx'),sheet_name='训练情况',skiprows=1)
+        df_train.columns=['时间','形式','目标肌群','有氧项目','有氧时长','抗阻内容','重量','距离','次数','消耗热量','教练姓名','教练评语']
+        df_train_interval=df_train[(df_train['时间']>=s_date) & (df_train['时间']<=e_date) ]
+        df_ym=pd.DataFrame()
+        df_ym['year']=df_train_interval['时间'].dt.year
+        df_ym['month']=df_train_interval['时间'].dt.month
+        df_ym['date']=df_train_interval['时间']
+        df_ym_count=df_ym.drop_duplicates('month')
+        df_ym_cal=df_ym_count.groupby('year').count().reset_index()
+        months=df_ym_cal['month'].sum()
+
+        if months>12:
+            txt_prd=str(months//12)+'年零'+str(months//12)+'个月'
+        else:
+            txt_prd=str(months)+'个月'
+        
+        
+        #训练次数（唯一的日期计数）
+        train_counts=len(list(df_train_interval['时间'].unique()))
+
+        #平均训练频率        
+        # if train_counts//months>=1:
+        #     avr_train_counts=str(train_counts//months)+'次'
+        # else:
+        #     avr_train_counts='每月不到1次'
+        try:
+            if train_counts//(prd//30)>=1:
+                avr_train_counts=str(train_counts//(prd//30))+'次'
+            else:
+                avr_train_counts='每月不到1次'
+        except:
+            avr_train_counts='每月'+str(train_counts)+'次'
+
+        #最高训练频率及对应月份
+        df_ym_trainmax=df_ym.drop_duplicates('date')
+        df_trainmax=df_ym_trainmax.groupby(['year','month']).count().reset_index()
+        trainmax=df_trainmax[df_trainmax['date']==df_trainmax['date'].max()]
+        if trainmax.shape[0]>1:
+            t_month=''
+            for index,row in trainmax.iterrows():
+                t_month=t_month+str(row['year'])+'年'+str(row['month'])+'月、'
+            txt_trainmax=t_month[:-1]+'，这'+str(trainmax.shape[0])+'个月都运动了'+str(trainmax['date'].max())+'次'
+        else:
+            txt_trainmax=str(trainmax['year'].tolist()[0])+'年'+str(trainmax['month'].tolist()[0])+'月，一共运动了'+str(trainmax['date'].max())+'次'
+
+
+
+        #最后一次体测日期
+        df_measure=pd.read_excel(os.path.join(self.cus_file_dir,cus_name_input+'.xlsx'),sheet_name='身体数据',skiprows=0)
+        latest_msr_date=str(df_measure['时间'].max())[0:4]+'年'+str(df_measure['时间'].max())[5:7]+'月'+str(df_measure['时间'].max())[8:10]+'日'
+
+        #体重
+        wt=df_measure[df_measure['时间']==df_measure['时间'].max()]['体重'].tolist()[0]
+        txt_wt=str(wt)+' Kg'
+        ht=df_measure[df_measure['时间']==df_measure['时间'].max()]['身高'].tolist()[0]
+
+        #BMI
+        txt_bmi=str(round(wt/((ht/100)*(ht/100)),2))
+
+        
+        cals=get_data.cals()
+        age=days_cal.calculate_age(str(cus_birthday))
+
+        #BMR
+        txt_bmr=cals.bmr(sex=cus_sex,ht=ht,wt=wt,age=age)
+
+        #BFR
+        cus_waist=df_measure[df_measure['时间']==df_measure['时间'].max()]['腰围'].tolist()[0]
+        txt_bfr=cals.bfr(age=age,sex=cus_sex,ht=ht,wt=wt,waist=cus_waist,adj_bfr='yes',adj_src='prg',gui='',formula=1)
+
+        #训练数据
+        train_data=get_data.ReadAndExportDataNew().exp_cus_prd(self.cus_file_dir,cus=cus_name_input,start_time=start_date,end_time=end_date)
+
+        #有氧训练时长
+        oxy_time=train_data['train']['oxy_time']
+        if oxy_time>86400:
+            txt_oxy_time=str(int(oxy_time//86400))+'天'+str(int(oxy_time%86400//3600))+'小时'
+        elif oxy_time>3600:
+            txt_oxy_time=str(int(oxy_time//3600))+'小时'+str(int(oxy_time%3600//60))+'分'
+        else:
+            txt_oxy_time=str(int(oxy_time//60))+'分'
+
+        #抗阻训练总重量
+        txt_muscle_wt=str(int(train_data['train']['muscle_total_wt']))+' Kg'
+
+        #各部位训练次数
+        each_part=train_data['train']['muscle']
+        txt_each_part=''
+        for itm in each_part:
+            txt_each_part=txt_each_part+itm+': '+str(each_part[itm])+' 次'+'\n'
+
+        #运动消耗
+        txt_calories=str(int(train_data['train']['calories']))+' Kcal'
+
+        #体适能指标
+        # print(train_data['body']['ht_lung'])
+        physical_fitness_data={'心肺':train_data['body']['ht_lung'],
+                                '平衡':train_data['body']['balance'],
+                                '力量':train_data['body']['power'],
+                                '柔韧性':train_data['body']['flexibility'],
+                                '核心':train_data['body']['core']}
+        
+        radar=draw_pic.DrawRadar()
+        pic_radar=radar.draw(physical_fitness_data)
+        pic_radar.show()
+                                
+
+        # print(latest_msr_date,txt_wt,txt_bmi,txt_bmr,txt_bfr)
+        print(txt_calories)
+
+
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    p=MingHu(place='seven')
+    p=PeroidSummary(place='minghu')
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
-    p.auto_cus_xls()
+    p.cal_data()
 
     #当天报告
     # p=FeedBackAfterClass(place='minghu')
