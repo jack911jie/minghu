@@ -1070,7 +1070,7 @@ class PeroidSummary:
             txt_cus_sex='先生'
         cus_birthday=df_basic['出生年月'].tolist()[0]
         #起止日期
-        txt_period=start_date[:4]+'年'+start_date[4:6]+'月'+start_date[6:]+'日 —— '+end_date[:4]+'年'+end_date[4:6]+'月'+end_date[6:]
+        txt_period=start_date[:4]+'年'+start_date[4:6]+'月'+start_date[6:]+'日 —— '+end_date[:4]+'年'+end_date[4:6]+'月'+end_date[6:]+'日'
 
         #标准化生日
         if len(str(cus_birthday))==4:
@@ -1123,11 +1123,11 @@ class PeroidSummary:
         #     avr_train_counts='每月不到1次'
         try:
             if train_counts//(prd//30)>=1:
-                avr_train_counts=str(train_counts//(prd//30))+'次'
+                txt_avr_train_counts=str(train_counts//(prd//30))+'次'
             else:
-                avr_train_counts='每月不到1次'
+                txt_avr_train_counts='每月不到1次'
         except:
-            avr_train_counts='每月'+str(train_counts)+'次'
+            txt_avr_train_counts='每月'+str(train_counts)+'次'
 
         #最高训练频率及对应月份
         df_ym_trainmax=df_ym.drop_duplicates('date')
@@ -1145,7 +1145,7 @@ class PeroidSummary:
 
         #最后一次体测日期
         df_measure=pd.read_excel(os.path.join(self.cus_file_dir,cus_name_input+'.xlsx'),sheet_name='身体数据',skiprows=0)
-        latest_msr_date=str(df_measure['时间'].max())[0:4]+'年'+str(df_measure['时间'].max())[5:7]+'月'+str(df_measure['时间'].max())[8:10]+'日'
+        txt_latest_msr_date=str(df_measure['时间'].max())[0:4]+'年'+str(df_measure['时间'].max())[5:7]+'月'+str(df_measure['时间'].max())[8:10]+'日'
 
         #体重
         wt=df_measure[df_measure['时间']==df_measure['时间'].max()]['体重'].tolist()[0]
@@ -1154,17 +1154,28 @@ class PeroidSummary:
 
         #BMI
         txt_bmi=str(round(wt/((ht/100)*(ht/100)),2))
+        bmi_chart=draw_pic.Scale(scale_name='BMI',stage=[10,18.5,24,28,40],stage_name=['','','超重','肥胖',''],colors=('#F4DDA4','#F4DDA4','#DFF4A4','#F4DDA4','#FBB2AB','#FE8E8E'))
+        pic_bmi=bmi_chart.draw(val=round(wt/((ht/100)*(ht/100)),2),scale_adj=200,color_bg='#EAEBEA',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_blue.png'))
 
         
         cals=get_data.cals()
         age=days_cal.calculate_age(str(cus_birthday))
 
         #BMR
-        txt_bmr=cals.bmr(sex=cus_sex,ht=ht,wt=wt,age=age)
+        txt_bmr=str(cals.bmr(sex=cus_sex,ht=ht,wt=wt,age=age))+' 千卡'
 
         #BFR
         cus_waist=df_measure[df_measure['时间']==df_measure['时间'].max()]['腰围'].tolist()[0]
-        txt_bfr=cals.bfr(age=age,sex=cus_sex,ht=ht,wt=wt,waist=cus_waist,adj_bfr='yes',adj_src='prg',gui='',formula=1)
+        val_bfr=round(cals.bfr(age=age,sex=cus_sex,ht=ht,wt=wt,waist=cus_waist,adj_bfr='yes',adj_src='prg',gui='',formula=1)*100,2)
+        txt_bfr=str(val_bfr)+' %'
+        if cus_sex=='女':
+            bfr_stage=[10,25,28,32,40]
+        else:
+            bfr_stage=[10,15,18,25,40]
+        bfr_chart=draw_pic.Scale(scale_name='BFR',stage=bfr_stage,stage_name=['','','','肥胖',''],colors=('#F4DDA4','#F4DDA4','#DFF4A4','#F4DDA4','#FBB2AB','#FE8E8E'))
+        pic_bfr=bfr_chart.draw(val=val_bfr,scale_adj=300,color_bg='#EAEBEA',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_blue.png'))
+
+
 
         #训练数据
         train_data=get_data.ReadAndExportDataNew().exp_cus_prd(self.cus_file_dir,cus=cus_name_input,start_time=start_date,end_time=end_date)
@@ -1200,25 +1211,34 @@ class PeroidSummary:
         
         radar=draw_pic.DrawRadar()
         pic_radar=radar.draw(physical_fitness_data)
-        pic_radar.show()
+        # pic_radar.show()
 
 
         #围度变化曲线
     
         body_measure_data=draw_pic.PeriodChart(font_fn=os.path.join(self.font_dir,'msyh.ttc'))
         body_measure_chart=body_measure_data.to_pic(cus_dir=self.cus_file_dir,cus_fn='MH003吕雅颖.xlsx',d_font='',title='',items=['waist','hip','chest'])
-        body_measure_chart.show()
+        # body_measure_chart.show()
                                 
 
         # print(latest_msr_date,txt_wt,txt_bmi,txt_bmr,txt_bfr)
         # print(txt_calories)
-        return {''}
+        return {'nickname':cus_nickname,'sex':cus_sex,'s-e_data':txt_period,
+                    'train_time':txt_prd,'train_frqcy':txt_avr_train_counts,
+                    'train_max_frqcy':txt_trainmax,'latest_msr':txt_latest_msr_date,
+                    'wt':txt_wt,'bmi':txt_bmi,'bmr':txt_bmr,'bfr':txt_bfr,
+                    'oxy_time':txt_oxy_time,'muscle_wt':txt_muscle_wt,'each_part':txt_each_part,
+                    'calories':txt_calories,'pic_radar':pic_radar,'pic_msr_chart':body_measure_chart,
+                    'pic_bmi':pic_bmi,'pic_bfr':pic_bfr}
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
     p=PeroidSummary(place='minghu')
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
-    p.cal_data()
+    res=p.cal_data()
+    print(res)
+    res['pic_bmi'].show()
+    res['pic_bfr'].show()
 
     #当天报告
     # p=FeedBackAfterClass(place='minghu')

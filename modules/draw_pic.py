@@ -1,7 +1,9 @@
 import os
 import sys
 import pic_transfer
+import pics_fill
 import pandas as pd
+from PIL import Image,ImageDraw,ImageFont
 import numpy as np
 import matplotlib.pyplot as plt 
 import matplotlib.font_manager as fm
@@ -304,11 +306,63 @@ class PeriodChart:
         image=pic_transfer.mat_to_pil_img(fig)
         return image
 
+class Scale:
+    def __init__(self,scale_name='BMI',stage=[0,18.5,24,28,50],stage_name=['','','','超重','肥胖',''],colors=('#F4DDA4','#DFF4A4','#F4DDA4','#FBB2AB','#FE8E8E')):
+        self.scale_name=scale_name
+        self.colors=colors
+        self.stage=stage
+        self.stage_name=stage_name
+
+    def draw(self,val=23,box=(1200,600),scale_adj=10,color_bg='#FFFFFF',arrow_fn='D:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\素材\\公共素材\\UI图标\\倒三角.png'):
+
+        bg=Image.new('RGBA',box,color=color_bg)
+        arrow=Image.open(arrow_fn)
+        arrow=arrow.resize((28,arrow.size[1]*28//arrow.size[0]))
+        arrow_mask=arrow.split()[3]
+
+        #画总刻度条
+        rec=Image.new('RGBA',(800,40),'#FFFFFF')
+        rec=pics_fill.FillGradient().fill_multi_gradient_rct_rgb(rec,self.colors,horizontal=(True, True, True),direction='horizon')
+
+        #画刻度
+        rec_draw=ImageDraw.Draw(rec)
+        bg_draw=ImageDraw.Draw(bg)
+        line_max=self.stage[-1]-self.stage[0]
+
+        line_scales=self.stage[1:-1]
+        if self.scale_name.lower()=='bfr':
+            txt_line_scales=[str(x)+'%' for x in line_scales]
+            txt_val=str(val)+'%'
+        else:
+            txt_line_scales=line_scales
+            txt_val=str(val)
+        stg_name=self.stage_name[1:-1]
+
+        for _n,l_scale in enumerate(line_scales):
+            x=l_scale*rec.size[0]//line_max
+            rec_draw.line((int(x-scale_adj),0,int(x-scale_adj),40), fill='#9F9C9C')
+            bg_draw.text((int(x-scale_adj)+185,416),str(txt_line_scales[_n]),fill='#6B6565',font=ImageFont.truetype('simhei',28))
+            bg_draw.text((int(x-scale_adj)+175,450),stg_name[_n],fill='#6B6565',font=ImageFont.truetype('simhei',24))
+        # bg_draw.text((50,91),'44444',fill='#000000',font=ImageFont.truetype('simhei',18))
+        bg.paste(rec,(200,360))
+
+        #箭头标记输入的数值
+        x_icon=val*rec.size[0]//line_max
+        bg.paste(arrow,(int(x_icon-scale_adj)+200-arrow.size[0]//2,330),mask=arrow_mask)
+        bg_draw.text((int(x_icon-scale_adj)+200-16,290),txt_val,fill='#84B6B9',font=ImageFont.truetype('simhei',32))
+
+        return bg
+
+
 if __name__=='__main__':
     # data={'ht_lung':8,'balance':8,'power':5, 'flexibility':3,'core':7}
     # p=DrawRadar().draw(data)
     # p.show()
 
-    data=PeriodChart(font_fn='G:\\健身项目\\minghu\\fonts\\msyh.ttc')
-    img=data.to_pic(cus_dir='e:\\temp\\铭湖健身测试\\会员资料',cus_fn='MH003吕雅颖.xlsx',d_font='',title='',items=['waist','hip','chest'])
-    img.show()
+    # data=PeriodChart(font_fn='G:\\健身项目\\minghu\\fonts\\msyh.ttc')
+    # img=data.to_pic(cus_dir='e:\\temp\\铭湖健身测试\\会员资料',cus_fn='MH003吕雅颖.xlsx',d_font='',title='',items=['waist','hip','chest'])
+    # img.show()
+
+    p=Scale(scale_name='BMI',stage=[10,18.5,24,28,40],stage_name=['','','超重','肥胖',''],colors=('#F4DDA4','#F4DDA4','#DFF4A4','#F4DDA4','#FBB2AB','#FE8E8E'))
+    res=p.draw(val=22.5,scale_adj=200,color_bg='#EAEBEA',arrow_fn='D:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\素材\\公共素材\\UI图标\\倒三角_blue.png')
+    res.show()
