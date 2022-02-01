@@ -313,7 +313,7 @@ class Scale:
         self.stage=stage
         self.stage_name=stage_name
 
-    def draw(self,val=23,box=(1200,600),scale_adj=10,color_bg='#FFFFFF',arrow_fn='D:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\素材\\公共素材\\UI图标\\倒三角.png'):
+    def draw(self,val=23,color_val='#84B6B9',box=(1200,600),scale_adj=10,color_bg='#FFFFFF',back_transparent_color='',arrow_fn='D:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\素材\\公共素材\\UI图标\\倒三角.png'):
 
         bg=Image.new('RGBA',box,color=color_bg)
         arrow=Image.open(arrow_fn)
@@ -349,7 +349,12 @@ class Scale:
         #箭头标记输入的数值
         x_icon=val*rec.size[0]//line_max
         bg.paste(arrow,(int(x_icon-scale_adj)+200-arrow.size[0]//2,330),mask=arrow_mask)
-        bg_draw.text((int(x_icon-scale_adj)+200-16,290),txt_val,fill='#84B6B9',font=ImageFont.truetype('simhei',32))
+        bg_draw.text((int(x_icon-scale_adj)+200-16,290),txt_val,fill=color_val,font=ImageFont.truetype('simhei',32))
+
+        if back_transparent_color=='':
+            pass
+        else:
+            bg=pic_transfer.pure_bg_transparent(img=bg,bg_color=back_transparent_color)
 
         return bg
 
@@ -364,5 +369,5 @@ if __name__=='__main__':
     # img.show()
 
     p=Scale(scale_name='BMI',stage=[10,18.5,24,28,40],stage_name=['','','超重','肥胖',''],colors=('#F4DDA4','#F4DDA4','#DFF4A4','#F4DDA4','#FBB2AB','#FE8E8E'))
-    res=p.draw(val=22.5,scale_adj=200,color_bg='#EAEBEA',arrow_fn='D:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\素材\\公共素材\\UI图标\\倒三角_blue.png')
+    res=p.draw(val=22.5,color_val='#84B6B9',scale_adj=200,color_bg='#FB2121',back_transparent_color='#FB2121',arrow_fn='D:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\素材\\公共素材\\UI图标\\倒三角_blue.png')
     res.show()

@@ -9,6 +9,7 @@ import readconfig
 import composing
 import get_data
 import draw_pic
+import math
 import json
 import openpyxl
 # from openpyxl import load_workbook
@@ -1039,6 +1040,7 @@ class PeroidSummary:
         self.save_dir=config['输出文件夹']
         self.public_dir=config['公共素材文件夹']
         self.font_dir=config['字体文件夹']
+        self.pro_dir=config['专业资料文件夹']
         self.adj_bfr=adj_bfr
         self.adj_src=adj_src
         self.gui=gui
@@ -1057,6 +1059,11 @@ class PeroidSummary:
         self.txt_ins_word=self.txt_public[2]
         self.txt_mini_title=self.txt_public[1]
         self.txt_slogan=self.txt_public[0]
+
+    def fonts(self,font_name,font_size):
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
+        # print(fontList)
+        return ImageFont.truetype(fontList[font_name],font_size)
 
     def cal_data(self,cus_name_input='MH003吕雅颖',start_date='20210729',end_date='20220201'):
         df_basic=pd.read_excel(os.path.join(self.cus_file_dir,cus_name_input+'.xlsx'),sheet_name='基本情况')
@@ -1137,9 +1144,9 @@ class PeroidSummary:
             t_month=''
             for index,row in trainmax.iterrows():
                 t_month=t_month+str(row['year'])+'年'+str(row['month'])+'月、'
-            txt_trainmax=t_month[:-1]+'，这'+str(trainmax.shape[0])+'个月都运动了'+str(trainmax['date'].max())+'次'
+            txt_trainmax=t_month[:-1]+'，这'+str(trainmax.shape[0])+'个月一共运动了'+str(trainmax['date'].max())+'次'
         else:
-            txt_trainmax=str(trainmax['year'].tolist()[0])+'年'+str(trainmax['month'].tolist()[0])+'月，一共运动了'+str(trainmax['date'].max())+'次'
+            txt_trainmax='表现最优秀是在 '+str(trainmax['year'].tolist()[0])+'年'+str(trainmax['month'].tolist()[0])+'月，运动了'+str(trainmax['date'].max())+'次。'
 
 
 
@@ -1154,8 +1161,8 @@ class PeroidSummary:
 
         #BMI
         txt_bmi=str(round(wt/((ht/100)*(ht/100)),2))
-        bmi_chart=draw_pic.Scale(scale_name='BMI',stage=[10,18.5,24,28,40],stage_name=['','','超重','肥胖',''],colors=('#F4DDA4','#F4DDA4','#DFF4A4','#F4DDA4','#FBB2AB','#FE8E8E'))
-        pic_bmi=bmi_chart.draw(val=round(wt/((ht/100)*(ht/100)),2),scale_adj=200,color_bg='#EAEBEA',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_blue.png'))
+        bmi_chart=draw_pic.Scale(scale_name='BMI',stage=[10,18.5,24,28,40],stage_name=['','','超重','肥胖',''],colors=('#9ED6D6','#CEE9E9','#CEE9E9','#9ED6D6','#9ED6D6'))
+        pic_bmi=bmi_chart.draw(val=round(wt/((ht/100)*(ht/100)),2),color_val='#84B6B9',scale_adj=200,color_bg='#E89A9A',back_transparent_color='',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_blue.png'))
 
         
         cals=get_data.cals()
@@ -1166,19 +1173,19 @@ class PeroidSummary:
 
         #BFR
         cus_waist=df_measure[df_measure['时间']==df_measure['时间'].max()]['腰围'].tolist()[0]
-        val_bfr=round(cals.bfr(age=age,sex=cus_sex,ht=ht,wt=wt,waist=cus_waist,adj_bfr='yes',adj_src='prg',gui='',formula=1)*100,2)
+        val_bfr=round(cals.bfr(age=age,sex=cus_sex,ht=ht,wt=wt,waist=cus_waist,adj_bfr='no',adj_src='prg',gui='',formula=1)*100,2)
         txt_bfr=str(val_bfr)+' %'
         if cus_sex=='女':
             bfr_stage=[10,25,28,32,40]
         else:
             bfr_stage=[10,15,18,25,40]
-        bfr_chart=draw_pic.Scale(scale_name='BFR',stage=bfr_stage,stage_name=['','','','肥胖',''],colors=('#F4DDA4','#F4DDA4','#DFF4A4','#F4DDA4','#FBB2AB','#FE8E8E'))
-        pic_bfr=bfr_chart.draw(val=val_bfr,scale_adj=300,color_bg='#EAEBEA',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_blue.png'))
+        bfr_chart=draw_pic.Scale(scale_name='BFR',stage=bfr_stage,stage_name=['','','丰满','肥胖',''],colors=('#EDD9A5','#EDD9A5','#FBF2DA','#FBF2DA','#EDD9A5','#EDD9A5'))
+        pic_bfr=bfr_chart.draw(val=val_bfr,color_val='#CEC09C',scale_adj=300,color_bg='#E89A9A',back_transparent_color='',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_yellow.png'))
 
 
 
         #训练数据
-        train_data=get_data.ReadAndExportDataNew().exp_cus_prd(self.cus_file_dir,cus=cus_name_input,start_time=start_date,end_time=end_date)
+        train_data=get_data.ReadAndExportDataNew(adj_bfr='no',adj_src='prg',gui='').exp_cus_prd(self.cus_file_dir,cus=cus_name_input,start_time=start_date,end_time=end_date)
 
         #有氧训练时长
         oxy_time=train_data['train']['oxy_time']
@@ -1231,14 +1238,174 @@ class PeroidSummary:
                     'calories':txt_calories,'pic_radar':pic_radar,'pic_msr_chart':body_measure_chart,
                     'pic_bmi':pic_bmi,'pic_bfr':pic_bfr}
 
+    def read_diet(self):
+        df=pd.read_excel(os.path.join(self.pro_dir,'减脂饮食建议表.xlsx'))
+        # df_sgst=df['饮食建议'].tolist()
+        df_sgst=df['饮食建议'].sample(1).tolist()[0]
+        return df_sgst
+
+    def txts(self,wid=680,font_size=28):
+        txt_input=self.read_diet()
+        para_txt=composing.split_txt_Chn_eng(wid=wid,font_size=font_size,txt_input=txt_input,Indent='no')
+        return para_txt
+
+    def block_ht(self,diet_font_size=28):
+        title=120
+        basic_info=330
+        basic_body=1540
+        diary=400
+        msr_change=400
+        diet=math.ceil(self.txts(font_size=diet_font_size)[1]*diet_font_size*1.2)
+        bottom=100
+        content=[title,basic_info,basic_body,diary,msr_change,diet,bottom]        
+        gap=20
+        total_ht=sum(content)+gap*(len(content)-1)
+
+        return {'b_title':title,'b_info':basic_info,'b_body':basic_body,
+                'b_diary':diary,'msr':msr_change,'diet':diet,'bottom':bottom,
+                'gap':gap,'total_ht':total_ht}
+
+    def icon(self,ico,ico_size):
+        ico=ico.resize(ico_size)
+        return (ico,ico.split()[3])
+
+    def exp_chart(self,cus_name_input='MH003吕雅颖',start_date='20210729',end_date='20220201',bg='#F9F8F5',ico_size=(40,40),diet_font_size=28):
+        contents=self.cal_data(cus_name_input=cus_name_input,start_date=start_date,end_date=end_date)
+        
+        block_ht=self.block_ht(diet_font_size=diet_font_size)
+        bg=Image.new('RGBA',(720,block_ht['total_ht']),color=bg)
+        gap=block_ht['gap']
+
+        #坐标计算
+        w_block=bg.size[0]
+
+        y_title=0
+        y_info=y_title+block_ht['b_title']+gap
+        y_body=y_info+block_ht['b_info']+gap
+        y_diary=y_body+block_ht['b_body']+gap
+        y_msr=y_diary+block_ht['b_diary']+gap
+        y_diet=y_msr+block_ht['msr']+gap
+        y_bottom=y_diet+block_ht['diet']+gap
+
+        draw=ImageDraw.Draw(bg)
+        #标题
+        bg_title=Image.new('RGBA',(720,block_ht['b_title']),'#FFFAC7')
+        bg.paste(bg_title,(0,y_title))        
+
+        logo=Image.open(os.path.join(self.material_dir,'logo及二维码','logo.png'))
+        logo=logo.resize((logo.size[0]*52//logo.size[1],52))
+        m_logo=logo.split()[3]
+        bg.paste(logo,(60,40),mask=m_logo)
+        draw.text((150,50),'铭湖健身工作室会员运动记录',fill='#969696',font=self.fonts('字由文艺黑体',40))
+
+        #基本信息
+        bg_info=Image.new('RGBA',(720,block_ht['b_info']),'#FFD9C7')
+        bg.paste(bg_info,(0,y_info))
+        #姓名
+        if contents['sex']=='女':
+            ico_head=Image.open(os.path.join(self.material_dir,'UI图标','head_female.png'))
+            txt_sex='女士'
+        else:
+            ico_head=Image.open(os.path.join(self.material_dir,'UI图标','head_male.png'))
+            txt_sex='先生'
+        ico_head=self.icon(ico_head,ico_size)
+        bg.paste(ico_head[0],(50,180),mask=ico_head[1])
+        draw.text((120,178),contents['nickname']+' '+txt_sex,fill='#787878',font=self.fonts('思源黑体',44))
+
+        #训练时间段
+        _ico_prd=Image.open(os.path.join(self.material_dir,'UI图标','calendar.png'))
+        ico_prd=self.icon(_ico_prd,ico_size)
+        bg.paste(ico_prd[0],(50,260),mask=ico_prd[1])
+        draw.text((120,270),contents['s-e_data'],fill='#787878',font=self.fonts('思源黑体',26))
+
+        #训练频率
+        _ico_frqcy=Image.open(os.path.join(self.material_dir,'UI图标','frequency.png'))
+        ico_frqcy=self.icon(_ico_frqcy,ico_size)
+        bg.paste(ico_frqcy[0],(50,320),mask=ico_frqcy[1])
+        txt_avr_frqcy='在过去的 '+contents['train_time']+' 里，你平均每个月运动 '+str(contents['train_frqcy'])+'。'
+        draw.text((120,330),txt_avr_frqcy,fill='#787878',font=self.fonts('思源黑体',26))
+
+        #最大训练频率
+        _ico_frqcy_max=Image.open(os.path.join(self.material_dir,'UI图标','frequency_max.png'))
+        ico_frqcy_max=self.icon(_ico_frqcy_max,ico_size)
+        bg.paste(ico_frqcy_max[0],(50,380),mask=ico_frqcy_max[1])
+        draw.text((120,390),contents['train_max_frqcy'],fill='#787878',font=self.fonts('思源黑体',26))
+
+        #最大训练频率
+        _ico_frqcy_max=Image.open(os.path.join(self.material_dir,'UI图标','frequency_max.png'))
+        ico_frqcy_max=self.icon(_ico_frqcy_max,ico_size)
+        bg.paste(ico_frqcy_max[0],(50,380),mask=ico_frqcy_max[1])
+        draw.text((120,390),contents['train_max_frqcy'],fill='#787878',font=self.fonts('思源黑体',26))
+
+        #基本体格
+        bg_body=Image.new('RGBA',(720,block_ht['b_body']),'#C6D7EE')
+        bg.paste(bg_body,(0,y_body))
+
+        #基本体格标题
+        _ico_dot=Image.open(os.path.join(self.material_dir,'UI图标','dot.png'))
+        ico_dot=self.icon(_ico_dot,ico_size)
+        bg.paste(ico_dot[0],(50,540),mask=ico_dot[1])
+        draw.text((100,540),'基本体格',fill='#787878',font=self.fonts('思源黑体',36))
+        draw.line((50,590,680,590),fill='#787878')
+
+        #最后测量日期
+        _ico_msr=Image.open(os.path.join(self.material_dir,'UI图标','body_msr.png'))
+        ico_msr=self.icon(_ico_msr,ico_size)
+        bg.paste(ico_msr[0],(50,620),mask=ico_msr[1])
+        draw.text((120,630),'最近测量日期：'+contents['latest_msr'],fill='#787878',font=self.fonts('思源黑体',26))
+
+        #基础代谢率
+        _ico_bfr=Image.open(os.path.join(self.material_dir,'UI图标','calory.png'))
+        ico_bfr=self.icon(_ico_bfr,ico_size)
+        bg.paste(ico_bfr[0],(50,680),mask=ico_bfr[1])
+        draw.text((120,690),'基础代谢率：'+contents['bmr'],fill='#787878',font=self.fonts('思源黑体',26))
+
+        #体重/BMI
+        _ico_wt=Image.open(os.path.join(self.material_dir,'UI图标','weight.png'))
+        ico_wt=self.icon(_ico_wt,ico_size)
+        bg.paste(ico_wt[0],(50,760),mask=ico_wt[1])
+        draw.text((120,765),'体重：'+contents['wt'],fill='#787878',font=self.fonts('思源黑体',26))
+        draw.text((400,765),'BMI：'+contents['bmi'],fill='#787878',font=self.fonts('思源黑体',26))
+        #BMI图
+        pic_bmi=contents['pic_bmi']
+        pic_bmi=pic_bmi.resize((600,600*pic_bmi.size[1]//pic_bmi.size[0]))
+        pic_bmi=pic_bmi.crop((0,int(600*pic_bmi.size[1]//pic_bmi.size[0]//3),pic_bmi.size[0],pic_bmi.size[1]))
+        bg.paste(pic_bmi,(60,820))
+        #体脂率
+        _ico_bfr=Image.open(os.path.join(self.material_dir,'UI图标','bfr.png'))
+        ico_bfr=self.icon(_ico_bfr,ico_size)
+        bg.paste(ico_bfr[0],(50,1070),mask=ico_bfr[1])
+        draw.text((120,1080),'体脂率：'+contents['bfr'],fill='#787878',font=self.fonts('思源黑体',26))
+        #BFR图
+        pic_bfr=contents['pic_bfr']
+        pic_bfr=pic_bfr.resize((600,600*pic_bfr.size[1]//pic_bfr.size[0]))
+        pic_bfr=pic_bfr.crop((0,int(600*pic_bfr.size[1]//pic_bfr.size[0]//3),pic_bfr.size[0],pic_bfr.size[1]))
+        bg.paste(pic_bfr,(60,1140))
+        #体适能雷达图
+        _ico_radar=Image.open(os.path.join(self.material_dir,'UI图标','radar.png'))
+        ico_radar=self.icon(_ico_radar,ico_size)
+        bg.paste(ico_radar[0],(50,1400),mask=ico_radar[1])
+        draw.text((120,1410),'体适能',fill='#787878',font=self.fonts('思源黑体',26))
+        pic_radar=contents['pic_radar']
+        pic_radar=pic_radar.resize((600,600*pic_radar.size[1]//pic_radar.size[0]))
+        # pic_radar=pic_radar.crop((0,int(600*pic_radar.size[1]//pic_radar.size[0]//3),pic_radar.size[0],pic_radar.size[1]))
+        bg.paste(pic_radar,(60,1460))
+
+
+
+
+
+        bg.show()
+
 if __name__=='__main__':
     #根据训练数据生成阶段报告
     p=PeroidSummary(place='minghu')
+    p.exp_chart(cus_name_input='MH003吕雅颖',start_date='20210729',end_date='20220201',bg='#F2F2F2',diet_font_size=28)
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
-    res=p.cal_data()
-    print(res)
-    res['pic_bmi'].show()
-    res['pic_bfr'].show()
+    # res=p.cal_data()
+    # print(res)
+    # # res['pic_bmi'].show()
+    # res['pic_bfr'].show()
 
     #当天报告
     # p=FeedBackAfterClass(place='minghu')
