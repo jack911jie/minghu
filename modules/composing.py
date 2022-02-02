@@ -64,13 +64,17 @@ def split_txt_Chn_eng(wid,font_size,txt_input,Indent='no'):
                     pre_txt=pre_txt+t
                     wd_lng=wd_lng+1
             else:
-                if wd_lng+char_len(t)>zi_per_line: #先判断是这个英文单词+原有拼接的字符串长度是否>每行字符数
-                    txtGrp.append(pre_txt) #大于，则保持原有的拼接字符串，不再加入该英文单词
-                    pre_txt=' '+t #新的英文单词另起一行
-                    wd_lng=char_len(t) #拼接字符串长度清零重计
-                else:                    
+                if t in ['”','’','，','。','！','：','；','.',',','!','”。','”，']:
                     pre_txt=pre_txt+' '+t
                     wd_lng=wd_lng+char_len(t)
+                else:    
+                    if wd_lng+char_len(t)>zi_per_line: #先判断是这个英文单词+原有拼接的字符串长度是否>每行字符数
+                        txtGrp.append(pre_txt) #大于，则保持原有的拼接字符串，不再加入该英文单词
+                        pre_txt=' '+t #新的英文单词另起一行
+                        wd_lng=char_len(t) #拼接字符串长度清零重计
+                    else:                    
+                        pre_txt=pre_txt+' '+t
+                        wd_lng=wd_lng+char_len(t)
             
             if wd_lng>zi_per_line:
                 wd_lng=0                
@@ -133,16 +137,18 @@ def split_txt_Chn_eng(wid,font_size,txt_input,Indent='no'):
    
     return [outTxt,para_num] 
 
-def put_txt_img(draw,tt,total_dis,xy,dis_line,fill,font_name,font_size,addSPC='None',font_config_file=''):
+def put_txt_img(draw,tt,total_dis,xy,dis_line,fill,font_name,font_size,addSPC='no',font_config_file=''):
         
     fontInput=fonts(font_name,font_size,config=font_config_file)            
-    if addSPC=='add_2spaces': 
+    if addSPC.lower()=='yes': 
         Indent='yes'
     else:
         Indent='no'
         
     # txt=self.split_txt(total_dis,font_size,t,Indent='no')
     txt=split_txt_Chn_eng(total_dis,font_size,tt,Indent=Indent)
+
+    # print('composing文字段数',txt[1])
 
     # font_sig = self.fonts('丁永康硬笔楷书',40)
     num=len(txt)   
@@ -154,7 +160,7 @@ def put_txt_img(draw,tt,total_dis,xy,dis_line,fill,font_name,font_size,addSPC='N
         m=0
         for tt in t:                  
             x,y=xy[0],xy[1]+(font_size+dis_line)*n
-            if addSPC=='add_2spaces':   #首行缩进
+            if addSPC.lower()=='yes':   #首行缩进
                 if m==0:    
                     # tt='  '+tt #首先前面加上两个空格
                     logging.info('字数：'+str(len(tt))+'，坐标：'+str(x)+','+str(y))
@@ -168,6 +174,7 @@ def put_txt_img(draw,tt,total_dis,xy,dis_line,fill,font_name,font_size,addSPC='N
                 # logging.info('字数：'+str(len(tt))+'，坐标：'+str(x)+','+str(y))
                 # logging.info(tt)
                 draw.text((x,y), tt, fill = fill,font=fontInput)  
+            # print('文字坐标',m,x,y)
 
             m+=1
             n+=1
