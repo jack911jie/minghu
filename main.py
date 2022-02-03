@@ -1,6 +1,7 @@
 import os
 import sys
 import random
+from turtle import bgcolor
 # from openpyxl.reader.excel import load_workbook
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'modules'))
 import pic_transfer
@@ -1065,7 +1066,11 @@ class PeroidSummary:
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
-    def cal_data(self,cus_name_input='MH003吕雅颖',start_date='20210729',end_date='20220201'):
+    def color_bg(self,theme='lightgrey'):
+        color=readconfig.exp_json(os.path.join(os.path.dirname(__file__),'configs','colors.config'))
+        return color['PeriodSummary'][theme]
+
+    def cal_data(self,cus_name_input='MH003吕雅颖',start_date='20210729',end_date='20220201',bmi_bg='#ffffff',bfr_bg="#ffffff",radar_bg='#ffffff',msr_chart_bg='#ffffff'):
         df_basic=pd.read_excel(os.path.join(self.cus_file_dir,cus_name_input+'.xlsx'),sheet_name='基本情况')
         cus_name=df_basic['姓名'].tolist()[0]
         cus_nickname=df_basic['昵称'].tolist()[0]
@@ -1162,7 +1167,7 @@ class PeroidSummary:
         #BMI
         txt_bmi=str(round(wt/((ht/100)*(ht/100)),2))
         bmi_chart=draw_pic.Scale(scale_name='BMI',stage=[10,18.5,24,28,40],stage_name=['','','超重','肥胖',''],colors=('#9ED6D6','#CEE9E9','#CEE9E9','#9ED6D6','#9ED6D6'))
-        pic_bmi=bmi_chart.draw(val=round(wt/((ht/100)*(ht/100)),2),color_val='#84B6B9',scale_adj=200,color_bg='#ffffff',back_transparent_color='',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_blue.png'))
+        pic_bmi=bmi_chart.draw(val=round(wt/((ht/100)*(ht/100)),2),color_val='#84B6B9',scale_adj=200,color_bg=bmi_bg,back_transparent_color='',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_blue.png'))
 
         
         cals=get_data.cals()
@@ -1180,7 +1185,7 @@ class PeroidSummary:
         else:
             bfr_stage=[10,15,18,25,40]
         bfr_chart=draw_pic.Scale(scale_name='BFR',stage=bfr_stage,stage_name=['','','丰满','肥胖',''],colors=('#EDD9A5','#EDD9A5','#FBF2DA','#FBF2DA','#EDD9A5','#EDD9A5'))
-        pic_bfr=bfr_chart.draw(val=val_bfr,color_val='#CEC09C',scale_adj=300,color_bg='#ffffff',back_transparent_color='',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_yellow.png'))
+        pic_bfr=bfr_chart.draw(val=val_bfr,color_val='#CEC09C',scale_adj=300,color_bg=bfr_bg,back_transparent_color='',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_yellow.png'))
 
 
 
@@ -1217,14 +1222,14 @@ class PeroidSummary:
                                 '核心':train_data['body']['core']}
         
         radar=draw_pic.DrawRadar()
-        pic_radar=radar.draw(physical_fitness_data)
+        pic_radar=radar.draw(physical_fitness_data,bgcolor=radar_bg)
         # pic_radar.show()
 
 
         #围度变化曲线
     
         body_measure_data=draw_pic.PeriodChart(font_fn=os.path.join(self.font_dir,'msyh.ttc'))
-        body_measure_chart=body_measure_data.to_pic(cus_dir=self.cus_file_dir,cus_fn='MH003吕雅颖.xlsx',d_font='',title='',items=['waist','hip','chest'])
+        body_measure_chart=body_measure_data.to_pic(cus_dir=self.cus_file_dir,cus_fn='MH003吕雅颖.xlsx',start_time=start_date,end_time=end_date,d_font='',title='',bgcolor=msr_chart_bg,items=['waist','hip','chest'])
         # body_measure_chart.show()
                                 
 
@@ -1275,13 +1280,15 @@ class PeroidSummary:
         return (ico,ico.split()[3])
 
     def exp_chart(self,cus_name_input='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210729',end_date='20220201',
-                                bgcolor='#F9F8F5',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580):
-        contents=self.cal_data(cus_name_input=cus_name_input,start_date=start_date,end_date=end_date)
+                                theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580):
+        colors=self.color_bg(theme=theme)
+        contents=self.cal_data(cus_name_input=cus_name_input,start_date=start_date,end_date=end_date,bmi_bg=colors['bmi_bg'],bfr_bg=colors['bfr_bg'],radar_bg=colors['radar_bg'],msr_chart_bg=colors['msr_chart_bg'])
         diet_para_nums=self.diet_txts(wid=diet_boxwid,font_size=diet_font_size)[1]
+        
         # print(self.diet_txts(wid=680,font_size=diet_font_size)[0],diet_para_nums,math.ceil(diet_para_nums*2.4*diet_font_size)+90)
         
         block_ht=self.block_ht(contents_input=contents,diet_para_num=diet_para_nums,diary_font_size=diary_font_size,diet_font_size=diet_font_size)
-        bg=Image.new('RGBA',(720,block_ht['total_ht']),color=bgcolor)
+        bg=Image.new('RGBA',(720,block_ht['total_ht']),color=colors['bg'])
         gap=block_ht['gap']
 
         #坐标计算
@@ -1299,7 +1306,7 @@ class PeroidSummary:
 
         draw=ImageDraw.Draw(bg)
         #标题----------------------------------------------------------------------------
-        bg_title=Image.new('RGBA',(720,block_ht['b_title']),'#FFFAC7')
+        bg_title=Image.new('RGBA',(720,block_ht['b_title']),color=colors['title'])
         bg.paste(bg_title,(0,y_title))        
 
         logo=Image.open(os.path.join(self.material_dir,'logo及二维码','logo.png'))
@@ -1309,7 +1316,7 @@ class PeroidSummary:
         draw.text((152,40),'铭湖健身工作室会员运动记录',fill='#969696',font=self.fonts('字由文艺黑体',40))
 
         #基本信息---------------------------------------------------------------
-        bg_info=Image.new('RGBA',(720,block_ht['b_info']),'#F2F2F2')
+        bg_info=Image.new('RGBA',(720,block_ht['b_info']),color=colors['basic_info'])
         bg.paste(bg_info,(0,y_info))
         #姓名
         if contents['sex']=='女':
@@ -1348,7 +1355,7 @@ class PeroidSummary:
         draw.text((120,390),contents['train_max_frqcy'],fill='#787878',font=self.fonts('思源黑体',26))
 
         #基本体格------------------------------------------------------------------------------------------
-        bg_body=Image.new('RGBA',(720,block_ht['b_body']),'#ffffff')
+        bg_body=Image.new('RGBA',(720,block_ht['b_body']),color=colors['basic_body'])
         bg.paste(bg_body,(0,y_body))
 
         #基本体格标题
@@ -1402,7 +1409,7 @@ class PeroidSummary:
         bg.paste(pic_radar,(60,1460))
 
         #运动记录----------------------------------------------------
-        bg_diary=Image.new('RGBA',(720,block_ht['b_diary']),'#F2F2F2')
+        bg_diary=Image.new('RGBA',(720,block_ht['b_diary']),color=colors['train_rec'])
         bg.paste(bg_diary,(0,y_diary))
 
         #训练日记标题
@@ -1429,7 +1436,7 @@ class PeroidSummary:
         draw.text((160,y_diary_title+210),'各部位训练次数\n\n'+contents['each_part'],fill='#787878',font=self.fonts('思源黑体',26))
 
         #围度变化--------------------------------------------------------------------------------
-        bg_msr=Image.new('RGBA',(720,block_ht['b_msr']),'#ffffff')
+        bg_msr=Image.new('RGBA',(720,block_ht['b_msr']),color=colors['msr_change'])
         bg.paste(bg_msr,(0,y_msr))
         y_msr_title=y_msr+40
         _ico_dot=Image.open(os.path.join(self.material_dir,'UI图标','dot.png'))
@@ -1443,7 +1450,7 @@ class PeroidSummary:
         bg.paste(pic_msr_chart,(60,y_msr_title+80))
 
         #饮食建议----------------------------------------------------------------------
-        bg_diet=Image.new('RGBA',(720,block_ht['b_diet']),'#F2F2F2')
+        bg_diet=Image.new('RGBA',(720,block_ht['b_diet']),color=colors['diet'])
         bg.paste(bg_diet,(0,y_diet))
         y_diet_title=y_diet+40
         _ico_dot=Image.open(os.path.join(self.material_dir,'UI图标','dot.png'))
@@ -1453,8 +1460,8 @@ class PeroidSummary:
         draw.line((50,y_diet_title+50,680,y_diet_title+50),fill='#787878')
         composing.put_txt_img(draw=draw,tt=self.read_diet(),total_dis=diet_boxwid,xy=(70,y_diet_title+80),dis_line=diet_font_size*1.3,fill='#787878',font_name='思源黑体',font_size=diet_font_size,addSPC='yes',font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.minghu'))
 
-        #底部
-        bg_bottom=Image.new('RGBA',(720,block_ht['b_bottom']),'#FFE7B9')
+        #底部---------------------------------------------------
+        bg_bottom=Image.new('RGBA',(720,block_ht['b_bottom']),color=colors['bottom'])
         bg.paste(bg_bottom,(0,y_bottom))
         qrcode=Image.open(os.path.join(self.ins_dir,ins+'二维码.jpg'))
         qrcode=qrcode.resize((100,100))
@@ -1467,12 +1474,16 @@ class PeroidSummary:
  
         # bg.show()
         outimg=bg.convert('RGB')
+        # outimg.show()
         outimg.save('C:\\Users\\jack9\\Desktop\\demo0.jpg',quality=90,subsampling=0)
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
     p=PeroidSummary(place='minghu')
-    p.exp_chart(cus_name_input='MH003吕雅颖',start_date='20210729',ins='MHINS001陆伟杰',end_date='20220201',bgcolor='#F2F2F2',diary_font_size=26,diet_font_size=26,diet_boxwid=580)
+    # color=p.color_bg(theme='lightgrey')
+    # print(color)
+    # print(color)
+    p.exp_chart(cus_name_input='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580)
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # res=p.cal_data()
     # print(res)

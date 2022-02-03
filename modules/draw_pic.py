@@ -38,7 +38,7 @@ class DrawRadar:
 
         return light_orange
 
-    def draw(self,data):
+    def draw(self,data,bgcolor='#ffee00'):
         color=self.color_list()
         # print(data)
         # 构造数据
@@ -58,9 +58,10 @@ class DrawRadar:
         # print(values,angles)
 
         # 绘图
-        fig = plt.figure(figsize=(6,5))
+        fig = plt.figure(facecolor=bgcolor,figsize=(6,5))
         # 这里一定要设置为极坐标格式
         ax = fig.add_subplot(111, polar=True)
+        ax.patch.set_facecolor(bgcolor)
         # ccl=ax.patch
 
         # 绘制折线图
@@ -130,17 +131,25 @@ class PeriodChart:
         # self.font='/home/jack/data/健身项目/minghu/fonts/msyh.ttc'
         self.font=font_fn
 
-    def to_pic(self,cus_dir='e:\\temp\\铭湖健身测试\\会员资料',cus_fn='MH003吕雅颖.xlsx',d_font='',title='',items=['wt','cal','arm','leg','waist','hip','chest']):
+    def to_pic(self,cus_dir='e:\\temp\\铭湖健身测试\\会员资料',cus_fn='MH003吕雅颖.xlsx',start_time='20000101',end_time='',d_font='',title='',bgcolor='#ffee00',items=['wt','cal','arm','leg','waist','hip','chest']):
         if title=='':
             # title=self.default_title
             pass
         if d_font=='':
             d_font=self.font
+
+        start_time=datetime.strptime('-'.join([start_time[0:4],start_time[4:6],start_time[6:]]),'%Y-%m-%d')
+        if end_time=='':
+            end_time=datetime.now()
+        else:
+            end_time=datetime.strptime('-'.join([end_time[0:4],end_time[4:6],end_time[6:]]),'%Y-%m-%d')
         
         myfont = fm.FontProperties(fname=d_font) # 设置字体
 
         fn=os.path.join(cus_dir,cus_fn)
         df=pd.read_excel(fn,sheet_name='身体数据')
+        
+        df=df[(df['时间']>=start_time) & (df['时间']<=end_time)]
         # print(df)
 
         x=[datetime.strftime(d,'%Y-%m-%d') for d in df['时间'].tolist()]
@@ -162,7 +171,7 @@ class PeriodChart:
         y_value=0.08
         ht_fig=10
         ht_axes=0.8/len(items)
-        fig=plt.figure(figsize=(8,ht_fig))
+        fig=plt.figure(facecolor=bgcolor,figsize=(8,ht_fig))
              
         
         if 'wt' in items:    
@@ -360,14 +369,14 @@ class Scale:
 
 
 if __name__=='__main__':
-    # data={'ht_lung':8,'balance':8,'power':5, 'flexibility':3,'core':7}
-    # p=DrawRadar().draw(data)
-    # p.show()
+    data={'ht_lung':8,'balance':8,'power':5, 'flexibility':3,'core':7}
+    p=DrawRadar().draw(data)
+    p.show()
 
     # data=PeriodChart(font_fn='G:\\健身项目\\minghu\\fonts\\msyh.ttc')
-    # img=data.to_pic(cus_dir='e:\\temp\\铭湖健身测试\\会员资料',cus_fn='MH003吕雅颖.xlsx',d_font='',title='',items=['waist','hip','chest'])
+    # img=data.to_pic(cus_dir='e:\\temp\\铭湖健身测试\\会员资料',cus_fn='MH003吕雅颖.xlsx',start_time='20210329',end_time='',d_font='',title='',bgcolor='#ffee00',items=['waist','hip','chest'])
     # img.show()
 
-    p=Scale(scale_name='BMI',stage=[10,18.5,24,28,40],stage_name=['','','超重','肥胖',''],colors=('#F4DDA4','#F4DDA4','#DFF4A4','#F4DDA4','#FBB2AB','#FE8E8E'))
-    res=p.draw(val=22.5,color_val='#84B6B9',scale_adj=200,color_bg='#FB2121',back_transparent_color='#FB2121',arrow_fn='D:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\素材\\公共素材\\UI图标\\倒三角_blue.png')
-    res.show()
+    # p=Scale(scale_name='BMI',stage=[10,18.5,24,28,40],stage_name=['','','超重','肥胖',''],colors=('#F4DDA4','#F4DDA4','#DFF4A4','#F4DDA4','#FBB2AB','#FE8E8E'))
+    # res=p.draw(val=22.5,color_val='#84B6B9',scale_adj=200,color_bg='#FB2121',back_transparent_color='',arrow_fn='D:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\素材\\公共素材\\UI图标\\倒三角_blue.png')
+    # res.show()
