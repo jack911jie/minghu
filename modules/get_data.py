@@ -255,6 +255,7 @@ class ReadAndExportDataNew:
             infos_muscle=pd.DataFrame(infos,columns=['时间','力量内容','重量','次数'])
             infos_muscle['次数'].fillna(1,inplace=True)
             infos_muscle.dropna(subset=['重量'],inplace=True)
+            # print(infos_muscle)
             infos_muscle['合计重量']=infos_muscle['重量']*infos_muscle['次数']
             out['train']['muscle_total_wt']=infos_muscle['合计重量'].sum()
             train_muscle_data=infos.groupby(['力量内容'])
@@ -399,7 +400,7 @@ class Vividict(dict):
 
 if __name__=='__main__':
     p=ReadAndExportDataNew(adj_bfr='no')
-    res=p.exp_cus_prd(cus_file_dir='D:\\temp\\铭湖健身测试\\会员资料',cus='MH003吕雅颖',start_time='20210729',end_time='20211201')
+    res=p.exp_cus_prd(cus_file_dir='D:\\temp\\铭湖健身测试\\会员资料',cus='MH017李俊娴',start_time='20210729',end_time='20211201')
     print(res)
 
     # c=cals()

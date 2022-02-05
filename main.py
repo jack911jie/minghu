@@ -1062,7 +1062,7 @@ class PeroidSummary:
         self.txt_slogan=self.txt_public[0]
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu.config'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
@@ -1458,7 +1458,7 @@ class PeroidSummary:
         bg.paste(ico_dot[0],(50,y_diet_title),mask=ico_dot[1])
         draw.text((100,y_diet_title),'饮食建议',fill='#787878',font=self.fonts('思源黑体',36))
         draw.line((50,y_diet_title+50,680,y_diet_title+50),fill='#787878')
-        composing.put_txt_img(draw=draw,tt=self.read_diet(),total_dis=diet_boxwid,xy=(70,y_diet_title+80),dis_line=diet_font_size*1.3,fill='#787878',font_name='思源黑体',font_size=diet_font_size,addSPC='yes',font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.minghu'))
+        composing.put_txt_img(draw=draw,tt=self.read_diet(),total_dis=diet_boxwid,xy=(70,y_diet_title+80),dis_line=diet_font_size*1.3,fill='#787878',font_name='思源黑体',font_size=diet_font_size,addSPC='yes',font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.minghu.config'))
 
         #底部---------------------------------------------------
         bg_bottom=Image.new('RGBA',(720,block_ht['b_bottom']),color=colors['bottom'])
@@ -1475,7 +1475,7 @@ class PeroidSummary:
         # bg.show()
         outimg=bg.convert('RGB')
         # outimg.show()
-        outimg.save('C:\\Users\\jack9\\Desktop\\demo0.jpg',quality=90,subsampling=0)
+        outimg.save('C:\\Users\\jack\\Desktop\\demo0.jpg',quality=90,subsampling=0)
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
@@ -1483,7 +1483,7 @@ if __name__=='__main__':
     # color=p.color_bg(theme='lightgrey')
     # print(color)
     # print(color)
-    p.exp_chart(cus_name_input='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580)
+    p.exp_chart(cus_name_input='MH017李俊娴',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580)
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # res=p.cal_data()
     # print(res)
