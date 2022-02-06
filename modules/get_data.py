@@ -260,7 +260,6 @@ class ReadAndExportDataNew:
             out['train']['muscle_total_wt']=infos_muscle['合计重量'].sum()
             train_muscle_data=infos.groupby(['力量内容'])
             for mscl_item,mscl_count in train_muscle_data:
-
                 train_muscle_info.append([mscl_item,mscl_count['重量'].sum(),mscl_count['次数'].sum(),mscl_count['距离'].sum()])
             out['train']['muscle_item']=train_muscle_info
             # print(out['train']['muscle_item'])   
