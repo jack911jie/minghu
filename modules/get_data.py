@@ -2,6 +2,7 @@ import os
 import sys
 import pandas as pd
 import days_cal
+import numpy as np
 from datetime import datetime
 import random
 from tkinter import simpledialog
@@ -370,6 +371,9 @@ class cals:
 
 
     def bmr(self,sex='f',ht=161,wt=61,age=35):
+        if ht=='' or wt=='' or age=='' or np.isnan(ht) or np.isnan(wt):
+            print('身体数据或年龄未填写，请核实。')
+            exit(0)
         if sex=='f' or sex=='女':
             bmr=665.1+9.6*wt+1.8*ht-4.7*age
         else:

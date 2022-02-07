@@ -1145,11 +1145,13 @@ class PeroidSummary:
         #     avr_train_counts='每月不到1次'
         try:
             if train_counts//(prd//30)>=1:
-                txt_avr_train_counts=str(train_counts//(prd//30))+'次'
+                txt_avr_train_counts='你平均每个月运动 '+str(train_counts//(prd//30))+'次。'
             else:
-                txt_avr_train_counts='每月不到1次'
+                txt_avr_train_counts='你每个月运动不到1次。'
         except:
-            txt_avr_train_counts='每月'+str(train_counts)+'次'
+            txt_avr_train_counts='每个月运动'+str(train_counts)+'次。'
+
+            # '在过去的 '+contents['train_time']+' 里，你平均每个月运动 '+str(contents['train_frqcy'])+'。'
 
         #最高训练频率及对应月份
         df_ym_trainmax=df_ym.drop_duplicates('date')
@@ -1171,6 +1173,7 @@ class PeroidSummary:
 
 
         #最后一次体测日期
+        
         df_measure=pd.read_excel(os.path.join(self.cus_file_dir,cus_name_input+'.xlsx'),sheet_name='身体数据',skiprows=0)
         txt_latest_msr_date=str(df_measure['时间'].max())[0:4]+'年'+str(df_measure['时间'].max())[5:7]+'月'+str(df_measure['时间'].max())[8:10]+'日'
 
@@ -1179,7 +1182,12 @@ class PeroidSummary:
         txt_wt=str(wt)+' Kg'
         ht=df_measure[df_measure['时间']==df_measure['时间'].max()]['身高'].tolist()[0]
 
-        #BMI
+        if np.isnan(ht) or np.isnan(wt) :
+            print('身体数据有未填写项，请核实。')
+            # exit(0)
+            return
+            
+        #BMI        
         txt_bmi=str(round(wt/((ht/100)*(ht/100)),2))
         bmi_chart=draw_pic.Scale(scale_name='BMI',stage=[10,18.5,24,28,40],stage_name=['','','超重','肥胖',''],colors=('#9ED6D6','#CEE9E9','#CEE9E9','#9ED6D6','#9ED6D6'))
         pic_bmi=bmi_chart.draw(val=round(wt/((ht/100)*(ht/100)),2),color_val='#84B6B9',scale_adj=200,color_bg=bmi_bg,back_transparent_color='',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_blue.png'))
@@ -1198,15 +1206,20 @@ class PeroidSummary:
         txt_bfr=str(val_bfr)+' %'
         if cus_sex=='女':
             bfr_stage=[10,25,28,32,40]
+            stage_name=['','','丰满','肥胖','']
+            scale_stage=300
         else:
-            bfr_stage=[10,15,18,25,40]
-        bfr_chart=draw_pic.Scale(scale_name='BFR',stage=bfr_stage,stage_name=['','','丰满','肥胖',''],colors=('#EDD9A5','#EDD9A5','#FBF2DA','#FBF2DA','#EDD9A5','#EDD9A5'))
-        pic_bfr=bfr_chart.draw(val=val_bfr,color_val='#CEC09C',scale_adj=300,color_bg=bfr_bg,back_transparent_color='',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_yellow.png'))
+            bfr_stage=[0,15,18,25,30]
+            stage_name=['','腹肌\n清晰','腹肌\n隐约','肥胖','']
+            scale_stage=100
+        bfr_chart=draw_pic.Scale(scale_name='BFR',stage=bfr_stage,stage_name=stage_name,colors=('#FBF2DA','#FBF2DA','#FBF2DA','#FBF2DA','#EDD9A5','#EDD9A5'))
+        pic_bfr=bfr_chart.draw(val=val_bfr,color_val='#CEC09C',scale_adj=scale_stage,color_bg=bfr_bg,back_transparent_color='',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_yellow.png'))
 
 
 
         #训练数据
         train_data=get_data.ReadAndExportDataNew(adj_bfr='no',adj_src='prg',gui='').exp_cus_prd(self.cus_file_dir,cus=cus_name_input,start_time=start_date,end_time=end_date)
+
 
         #有氧训练时长
         oxy_time=train_data['train']['oxy_time']
@@ -1225,7 +1238,7 @@ class PeroidSummary:
         txt_each_part=''
         for itm in each_part:
             txt_each_part=txt_each_part+'     -  '+itm+':  '+str(each_part[itm])+' 次'+'\n\n'
-
+    
         #运动消耗
         txt_calories=str(int(train_data['train']['calories']))+' Kcal'
 
@@ -1245,7 +1258,7 @@ class PeroidSummary:
         #围度变化曲线
     
         body_measure_data=draw_pic.PeriodChart(font_fn=os.path.join(self.font_dir,'msyh.ttc'))
-        body_measure_chart=body_measure_data.to_pic(cus_dir=self.cus_file_dir,cus_fn='MH003吕雅颖.xlsx',start_time=start_date,end_time=end_date,d_font='',title='',bgcolor=msr_chart_bg,items=['waist','hip','chest'])
+        body_measure_chart=body_measure_data.to_pic(cus_dir=self.cus_file_dir,cus_fn=cus_name_input+'.xlsx',start_time=start_date,end_time=end_date,d_font='',title='',bgcolor=msr_chart_bg,items=['waist','hip','chest'])
         # body_measure_chart.show()
                                 
 
@@ -1279,13 +1292,20 @@ class PeroidSummary:
         basic_info=330
         basic_body=1540
         t_diary=contents_input['each_part'].split('\n')
-        diary=len(t_diary)*diary_font_size*2
+        t_diary.append(contents_input['muscle_wt'].split('\n'))
+        t_diary.append(contents_input['oxy_time'].split('\n'))
+        #根据运动日记长短调整色块高度
+        if len(t_diary)*diary_font_size>=300:
+            diary=len(t_diary)*diary_font_size*2
+        else:
+            diary=len(t_diary)*diary_font_size*2-int((4*len(t_diary)*diary_font_size*2)/3)+440
+        # print(-int((4*len(t_diary)*diary_font_size*2)/3)+440,len(t_diary)*diary_font_size*2)
         msr_change=900
         diet=math.ceil(diet_para_num*2.4*diet_font_size)+90
         bottom=150
         content=[title,basic_info,basic_body,diary,msr_change,diet,bottom]        
         gap=20
-        total_ht=sum(content)+gap*(len(content)-0)
+        total_ht=sum(content)+gap*(len(content)-1)
 
         return {'b_title':title,'b_info':basic_info,'b_body':basic_body,
                 'b_diary':diary,'b_msr':msr_change,'b_diet':diet,'b_bottom':bottom,
@@ -1318,7 +1338,7 @@ class PeroidSummary:
         y_diet=y_msr+block_ht['b_msr']+gap
         y_bottom=y_diet+block_ht['b_diet']+gap
 
-        # print(y_diet,y_bottom,y_msr,block_ht['b_diet'])
+        # print(y_diet,y_bottom,y_msr,block_ht['b_diet'],block_ht['b_bottom'],block_ht['total_ht'])
 
         draw=ImageDraw.Draw(bg)
         #标题----------------------------------------------------------------------------
@@ -1355,7 +1375,7 @@ class PeroidSummary:
         _ico_frqcy=Image.open(os.path.join(self.material_dir,'UI图标','frequency.png'))
         ico_frqcy=self.icon(_ico_frqcy,ico_size)
         bg.paste(ico_frqcy[0],(50,320),mask=ico_frqcy[1])
-        txt_avr_frqcy='在过去的 '+contents['train_time']+' 里，你平均每个月运动 '+str(contents['train_frqcy'])+'。'
+        txt_avr_frqcy='在过去的 '+contents['train_time']+' 里，'+str(contents['train_frqcy'])
         draw.text((120,330),txt_avr_frqcy,fill='#787878',font=self.fonts('思源黑体',22))
 
         #最大训练频率
@@ -1498,7 +1518,7 @@ class PeroidSummary:
 if __name__=='__main__':
     #根据训练数据生成阶段报告
     p=PeroidSummary(place='minghu')
-    p.exp_chart(cus_name_input='MH016徐颖丽',ins='MHINS001陆伟杰',start_date='20210101',end_date='20220101',theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580)
+    p.exp_chart(cus_name_input='MH041陈智翀',ins='MHINS001陆伟杰',start_date='20210429',end_date='20210827',theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580)
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # res=p.cal_data()
     # print(res)
