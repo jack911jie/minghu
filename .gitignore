@@ -1,4 +1,8 @@
 *.bak
 *.pyc
 *.config
+<<<<<<< HEAD
 *.minghu
+=======
+*.lnk
+>>>>>>> fea10608a2eede882371f4d686592a2349b35ddf

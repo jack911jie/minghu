@@ -2,6 +2,7 @@ import os
 import sys
 import pandas as pd
 import days_cal
+import numpy as np
 from datetime import datetime
 import random
 from tkinter import simpledialog
@@ -252,9 +253,15 @@ class ReadAndExportDataNew:
             #抗阻训练
             #细项
             train_muscle_info=[]
+            infos_muscle=pd.DataFrame(infos,columns=['时间','力量内容','重量','次数'])
+            infos_muscle['次数'].fillna(1,inplace=True)
+            infos_muscle.dropna(subset=['重量'],inplace=True)
+            # print(infos_muscle)
+            infos_muscle['合计重量']=infos_muscle['重量']*infos_muscle['次数']
+            out['train']['muscle_total_wt']=infos_muscle['合计重量'].sum()
             train_muscle_data=infos.groupby(['力量内容'])
             for mscl_item,mscl_count in train_muscle_data:
-                train_muscle_info.append([mscl_item,mscl_count['重量'].sum(),mscl_count['次数'].sum()])
+                train_muscle_info.append([mscl_item,mscl_count['重量'].sum(),mscl_count['次数'].sum(),mscl_count['距离'].sum()])
             out['train']['muscle_item']=train_muscle_info
             # print(out['train']['muscle_item'])   
 
@@ -321,9 +328,9 @@ class cals:
             # 体脂肪重量（kg）=a－b
             # 体脂率=（身体脂肪总重量÷体重）×100%
         if formula==1:
-            if sex=='女':
+            if sex=='女' or sex=='f':
                 k=34.89
-            if sex=='男':
+            if sex=='男' or sex=='m':
                 k=44.74
             a=waist*0.74
             b=wt*0.082+k
@@ -333,9 +340,9 @@ class cals:
 
         elif formula==2:
             # 1.2×BMI+0.23×年龄-5.4-10.8×性别（男为1，女为0）
-            if sex=='女':
+            if sex=='女' or sex=='f':
                 k=0
-            if sex=='男':
+            if sex=='男' or sex=='m':
                 k=1
 
             bmi=wt/((ht/100)*(ht/100))
@@ -362,6 +369,18 @@ class cals:
 
         return bfr
 
+
+    def bmr(self,sex='f',ht=161,wt=61,age=35):
+        if ht=='' or wt=='' or age=='' or np.isnan(ht) or np.isnan(wt):
+            print('身体数据或年龄未填写，请核实。')
+            exit(0)
+        if sex=='f' or sex=='女':
+            bmr=665.1+9.6*wt+1.8*ht-4.7*age
+        else:
+            bmr=66.5+13.8*wt+5*ht-6.8*age
+        return bmr
+
+
 class ReadDiet:
     def __init__(self,fn_diet='D:\\Documents\\WXWork\\1688851376227744\\WeDrive\\铭湖健身工作室\\05-专业资料\\减脂饮食建议表.xlsx'):
         self.fn_diet=fn_diet
@@ -383,9 +402,13 @@ class Vividict(dict):
         return value
 
 if __name__=='__main__':
-    p=ReadAndExportDataNew(adj_bfr='yes')
-    res=p.exp_cus_prd(cus_file_dir="D:\\Documents\\WXWork\\1688851376227744\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料",cus='MH003吕雅颖',start_time='20210727',end_time='20210727')
+    p=ReadAndExportDataNew(adj_bfr='no')
+    res=p.exp_cus_prd(cus_file_dir='D:\\temp\\铭湖健身测试\\会员资料',cus='MH017李俊娴',start_time='20210729',end_time='20211201')
     print(res)
+
+    # c=cals()
+    # bmr=c.bmr(sex='m',ht=170,wt=64,age=41)
+    # print(bmr)
     # p=ReadDiet()
     # su=p.exp_diet_suggests()
     # print(random.choice(su))

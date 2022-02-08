@@ -1,5 +1,8 @@
+import os
+import sys
 import numpy as np
-import matplotlib.pyplot as plt 
+import matplotlib
+from matplotlib import pyplot as plt 
 import matplotlib.font_manager as fm
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from PIL import Image,ImageDraw
@@ -70,9 +73,42 @@ def round_corner(img,method='in'):
         # bg.show()
     return bg
 
+def Hex_to_RGB(hex):
+    r = int(hex[1:3],16)
+    g = int(hex[3:5],16)
+    b = int(hex[5:7], 16)
+    # rgb = str(r)+','+str(g)+','+str(b)
+    rgb=(r,g,b)
+    # print(rgb)
+    return rgb
+
+def pure_bg_transparent(img,bg_color='#FB2121'):
+    img = img.convert('RGBA')
+    L, H = img.size
+    color_0 = img.getpixel((0,0))
+    # print(color_0[:-1]==Hex_to_RGB(bg_color))
+    for h in range(H):
+        for l in range(L):
+            dot = (l,h)
+            color_1 = img.getpixel(dot)
+            if color_1[:-1] == Hex_to_RGB(bg_color):
+                color_1 = color_1[:-1] + (0,)
+                img.putpixel(dot,color_1)
+    return img
+
+
+
+
+
 if __name__=='__main__':
     # img=Image.open('E:\\健身项目\\素材\\男性头像01.jpg')
-    img=Image.open('E:\\铭湖健身\\素材\\女性头像02.jpg')
-    imgg=round_corner(img,method='in')
-    imgg.save('E:\\铭湖健身\\素材\\tt.png')
-    imgg.show()
+    # img=Image.open('f:\\铭湖健身\\素材\\女性头像02.jpg')
+    # imgg=round_corner(img,method='in')
+    # # imgg.save('E:\\铭湖健身\\素材\\tt.png')
+    # imgg.show()
+    bg=Image.new('RGB',(200,330),'#FB2121')
+    cover=Image.new('RGB',(100,80),'#ffaa00')
+    bg.paste(cover,(50,50))
+
+    bg=pure_bg_transparent(bg,bg_color='#FB2121')
+    bg.show()
