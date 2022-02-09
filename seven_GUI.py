@@ -279,7 +279,8 @@ class GUI:
                     feed_back.delete('1.0','end')
                     print('正在生成会员训练总结')
                     # run.cus_feedback(place=self.place,cus=cus_name,ins=ins.get(),start_time=date_s,end_time=date_e,adj_bfr='yes',adj_src='gui',gui=window)
-                    run.period_summary(place=self.place,cus=cus_name,ins=ins.get(),start_date=date_s,end_date=date_e,adj_bfr='yes',adj_src='gui',gui=window)
+                    run.period_summary(place='minghu',cus_name_input=cus_name,ins=ins.get(),start_date=date_s,end_date=date_e,
+                                theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,adj_bfr='yes',adj_src='gui',gui=window)
                 else:
                     feed_back.delete('1.0','end')
                     print('会员ID不在列表内，请检查。')

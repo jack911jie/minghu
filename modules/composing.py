@@ -64,7 +64,7 @@ def split_txt_Chn_eng(wid,font_size,txt_input,Indent='no'):
                     pre_txt=pre_txt+t
                     wd_lng=wd_lng+1
             else:
-                if t in ['”','’','，','。','！','：','；','.',',','!','”。','”，']:
+                if t in ['”','’','，','。','！','、','：','；','.',',','!','”。','”，']:
                     pre_txt=pre_txt+' '+t
                     wd_lng=wd_lng+char_len(t)
                 else:    
