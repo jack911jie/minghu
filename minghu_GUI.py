@@ -267,7 +267,7 @@ class GUI:
 
         
 
-        def exp_cus_summary():
+        def exp_cus_summary(deal='period_summary'):
             date_s=date_start.get()
             date_e=date_end.get()
             if len(date_s)==8 and len(date_e)==8 and self.isValidDate(int(date_s[0:4]),int(date_s[4:6]),int(date_s[6:])) and \
@@ -278,9 +278,15 @@ class GUI:
                 # cus_feedback(cus='MH017李俊娴',ins='MHINS001陆伟杰',start_time='20210526',end_time='20210701')
                 cus_name=var_cus_name.get().upper()
                 if cus_name in cus_list:
-                    feed_back.delete('1.0','end')
-                    print('正在生成会员训练总结')
-                    run.cus_feedback(cus=cus_name,ins=ins.get(),start_time=date_s,end_time=date_e,adj_bfr='yes',adj_src='gui',gui=window)
+                    if deal=='after_class':
+                        feed_back.delete('1.0','end')
+                        print('正在生成会员训练总结')
+                        run.cus_feedback(cus=cus_name,ins=ins.get(),start_time=date_s,end_time=date_e,adj_bfr='yes',adj_src='gui',gui=window)
+                    elif deal=='period_summary':
+                        feed_back.delete('1.0','end')
+                        print('正在生成会员阶段训练日记')
+                        run.period_summary(cus=cus_name,ins=ins.get(),start_time=date_s,end_time=date_e,adj_bfr='yes',adj_src='gui',gui=window)
+                        #place='minghu',cus_name_input='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580
                 else:
                     feed_back.delete('1.0','end')
                     print('会员ID不在列表内，请检查。')
@@ -288,9 +294,14 @@ class GUI:
             else:
                 feed_back.delete('1.0','end')
                 feed_back.insert('insert','日期错误：'+date_s+','+date_e)
-        btn=tk.Button(window,text='生成会员训练总结',font=('幼圆',12),width=18,command=exp_cus_summary)
+
+        
+
+
+        btn=tk.Button(window,text='生成会员训练总结',font=('幼圆',12),width=18,command=exp_cus_summary(deal='period_summary'))
         btn.pack(pady=10)
         feed_back.pack()
+
 
     #批量录入团课训练信息
     def group_train_input(self,window):

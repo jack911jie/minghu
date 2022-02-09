@@ -278,7 +278,8 @@ class GUI:
                 if cus_name in cus_list:
                     feed_back.delete('1.0','end')
                     print('正在生成会员训练总结')
-                    run.cus_feedback(place=self.place,cus=cus_name,ins=ins.get(),start_time=date_s,end_time=date_e,adj_bfr='yes',adj_src='gui',gui=window)
+                    # run.cus_feedback(place=self.place,cus=cus_name,ins=ins.get(),start_time=date_s,end_time=date_e,adj_bfr='yes',adj_src='gui',gui=window)
+                    run.period_summary(place=self.place,cus=cus_name,ins=ins.get(),start_date=date_s,end_date=date_e,adj_bfr='yes',adj_src='gui',gui=window)
                 else:
                     feed_back.delete('1.0','end')
                     print('会员ID不在列表内，请检查。')

@@ -1190,7 +1190,7 @@ class PeroidSummary:
 
 
         #训练数据
-        train_data=get_data.ReadAndExportDataNew(adj_bfr='no',adj_src='prg',gui='').exp_cus_prd(self.cus_file_dir,cus=cus_name_input,start_time=start_date,end_time=end_date)
+        train_data=get_data.ReadAndExportDataNew(adj_bfr=self.adj_bfr,adj_src=self.adj_src,gui='').exp_cus_prd(self.cus_file_dir,cus=cus_name_input,start_time=start_date,end_time=end_date)
 
         #有氧训练时长
         oxy_time=train_data['train']['oxy_time']
@@ -1279,10 +1279,10 @@ class PeroidSummary:
         ico=ico.resize(ico_size)
         return (ico,ico.split()[3])
 
-    def exp_chart(self,cus_name_input='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210729',end_date='20220201',
-                                theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580):
+    def exp_chart(self,cus='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210729',end_date='20220201',adj_bfr='yes',adj_src='gui',
+                                theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,gui=''):
         colors=self.color_bg(theme=theme)
-        contents=self.cal_data(cus_name_input=cus_name_input,start_date=start_date,end_date=end_date,bmi_bg=colors['bmi_bg'],bfr_bg=colors['bfr_bg'],radar_bg=colors['radar_bg'],msr_chart_bg=colors['msr_chart_bg'])
+        contents=self.cal_data(cus_name_input=cus,start_date=start_date,end_date=end_date,bmi_bg=colors['bmi_bg'],bfr_bg=colors['bfr_bg'],radar_bg=colors['radar_bg'],msr_chart_bg=colors['msr_chart_bg'])
         diet_para_nums=self.diet_txts(wid=diet_boxwid,font_size=diet_font_size)[1]
         
         # print(self.diet_txts(wid=680,font_size=diet_font_size)[0],diet_para_nums,math.ceil(diet_para_nums*2.4*diet_font_size)+90)
@@ -1483,7 +1483,7 @@ if __name__=='__main__':
     # color=p.color_bg(theme='lightgrey')
     # print(color)
     # print(color)
-    p.exp_chart(cus_name_input='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580)
+    p.exp_chart(cus='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580)
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # res=p.cal_data()
     # print(res)
