@@ -10,6 +10,12 @@ def cus_feedback(place='minghu',cus='MH017李俊娴',ins='MHINS001陆伟杰',sta
     p=main.MingHu(place=place,adj_bfr=adj_bfr,adj_src=adj_src,gui=gui)
     p.draw(cus=cus,ins=ins,start_time=start_time,end_time=end_time)
 
+def period_summary(place='minghu',cus_name_input='MH017李俊娴',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',
+                    theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,adj_bfr='yes',adj_src='prg',gui=''):
+    p=main.PeroidSummary(place=place,adj_bfr=adj_bfr,adj_src=adj_src,gui=gui)
+    p.exp_chart(cus_name_input=cus_name_input,ins=ins,start_date=start_date,end_date=end_date,
+                theme=theme,ico_size=ico_size,diary_font_size=diary_font_size,diet_font_size=diet_font_size,diet_boxwid=diet_boxwid)
+    
 def group_input(place='minghu'):
     p=main.GroupDataInput(place=place)
     p.data_input()
@@ -44,6 +50,10 @@ if __name__=='__main__':
 
     #运行最新版本的gui
     run_seven_gui(place='minghu')
+
+    # period_summary(place='minghu',cus_name_input='MH017李俊娴',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',
+    #                             theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,adj_bfr='yes',adj_src='prg',gui='')
+             
 
 
 
