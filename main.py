@@ -1626,7 +1626,7 @@ class PeroidSummary:
         return (ico,ico.split()[3])
 
     def exp_chart(self,cus_name_input='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210729',end_date='20220201',
-                                theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580):
+                                theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=52):
         colors=self.color_bg(theme=theme)
         contents=self.cal_data(cus_name_input=cus_name_input,start_date=start_date,end_date=end_date,bmi_bg=colors['bmi_bg'],bfr_bg=colors['bfr_bg'],radar_bg=colors['radar_bg'],msr_chart_bg=colors['msr_chart_bg'])
         diet_para_nums=self.diet_txts(wid=diet_boxwid,font_size=diet_font_size)[1]
@@ -1656,10 +1656,10 @@ class PeroidSummary:
         bg.paste(bg_title,(0,y_title))        
 
         logo=Image.open(os.path.join(self.material_dir,'logo及二维码','logo.png'))
-        logo=logo.resize((logo.size[0]*52//logo.size[1],52))
+        logo=logo.resize((logo.size[0]*logo_ht//logo.size[1],logo_ht))
         m_logo=logo.split()[3]
         bg.paste(logo,(50,30),mask=m_logo)
-        draw.text((152,40),'铭湖健身工作室会员运动记录',fill='#969696',font=self.fonts('字由文艺黑体',40))
+        draw.text((152,40),self.gym_name.strip()+'会员运动记录',fill='#969696',font=self.fonts('字由文艺黑体',40))
 
         #基本信息---------------------------------------------------------------
         bg_info=Image.new('RGBA',(720,block_ht['b_info']),color=colors['basic_info'])
@@ -1827,8 +1827,10 @@ class PeroidSummary:
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    # p=PeroidSummary(place='minghu')
-    # p.exp_chart(cus_name_input='MH041陈智翀',ins='MHINS001陆伟杰',start_date='20210429',end_date='20210827',theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580)
+    p=PeroidSummary(place='seven')
+    p.exp_chart(cus_name_input='SV001测试',ins='SVINS001周颖鑫',
+                start_date='20210429',end_date='20210827',theme='lightgrey',
+                ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=72)
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # res=p.cal_data()
     # print(res)
@@ -1836,8 +1838,8 @@ if __name__=='__main__':
     # res['pic_bfr'].show()
 
     #当天报告
-    p=FeedBackAfterClass(place='seven')
-    p.draw_new(cus='SV001测试',ins='SVINS001周颖鑫',date_input='20210817')
+    # p=FeedBackAfterClass(place='seven')
+    # p.draw_new(cus='SV001测试',ins='SVINS001周颖鑫',date_input='20210817')
     # p.draw(cus='MH037廖程',ins='MHINS002韦越棋',date_input='20210824')
     # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
