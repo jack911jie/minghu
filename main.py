@@ -1834,15 +1834,10 @@ class PeroidSummary:
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-<<<<<<< HEAD
     p=PeroidSummary(place='seven')
     p.exp_chart(cus_name_input='SV001测试',ins='SVINS001周颖鑫',
                 start_date='20210429',end_date='20210827',theme='lightgrey',
                 ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=72)
-=======
-    p=PeroidSummary(place='minghu')
-    p.exp_chart(cus_name_input='MH017李俊娴',ins='MHINS001陆伟杰',start_date='20210429',end_date='20211227',theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580)
->>>>>>> 1380ebd653d29442832d5557b2685676b339aa9b
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # res=p.cal_data()
     # print(res)
