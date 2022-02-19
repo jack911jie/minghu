@@ -1626,13 +1626,8 @@ class PeroidSummary:
         ico=ico.resize(ico_size)
         return (ico,ico.split()[3])
 
-<<<<<<< HEAD
-    def exp_chart(self,cus='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210729',end_date='20220201',adj_bfr='yes',adj_src='gui',
-                                theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,gui=''):
-=======
     def exp_chart(self,cus_name_input='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210729',end_date='20220201',
                                 theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=52):
->>>>>>> 8301b3940cb4fe03234f38f2b33663e33d1f963d
         colors=self.color_bg(theme=theme)
         contents=self.cal_data(cus_name_input=cus,start_date=start_date,end_date=end_date,bmi_bg=colors['bmi_bg'],bfr_bg=colors['bfr_bg'],radar_bg=colors['radar_bg'],msr_chart_bg=colors['msr_chart_bg'])
         diet_para_nums=self.diet_txts(wid=diet_boxwid,font_size=diet_font_size)[1]
