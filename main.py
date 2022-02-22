@@ -1167,7 +1167,7 @@ if __name__=='__main__':
 
     #当天报告
     p=FeedBackAfterClass(place='minghu')
-    p.draw(cus='SV001测试',ins='SVINS001周颖鑫',date_input='20210623')
+    p.draw(cus='SV001测试',ins='QQINS001周颖鑫',date_input='20210623')
     # p.draw(cus='MH037廖程',ins='MHINS002韦越棋',date_input='20210824')
     # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
