@@ -1303,10 +1303,10 @@ class FeedBackAfterClass:
                         fill=color['font']['title'],
                         font=composing.fonts('思源黑体',40,config=font_config_file))
             #标题栏内其他文字
-            draw.text((p_title_box[0]+116,p_title_box[1]+206),
+            draw.text((p_title_box[0]+90,p_title_box[1]+220),
                         txt_title_box,
-                        fill=color['font']['title'],
-                        font=composing.fonts('思源黑体',40,config=font_config_file))
+                        fill=color['font']['mini_title'],
+                        font=composing.fonts('aa楷体',40,config=font_config_file))
 
             #训练内容
             print()
@@ -1608,7 +1608,7 @@ class PeroidSummary:
 
 
         #训练数据
-        train_data=get_data.ReadAndExportDataNew(adj_bfr=self.adj_bfr,adj_src=self.adj_src,gui='').exp_cus_prd(self.cus_file_dir,cus=cus_name_input,start_time=start_date,end_time=end_date)
+        train_data=get_data.ReadAndExportDataNew(adj_bfr='no',adj_src='prg',gui='').exp_cus_prd(self.cus_file_dir,cus=cus_name_input,start_time=start_date,end_time=end_date)
 
 
         #有氧训练时长
@@ -1708,7 +1708,7 @@ class PeroidSummary:
     def exp_chart(self,cus_name_input='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210729',end_date='20220201',
                                 theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=52):
         colors=self.color_bg(theme=theme)
-        contents=self.cal_data(cus_name_input=cus,start_date=start_date,end_date=end_date,bmi_bg=colors['bmi_bg'],bfr_bg=colors['bfr_bg'],radar_bg=colors['radar_bg'],msr_chart_bg=colors['msr_chart_bg'])
+        contents=self.cal_data(cus_name_input=cus_name_input,start_date=start_date,end_date=end_date,bmi_bg=colors['bmi_bg'],bfr_bg=colors['bfr_bg'],radar_bg=colors['radar_bg'],msr_chart_bg=colors['msr_chart_bg'])
         diet_para_nums=self.diet_txts(wid=diet_boxwid,font_size=diet_font_size)[1]
         
         # print(self.diet_txts(wid=680,font_size=diet_font_size)[0],diet_para_nums,math.ceil(diet_para_nums*2.4*diet_font_size)+90)
@@ -1913,8 +1913,8 @@ class PeroidSummary:
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    # p=PeroidSummary(place='seven')
-    # p.exp_chart(cus_name_input='SV001测试',ins='SVINS001周颖鑫',
+    # p=PeroidSummary(place='minghu')
+    # p.exp_chart(cus_name_input='MH017李俊娴',ins='MHINS001陆伟杰',
     #             start_date='20210429',end_date='20210827',theme='lightgrey',
     #             ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=72)
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
@@ -1924,8 +1924,8 @@ if __name__=='__main__':
     # res['pic_bfr'].show()
 
     #当天报告
-    p=FeedBackAfterClass(place='seven')
-    p.draw_new(cus='SV001测试',ins='SVINS001周颖鑫',date_input='20210830')
+    p=FeedBackAfterClass(place='minghu')
+    p.draw_new(cus='MH017李俊娴',ins='MHINS001陆伟杰',date_input='20210814')
     # p.draw(cus='MH037廖程',ins='MHINS002韦越棋',date_input='20210824')
     # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
