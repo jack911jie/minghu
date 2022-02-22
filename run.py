@@ -55,5 +55,9 @@ if __name__=='__main__':
     #                             theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,adj_bfr='yes',adj_src='prg',gui='')
              
 
+    # period_summary(place='minghu',cus_name_input='MH017李俊娴',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',
+    #                             theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,adj_bfr='yes',adj_src='prg',gui='')
+             
+
 
 
