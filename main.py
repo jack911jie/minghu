@@ -1431,6 +1431,7 @@ class PeroidSummary:
         self.public_dir=config['公共素材文件夹']
         self.font_dir=config['字体文件夹']
         self.pro_dir=config['专业资料文件夹']
+        self.cus_period_dir=config['会员阶段记录文件夹']
         self.adj_bfr=adj_bfr
         self.adj_src=adj_src
         self.gui=gui
@@ -1607,7 +1608,7 @@ class PeroidSummary:
 
 
         #训练数据
-        train_data=get_data.ReadAndExportDataNew(adj_bfr='no',adj_src='prg',gui='').exp_cus_prd(self.cus_file_dir,cus=cus_name_input,start_time=start_date,end_time=end_date)
+        train_data=get_data.ReadAndExportDataNew(adj_bfr=self.adj_bfr,adj_src=self.adj_src,gui='').exp_cus_prd(self.cus_file_dir,cus=cus_name_input,start_time=start_date,end_time=end_date)
 
 
         #有氧训练时长
@@ -1707,7 +1708,7 @@ class PeroidSummary:
     def exp_chart(self,cus_name_input='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210729',end_date='20220201',
                                 theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=52):
         colors=self.color_bg(theme=theme)
-        contents=self.cal_data(cus_name_input=cus_name_input,start_date=start_date,end_date=end_date,bmi_bg=colors['bmi_bg'],bfr_bg=colors['bfr_bg'],radar_bg=colors['radar_bg'],msr_chart_bg=colors['msr_chart_bg'])
+        contents=self.cal_data(cus_name_input=cus,start_date=start_date,end_date=end_date,bmi_bg=colors['bmi_bg'],bfr_bg=colors['bfr_bg'],radar_bg=colors['radar_bg'],msr_chart_bg=colors['msr_chart_bg'])
         diet_para_nums=self.diet_txts(wid=diet_boxwid,font_size=diet_font_size)[1]
         
         # print(self.diet_txts(wid=680,font_size=diet_font_size)[0],diet_para_nums,math.ceil(diet_para_nums*2.4*diet_font_size)+90)
@@ -1900,7 +1901,13 @@ class PeroidSummary:
         # bg.show()
         outimg=bg.convert('RGB')
         # outimg.show()
-        outimg.save('C:\\Users\\jack\\Desktop\\demo0.jpg',quality=90,subsampling=0)
+        savedir=os.path.join(self.cus_period_dir,cus_name_input)
+        if not os.path.exists(savedir):
+            os.makedirs(savedir)
+        savefn=os.path.join(savedir,datetime.now().strftime('%Y%m%d%H%M%S')+'_'+cus_name_input+'阶段记录.jpg')
+        print(savefn)
+        os.startfile(savedir)
+        outimg.save(savefn,quality=90,subsampling=0)
 
         print('完成')
 
