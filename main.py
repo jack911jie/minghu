@@ -1175,7 +1175,7 @@ class FeedBackAfterClass:
                         p_title_block[3]+size['ht']['gap']*2,
                         p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2+size['wid']['small'],
                         p_title_block[3]+size['ht']['train'])
-            p_train_bar=(p_train[0]+110,p_train[1]+26,p_train[0]+110+8,p_train[3]-18)
+            p_train_bar=(p_train[0]+80,p_train[1]+26,p_train[0]+80+8,p_train[3]-18)
             p_train_txt=[p_train_bar[0]+50,p_train_bar[1]+4]
             p_burn=(p_train[0],
                     p_train[3]+size['ht']['gap']*2,
