@@ -10,13 +10,19 @@ def cus_feedback(place='minghu',cus='MH017李俊娴',ins='MHINS001陆伟杰',sta
     p=main.MingHu(place=place,adj_bfr=adj_bfr,adj_src=adj_src,gui=gui)
     p.draw(cus=cus,ins=ins,start_time=start_time,end_time=end_time)
 
+def period_summary(place='minghu',cus_name_input='MH017李俊娴',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',
+                    theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,adj_bfr='yes',adj_src='prg',gui='',logo_ht=52):
+    p=main.PeroidSummary(place=place,adj_bfr=adj_bfr,adj_src=adj_src,gui=gui)
+    p.exp_chart(cus_name_input=cus_name_input,ins=ins,start_date=start_date,end_date=end_date,
+                theme=theme,ico_size=ico_size,diary_font_size=diary_font_size,diet_font_size=diet_font_size,diet_boxwid=diet_boxwid,logo_ht=logo_ht)
+    
 def group_input(place='minghu'):
     p=main.GroupDataInput(place=place)
     p.data_input()
 
 def today_feedback(place='minghu',cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
     p=main.FeedBackAfterClass(place=place)
-    p.draw(cus=cus,ins=ins,date_input=date_input)
+    p.draw_new(cus=cus,ins=ins,date_input=date_input)
 
 def auto_xls(place='seven',cus_name_input='',mode='prgrm',gui=''):
     p=main.MingHu(place=place)
@@ -43,7 +49,11 @@ if __name__=='__main__':
     # auto_xls(cus_name_input='测试',mode='prgrm',gui='')
 
     #运行最新版本的gui
-    run_seven_gui(place='minghu')
+    run_seven_gui(place='seven')
+
+    # period_summary(place='minghu',cus_name_input='MH017李俊娴',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',
+    #                             theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,adj_bfr='yes',adj_src='prg',gui='')
+             
 
 
 
