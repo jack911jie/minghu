@@ -1065,10 +1065,23 @@ class FeedBackAfterClass:
         #教练
         # ins=ins[8:][0]+'教练'
         # print(self.df_ins)
-        ins=self.df_ins.loc[self.df_ins['员工编号']==ins[0:8]]['昵称'].values[0]
+        ins_nickname=self.df_ins.loc[self.df_ins['员工编号']==ins[0:8]]['昵称'].values[0]
 
+        #教练点评
+        ins_cmt=data['train']['ins_cmts']
+
+        if len(ins_cmt)!=0:
+            txt_ins_cmt=''
+            for t_cmt in ins_cmt:
+                txt_ins_cmt=txt_ins_cmt+'- '+t_cmt+'\n'
+            txt_ins_cmt.strip()
+        else:
+            txt_ins_cmt=''
+
+        # print(txt_ins_cmt)    
         #建议
-        txt_suggest_title=ins+'给你的饮食建议'
+        txt_cmt_title=ins_nickname+'对你的训练点评'
+        txt_suggest_title=ins_nickname+'给你的饮食建议'
         # txt_suggest='补充足够的碳水化合物：健身训练时能量主要由糖原提供，摄入的碳水化合物可以补充糖原，供给能量，并防止训练造成的肌肉分解'
         exp_knlg_fn=os.path.join(self.exp_knlg_dir,'减脂饮食建议表.xlsx')
         _diet_suggests=get_data.ReadDiet(exp_knlg_fn)
@@ -1084,6 +1097,7 @@ class FeedBackAfterClass:
 
         ftsz_train=40
         ftsz_suggest=40
+        ftsz_cmt=40
 
         #背景
 
@@ -1101,6 +1115,8 @@ class FeedBackAfterClass:
                     'title_box':230,
                     'train':350,
                     'burn':200,
+                    'comment':300,
+                    'comment_title':120,
                     'suggest':300,
                     'suggest_title':120,
                     'bottom':200,
@@ -1117,12 +1133,20 @@ class FeedBackAfterClass:
             # print(ht_train)
             size['ht']['train']=ht_train
 
+            #重写教练点评高度
+            if txt_ins_cmt:
+                ht_cmt_cal=composing.split_txt_Chn_eng(wid=size['wid']['small']-40,font_size=ftsz_train,txt_input=txt_ins_cmt,Indent='no')
+                ht_cmt=int(ftsz_cmt*ht_cmt_cal[1]*2)+size['ht']['comment_title']
+                size['ht']['cmt']=ht_cmt
+            else:
+                size['ht']['cmt']=0
+
             #重写建议内容高度
             ht_suggest_cal=composing.split_txt_Chn_eng(wid=size['wid']['third']-20,font_size=ftsz_suggest,txt_input=txt_suggest,Indent='yes')
             ht_suggest=int(ftsz_suggest*ht_suggest_cal[1]*2)+size['ht']['suggest_title']
             size['ht']['suggest']=ht_suggest
 
-            total_ht=size['ht']['title']+size['ht']['train']+size['ht']['burn']+size['ht']['suggest']+size['ht']['bottom']+size['ht']['gap']*2*4
+            total_ht=size['ht']['title']+size['ht']['train']+size['ht']['burn']+size['ht']['cmt']+size['ht']['suggest']+size['ht']['bottom']+size['ht']['gap']*2*5
             size['ht']['total']=total_ht
  
             # print(size)
@@ -1159,11 +1183,24 @@ class FeedBackAfterClass:
                     p_train[3]+size['ht']['burn'])
             
             p_flame=[p_burn[0]+30,p_burn[1]+50]
+
                     
-            p_suggest=(p_burn[0],
+            p_cmt=(p_burn[0],
                     p_burn[3]+size['ht']['gap']*2,
                     p_burn[2],
-                    p_burn[3]+size['ht']['gap']*2+size['ht']['suggest'])
+                    p_burn[3]+size['ht']['gap']*2+size['ht']['cmt'])
+
+            p_cmt_small=(p_cmt[0]+(size['wid']['small']-size['wid']['third'])//2,
+                    p_cmt[1]+size['ht']['comment_title'],
+                    p_cmt[0]+(size['wid']['small']-size['wid']['third'])//2+size['wid']['third'],
+                    p_cmt[1]+size['ht']['comment_title']+(size['ht']['comment']-size['ht']['comment_title'])-20)
+
+            p_cmt_txt=[p_cmt_small[0]+18,p_cmt_small[1]+20]
+
+            p_suggest=(p_cmt[0],
+                    p_cmt[3]+size['ht']['gap']*2,
+                    p_cmt[2],
+                    p_cmt[3]+size['ht']['gap']*2+size['ht']['suggest'])
 
             p_suggest_small=(p_suggest[0]+(size['wid']['small']-size['wid']['third'])//2,
                     p_suggest[1]+size['ht']['suggest_title'],
@@ -1171,8 +1208,11 @@ class FeedBackAfterClass:
                     p_suggest[1]+size['ht']['suggest_title']+(size['ht']['suggest']-size['ht']['suggest_title'])-20)
 
             p_suggest_txt=[p_suggest_small[0]+18,p_suggest_small[1]+20]
+
+
             
             p_logo=[p_suggest[0]+20,p_suggest[3]+size['ht']['gap']*2+(size['ht']['bottom']-120)//2]
+            p_qrcode=[p_suggest[0]+20,p_suggest[3]+size['ht']['gap']*2+(size['ht']['bottom']-120)//2]
             
 
             bg=Image.new('RGBA',(size['wid']['total'],size['ht']['total']),color=color['block']['bg'])
@@ -1190,6 +1230,12 @@ class FeedBackAfterClass:
 
             #燃烧
             draw.rounded_rectangle(xy=p_burn,radius=10,fill=color['block']['burn'],width=3,outline=color['edge']['burn'])
+
+            #教练点评
+            if size['ht']['cmt']>0:
+                draw.rectangle(xy=p_cmt,fill=color['block']['cmt'])
+                draw.rounded_rectangle(xy=p_cmt_small,radius=10,fill=color['block']['cmt_small_box'],
+                                        width=3,outline=color['edge']['cmt_small_box'])
 
             #教练建议
             draw.rectangle(xy=p_suggest,fill=color['block']['suggest'])
@@ -1227,10 +1273,18 @@ class FeedBackAfterClass:
             
 
             #logo
-            _logo=Image.open(os.path.join(self.public_dir,'logo及二维码','logo.png'))
-            logo=_logo.resize((_logo.size[0]*160//_logo.size[1],160))
-            a_logo=logo.split()[3]
-            bg.paste(logo,p_logo,mask=a_logo)
+            # _logo=Image.open(os.path.join(self.public_dir,'logo及二维码','logo.png'))
+            # logo=_logo.resize((_logo.size[0]*160//_logo.size[1],160))
+            # a_logo=logo.split()[3]
+            # bg.paste(logo,p_logo,mask=a_logo)
+
+            
+            #教练二维码
+            _qrcode=Image.open(os.path.join(self.ins_dir,ins+'二维码.jpg'))
+            qrcode=_qrcode.resize((_qrcode.size[0]*160//_qrcode.size[1],160))
+            bg.paste(qrcode,p_qrcode)
+
+
 
             #文字
             font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.minghu.config')
@@ -1273,6 +1327,29 @@ class FeedBackAfterClass:
                         fill=color['font']['burn'],
                         font=composing.fonts('汉仪糯米团',54,config=font_config_file))
 
+
+            #教练点评
+            if size['ht']['cmt']>0:
+                _ico_dot=Image.open(os.path.join(self.public_dir,'UI图标','dot.png'))
+                ico_dot=self.icon(_ico_dot,ico_size=(40,40))
+                bg.paste(ico_dot[0],(p_cmt[0]+10,p_cmt[1]+56),mask=ico_dot[1])
+                draw.line((p_cmt[0]+70,p_cmt[1]+100,p_cmt[0]+40+540,p_cmt[1]+100),fill='#787878')
+                draw.text((p_cmt[0]+68,p_cmt[1]+38),
+                            txt_cmt_title,
+                            fill=color['font']['cmt_title'],
+                            font=composing.fonts('思源黑体',44,config=font_config_file))
+
+                composing.put_txt_img(draw=draw,
+                                        tt=txt_ins_cmt,
+                                        total_dis=int((p_cmt_small[2]-p_cmt_small[0])*0.9),
+                                        xy=p_cmt_txt,
+                                        dis_line=int(ftsz_cmt*0.5),
+                                        fill=color['font']['suggest'],
+                                        font_name='汉仪字酷堂义山楷w',
+                                        font_size=ftsz_cmt,
+                                        addSPC='yes',
+                                        font_config_file=font_config_file)
+
             #教练建议
             _ico_dot=Image.open(os.path.join(self.public_dir,'UI图标','dot.png'))
             ico_dot=self.icon(_ico_dot,ico_size=(40,40))
@@ -1297,6 +1374,8 @@ class FeedBackAfterClass:
             #slogan
             draw.text((p_logo[0]+185,p_logo[1]+48),txt_slogan,
                         fill=color['font']['slogan'],font=composing.fonts('华康海报体W12(p)',62,config=font_config_file))
+
+
 
             # bg.show()
             bg=bg.convert('RGB')
@@ -1827,10 +1906,10 @@ class PeroidSummary:
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    p=PeroidSummary(place='seven')
-    p.exp_chart(cus_name_input='SV001测试',ins='SVINS001周颖鑫',
-                start_date='20210429',end_date='20210827',theme='lightgrey',
-                ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=72)
+    # p=PeroidSummary(place='seven')
+    # p.exp_chart(cus_name_input='SV001测试',ins='SVINS001周颖鑫',
+    #             start_date='20210429',end_date='20210827',theme='lightgrey',
+    #             ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=72)
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # res=p.cal_data()
     # print(res)
@@ -1838,8 +1917,8 @@ if __name__=='__main__':
     # res['pic_bfr'].show()
 
     #当天报告
-    # p=FeedBackAfterClass(place='seven')
-    # p.draw_new(cus='SV001测试',ins='SVINS001周颖鑫',date_input='20210817')
+    p=FeedBackAfterClass(place='seven')
+    p.draw_new(cus='SV001测试',ins='SVINS001周颖鑫',date_input='20210830')
     # p.draw(cus='MH037廖程',ins='MHINS002韦越棋',date_input='20210824')
     # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
