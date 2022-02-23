@@ -1914,10 +1914,10 @@ class PeroidSummary:
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    # p=PeroidSummary(place='minghu')
-    # p.exp_chart(cus_name_input='MH017李俊娴',ins='MHINS001陆伟杰',
-    #             start_date='20210308',end_date='20210930',theme='lightgrey',
-    #             ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=72)
+    p=PeroidSummary(place='minghu')
+    p.exp_chart(cus_name_input='MH049王丹',ins='MHINS001陆伟杰',
+                start_date='20211122',end_date='20220223',theme='lightgrey',
+                ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=72)
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # res=p.cal_data()
     # print(res)
@@ -1925,8 +1925,8 @@ if __name__=='__main__':
     # res['pic_bfr'].show()
 
     #当天报告
-    p=FeedBackAfterClass(place='minghu')
-    p.draw_new(cus='MH017李俊娴',ins='MHINS001陆伟杰',date_input='20210814')
+    # p=FeedBackAfterClass(place='minghu')
+    # p.draw_new(cus='MH049王丹',ins='MHINS001陆伟杰',date_input='20210814')
     # p.draw(cus='MH037廖程',ins='MHINS002韦越棋',date_input='20210824')
     # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 

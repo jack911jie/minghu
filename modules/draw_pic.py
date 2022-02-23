@@ -147,10 +147,12 @@ class PeriodChart:
         myfont = fm.FontProperties(fname=d_font) # 设置字体
 
         fn=os.path.join(cus_dir,cus_fn)
+        # print(fn)
         df=pd.read_excel(fn,sheet_name='身体数据')
-        
-        df=df[(df['时间']>=start_time) & (df['时间']<=end_time)]
         # print(df)
+        df=df[(df['时间']>=start_time) & (df['时间']<=end_time)]
+        if df.empty:
+            print('在输入的时间段内无训练数据或身体数据，请检查表格中的时间。')
 
         x=[datetime.strftime(d,'%Y-%m-%d') for d in df['时间'].tolist()]
         y_wt=df['体重'].tolist()
