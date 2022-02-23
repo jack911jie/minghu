@@ -117,7 +117,7 @@ class MingHu:
 
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu.config'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.'+self.place+'.config'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
@@ -700,6 +700,7 @@ class GroupDataInput:
 
 class FeedBackAfterClass:
     def __init__(self,place='minghu'):
+        self.place=place
         self.dir=os.path.dirname(os.path.abspath(__file__))
         config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'))
         self.cus_file_dir=config['会员档案文件夹']
@@ -936,7 +937,7 @@ class FeedBackAfterClass:
             bg.paste(logo,p_logo,mask=a_logo)
 
             #文字
-            font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.minghu.config')
+            font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.'+self.place+'.config')
             #姓名
             draw.text((p_title_box[0]+50,p_title_box[1]+30),
                         nickname+sex,
@@ -1287,7 +1288,7 @@ class FeedBackAfterClass:
 
 
             #文字
-            font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.minghu.config')
+            font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.'+self.place+'.config')
             #姓名
             draw.text((p_title_box[0]+116,p_title_box[1]+30),
                         nickname,
@@ -1452,7 +1453,7 @@ class PeroidSummary:
         self.txt_slogan=self.txt_public[0]
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu.config'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.'+self.place+'.config'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
@@ -1884,7 +1885,7 @@ class PeroidSummary:
         bg.paste(ico_dot[0],(50,y_diet_title),mask=ico_dot[1])
         draw.text((100,y_diet_title),'饮食建议',fill='#787878',font=self.fonts('思源黑体',36))
         draw.line((50,y_diet_title+50,680,y_diet_title+50),fill='#787878')
-        composing.put_txt_img(draw=draw,tt=self.read_diet(),total_dis=diet_boxwid,xy=(70,y_diet_title+80),dis_line=diet_font_size*1.3,fill='#787878',font_name='思源黑体',font_size=diet_font_size,addSPC='yes',font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.minghu.config'))
+        composing.put_txt_img(draw=draw,tt=self.read_diet(),total_dis=diet_boxwid,xy=(70,y_diet_title+80),dis_line=diet_font_size*1.3,fill='#787878',font_name='思源黑体',font_size=diet_font_size,addSPC='yes',font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.'+self.place+'.config'))
 
         #底部---------------------------------------------------
         bg_bottom=Image.new('RGBA',(720,block_ht['b_bottom']),color=colors['bottom'])
@@ -1913,10 +1914,10 @@ class PeroidSummary:
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    # p=PeroidSummary(place='minghu')
-    # p.exp_chart(cus_name_input='MH017李俊娴',ins='MHINS001陆伟杰',
-    #             start_date='20210308',end_date='20210930',theme='lightgrey',
-    #             ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=72)
+    p=PeroidSummary(place='minghu')
+    p.exp_chart(cus_name_input='MH017李俊娴',ins='MHINS001陆伟杰',
+                start_date='20210308',end_date='20210930',theme='lightgrey',
+                ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=72)
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # res=p.cal_data()
     # print(res)
@@ -1924,8 +1925,8 @@ if __name__=='__main__':
     # res['pic_bfr'].show()
 
     #当天报告
-    p=FeedBackAfterClass(place='minghu')
-    p.draw_new(cus='MH017李俊娴',ins='MHINS001陆伟杰',date_input='20210814')
+    # p=FeedBackAfterClass(place='minghu')
+    # p.draw_new(cus='MH017李俊娴',ins='MHINS001陆伟杰',date_input='20210814')
     # p.draw(cus='MH037廖程',ins='MHINS002韦越棋',date_input='20210824')
     # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
