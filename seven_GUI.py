@@ -43,7 +43,7 @@ class GUI:
     def creat_gui(self):
         global fr_grp
         window =tk.Tk()
-        window.title(self.gym_name+' | 会员管理及反馈小程序 v1.0')
+        window.title(self.gym_name+' | 会员管理及反馈小程序 v1.1')
         window.geometry('500x600')
         window.attributes("-toolwindow", 2)
         window.resizable(0,0)

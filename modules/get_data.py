@@ -305,6 +305,14 @@ class ReadAndExportDataNew:
             calories=_calories.dropna(axis=0,how='all')
             burn_cal=calories.sum()
             out['train']['calories']=burn_cal
+
+            #教练评语
+            _ins_cmts=infos['教练评语']
+            _ins_cmts.dropna(axis=0,how='any',inplace=True)
+            ins_cmts=list(_ins_cmts)
+            out['train']['ins_cmts']=ins_cmts
+
+            # print(_ins_cmts)
             
 
 
@@ -403,7 +411,7 @@ class Vividict(dict):
 
 if __name__=='__main__':
     p=ReadAndExportDataNew(adj_bfr='no')
-    res=p.exp_cus_prd(cus_file_dir='D:\\temp\\铭湖健身测试\\会员资料',cus='MH017李俊娴',start_time='20210729',end_time='20211201')
+    res=p.exp_cus_prd(cus_file_dir='E:\\temp\\seven\\会员\\会员资料',cus='SV001测试',start_time='20210830',end_time='20210830')
     print(res)
 
     # c=cals()

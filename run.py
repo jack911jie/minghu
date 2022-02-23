@@ -49,7 +49,7 @@ if __name__=='__main__':
     # auto_xls(cus_name_input='测试',mode='prgrm',gui='')
 
     #运行最新版本的gui
-    run_seven_gui(place='seven')
+    run_seven_gui(place='minghu')
 
     # period_summary(place='minghu',cus_name_input='MH017李俊娴',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',
     #                             theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,adj_bfr='yes',adj_src='prg',gui='')
