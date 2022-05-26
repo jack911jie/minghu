@@ -155,6 +155,8 @@ class PeriodChart:
             print('在输入的时间段内无训练数据或身体数据，请检查表格中的时间。')
 
         x=[datetime.strftime(d,'%Y-%m-%d') for d in df['时间'].tolist()]
+
+        # print(df)
         y_wt=df['体重'].tolist()
         y_chest=df['胸围'].tolist()
         y_waist=df['腰围'].tolist()
