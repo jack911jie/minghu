@@ -699,14 +699,11 @@ class GroupDataInput:
         print('完成')
 
 class FeedBackAfterClass:
-<<<<<<< HEAD
     def __init__(self,place='minghu'):
-=======
-    def __init__(self,place='minghu',wecomid_replace='yes',wecomid_pair=['$wecomid$','1688850049985213']):
->>>>>>> wecom
         self.place=place
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'),wecomid_replace=wecomid_replace,wecomid_pair=wecomid_pair)
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'))
+
         # print(config)
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
@@ -1182,11 +1179,9 @@ class FeedBackAfterClass:
                         p_title_block[3]+size['ht']['gap']*2,
                         p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2+size['wid']['small'],
                         p_title_block[3]+size['ht']['train'])
-<<<<<<< HEAD
+
             p_train_bar=(p_train[0]+80,p_train[1]+26,p_train[0]+80+8,p_train[3]-18)
-=======
-            p_train_bar=(p_train[0]+50,p_train[1]+26,p_train[0]+50+8,p_train[3]-18)
->>>>>>> wecom
+
             p_train_txt=[p_train_bar[0]+50,p_train_bar[1]+4]
             p_burn=(p_train[0],
                     p_train[3]+size['ht']['gap']*2,
@@ -1291,7 +1286,7 @@ class FeedBackAfterClass:
 
             
             #教练二维码
-            _qrcode=Image.open(os.path.join(self.ins_dir,ins+'二维码.jpg'))
+            _qrcode=Image.open(os.path.join(self.ins_dir,'教练二维码',ins+'二维码.jpg'))
             qrcode=_qrcode.resize((_qrcode.size[0]*160//_qrcode.size[1],160))
             bg.paste(qrcode,p_qrcode)
 
@@ -1520,7 +1515,7 @@ class PeroidSummary:
 
 
         df_train=pd.read_excel(os.path.join(self.cus_file_dir,cus_name_input+'.xlsx'),sheet_name='训练情况',skiprows=1)
-        df_train.columns=['时间','节次','课程','形式','目标肌群','有氧项目','有氧时长','抗阻内容','重量','距离','次数','消耗热量','教练姓名','教练评语']
+        df_train.columns=['时间','形式','目标肌群','有氧项目','有氧时长','抗阻内容','重量','距离','次数','消耗热量','教练姓名','教练评语']
         df_train_interval=df_train[(df_train['时间']>=s_date) & (df_train['时间']<=e_date) ]
         df_ym=pd.DataFrame()
         df_ym['year']=df_train_interval['时间'].dt.year
@@ -1924,17 +1919,12 @@ class PeroidSummary:
 
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-<<<<<<< HEAD
+
     p=PeroidSummary(place='minghu')
     p.exp_chart(cus_name_input='MH016徐颖丽',ins='MHINS001陆伟杰',
                 start_date='20210101',end_date='20220523',theme='lightgrey',
                 ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=72)
-=======
-    # p=PeroidSummary(place='seven')
-    # p.exp_chart(cus_name_input='SV001蚂蚁',ins='SVINS001周颖鑫',
-    #             start_date='20220222',end_date='20220223',theme='lightgrey',
-    #             ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=72)
->>>>>>> wecom
+
     # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
     # res=p.cal_data()
     # print(res)
@@ -1942,13 +1932,10 @@ if __name__=='__main__':
     # res['pic_bfr'].show()
 
     #当天报告
-<<<<<<< HEAD
+
     # p=FeedBackAfterClass(place='minghu')
     # p.draw_new(cus='MH049王丹',ins='MHINS001陆伟杰',date_input='20210814')
-=======
-    p=FeedBackAfterClass(place='seven')
-    p.draw_new(cus='SV001蚂蚁',ins='SVINS001周颖鑫',date_input='20220223')
->>>>>>> wecom
+
     # p.draw(cus='MH037廖程',ins='MHINS002韦越棋',date_input='20210824')
     # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 

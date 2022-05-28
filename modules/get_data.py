@@ -235,7 +235,7 @@ class ReadAndExportDataNew:
         #------------训练数据--------
         # infos=pd.read_excel(xls_name,sheet_name='训练情况',skiprows=2,header=None)
         infos=infos.iloc[:,0:14] #取前13列
-        infos.columns=['时间','节次','课程','形式','目标肌群','有氧项目','有氧时长','力量内容','重量','距离','次数','消耗热量','教练姓名','教练评语']
+        infos.columns=['时间','形式','目标肌群','有氧项目','有氧时长','力量内容','重量','距离','次数','消耗热量','教练姓名','教练评语']
         # print(infos.dropna(how='all'))
         if infos.dropna(how='all').shape[0]!=0:
             infos=infos[(infos['时间']>=start_time) & (infos['时间']<=end_time)] #根据时间段筛选记录      
@@ -314,26 +314,26 @@ class ReadAndExportDataNew:
 
             # print(_ins_cmts)
             
-            #训练次数
-            train_types=['常规私教','团课']
-            all_train_amount=0
-            for train_type in train_types:
-                df_train_amount=infos[infos['课程']==train_type][['时间','节次','课程']]
-                df_train_amount=df_train_amount.drop_duplicates(['时间','节次']).reset_index(drop=True)
-                total_train_amount=df_train_amount['时间'].count()
-                all_train_amount+=total_train_amount
-                df_train_amount['年']=pd.to_datetime(df_train_amount['时间']).dt.strftime('%Y')
-                df_train_amount['月']=pd.to_datetime(df_train_amount['时间']).dt.strftime('%m')
-                train_amt_month=df_train_amount.groupby(['年','月'])['时间'].count().reset_index()
-                # train_amount_gp=df_train_amount.groupby(['月'])['时间'].count().reset_index()
-                train_amt_month.columns=['年','月','次数']
-            # print(train_amount_gp)
-                out['train_stat']['total_train_amt'][train_type]=total_train_amount
-                out['train_stat']['train_amt_month'][train_type]=train_amt_month
+            # #训练次数
+            # train_types=['常规私教','团课']
+            # all_train_amount=0
+            # for train_type in train_types:
+            #     df_train_amount=infos[infos['课程']==train_type][['时间','节次','课程']]
+            #     df_train_amount=df_train_amount.drop_duplicates(['时间','节次']).reset_index(drop=True)
+            #     total_train_amount=df_train_amount['时间'].count()
+            #     all_train_amount+=total_train_amount
+            #     df_train_amount['年']=pd.to_datetime(df_train_amount['时间']).dt.strftime('%Y')
+            #     df_train_amount['月']=pd.to_datetime(df_train_amount['时间']).dt.strftime('%m')
+            #     train_amt_month=df_train_amount.groupby(['年','月'])['时间'].count().reset_index()
+            #     # train_amount_gp=df_train_amount.groupby(['月'])['时间'].count().reset_index()
+            #     train_amt_month.columns=['年','月','次数']
+            # # print(train_amount_gp)
+            #     out['train_stat']['total_train_amt'][train_type]=total_train_amount
+            #     out['train_stat']['train_amt_month'][train_type]=train_amt_month
 
-            # print(df_train_amount['时间'].count())
-            # print(total_train_amount)
-            out['train_stat']['all_train_amount']=all_train_amount
+            # # print(df_train_amount['时间'].count())
+            # # print(total_train_amount)
+            # out['train_stat']['all_train_amount']=all_train_amount
             
 
         else:
