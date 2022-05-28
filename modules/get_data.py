@@ -234,8 +234,8 @@ class ReadAndExportDataNew:
 
         #------------训练数据--------
         # infos=pd.read_excel(xls_name,sheet_name='训练情况',skiprows=2,header=None)
-        infos=infos.iloc[:,0:12] #取前10列
-        infos.columns=['时间','形式','目标肌群','有氧项目','有氧时长','力量内容','重量','距离','次数','消耗热量','教练姓名','教练评语']
+        infos=infos.iloc[:,0:14] #取前13列
+        infos.columns=['时间','节次','课程','形式','目标肌群','有氧项目','有氧时长','力量内容','重量','距离','次数','消耗热量','教练姓名','教练评语']
         # print(infos.dropna(how='all'))
         if infos.dropna(how='all').shape[0]!=0:
             infos=infos[(infos['时间']>=start_time) & (infos['时间']<=end_time)] #根据时间段筛选记录      
@@ -314,7 +314,27 @@ class ReadAndExportDataNew:
 
             # print(_ins_cmts)
             
+            #训练次数
+            train_types=['常规私教','团课']
+            all_train_amount=0
+            for train_type in train_types:
+                df_train_amount=infos[infos['课程']==train_type][['时间','节次','课程']]
+                df_train_amount=df_train_amount.drop_duplicates(['时间','节次']).reset_index(drop=True)
+                total_train_amount=df_train_amount['时间'].count()
+                all_train_amount+=total_train_amount
+                df_train_amount['年']=pd.to_datetime(df_train_amount['时间']).dt.strftime('%Y')
+                df_train_amount['月']=pd.to_datetime(df_train_amount['时间']).dt.strftime('%m')
+                train_amt_month=df_train_amount.groupby(['年','月'])['时间'].count().reset_index()
+                # train_amount_gp=df_train_amount.groupby(['月'])['时间'].count().reset_index()
+                train_amt_month.columns=['年','月','次数']
+            # print(train_amount_gp)
+                out['train_stat']['total_train_amt'][train_type]=total_train_amount
+                out['train_stat']['train_amt_month'][train_type]=train_amt_month
 
+            # print(df_train_amount['时间'].count())
+            # print(total_train_amount)
+            out['train_stat']['all_train_amount']=all_train_amount
+            
 
         else:
             out['train']=''
@@ -388,6 +408,87 @@ class cals:
             bmr=66.5+13.8*wt+5*ht-6.8*age
         return bmr
 
+class ReadCourses:
+    def __init__(self,work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室'):
+        self.work_dir=work_dir
+        self.base_fn=os.path.join(work_dir,'01-会员管理','工作文档','20220430私教会员剩余课程节数.xlsx')
+        self.taken_fn='D:\\铭湖健身工作目录\\教练工作日志\\教练工作日志.xlsx'
+        self.df_base=pd.read_excel(self.base_fn)
+        self.df_base['备注'].fillna('无',inplace=True)
+
+    def read_excel_taken(self):
+        fn_shtnames=pd.ExcelFile(self.taken_fn).sheet_names
+        df_takens=[]
+        for shtname in fn_shtnames:
+            df_taken=pd.read_excel(self.taken_fn,sheet_name=shtname)
+            df_takens.append(df_taken)
+        df_all_taken=pd.concat(df_takens)
+        df_all_taken.columns=["序号","日期","时间","时长","课程类型","会员姓名","教练","是否完成","备注","体验课出单","出单日期"]
+        df_all_taken['是否完成'].fillna('否',inplace=True)
+        df_all_taken['备注'].fillna('无',inplace=True)
+        df_all_taken['体验课出单'].fillna('不适用',inplace=True)
+        df_all_taken['出单日期'].fillna('不适用',inplace=True)
+
+        return  df_all_taken
+
+    def cus_taken(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课']):
+        all_cus_taken=self.read_excel_taken()
+        _df_cus_takens=[]
+        for crs_type in crs_types:
+            df_cus_taken=all_cus_taken[(all_cus_taken['会员姓名']==cus_name) & (all_cus_taken['课程类型']==crs_type) ]
+            _df_cus_takens.append(df_cus_taken)
+        df_cus_takens=pd.concat(_df_cus_takens)
+        gp_taken=df_cus_takens.groupby(['课程类型']).count().reset_index()
+        gp_taken=gp_taken[['课程类型','会员姓名']]
+        gp_taken.columns=['课程类型','上课次数']
+        # gp_taken['上课次数']=gp_taken['上课次数'].apply(lambda x:x*-1)
+
+        # print(gp_taken)
+        return gp_taken
+
+    def ins_info(self,ins='MHINS001陆伟杰'):
+        df_all_ins=pd.read_excel(os.path.join(self.work_dir,'03-教练管理','教练资料','教练信息.xlsx'))
+        df_ins=df_all_ins[df_all_ins['员工编号']==ins[:8]]
+        return df_ins
+
+    def cal_crs_remain(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课']):
+        _df_cus_takens=[]
+        for crs_type in crs_types:
+            df_cus_base=self.df_base[(self.df_base['客户名称']==cus_name) & (self.df_base['购买课程类型']==crs_type)]
+            _df_cus_takens.append(df_cus_base)
+        cus_base=pd.concat(_df_cus_takens)
+        cus_base=cus_base[['客户名称','购买课程类型','剩余课时（节）']]
+        cus_base.columns=['客户名称','课程类型','剩余课时（节）']
+        cus_base.groupby(['课程类型']).sum()
+
+        df_cus_taken=self.cus_taken(cus_name=cus_name,crs_types=crs_types)
+        # df_cus_base['剩余节数']=df_cus_base
+        res=pd.merge(cus_base,df_cus_taken,how='outer')
+        res['客户名称']=cus_name
+        res['剩余课时（节）'].fillna(0,inplace=True)
+        res['本次剩余课时']=res['剩余课时（节）']-res['上课次数']
+
+        return res
+
+        # print(res)
+    
+    def exp_txt(self,cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220527',crs_time='1000-1100',ins='MHINS001陆伟杰'):
+        # print(cus_name,crs_type,crs_date,crs_time,ins)
+        crs_types=[crs_type]
+        crs_remain=self.cal_crs_remain(cus_name=cus_name,crs_types=crs_types)
+        txt_crs_remain=str(crs_remain[crs_remain['课程类型']==crs_type]['本次剩余课时'].tolist()[0])
+
+        talk_template=pd.read_excel(os.path.join(self.work_dir,'01-会员管理','工作文档','预约客户话术模板.xlsx'))
+        txt_datetime='\n【'+crs_date[:4]+'年'+crs_date[4:6]+'月'+crs_date[6:]+'日】\n【'+crs_time[:2]+':'+crs_time[2:7]+':'+crs_time[7:]+'】'
+
+
+        txt_talk=talk_template[talk_template['课程类型']==crs_type]['话术'].tolist()[0]
+        txt_talk=txt_talk.replace('cus_name',' '+cus_name[5:]+' ')
+        txt_talk=txt_talk.replace('time',' '+txt_datetime+' ')
+        txt_talk=txt_talk.replace('ins','【'+ins[8:]+'】')
+        txt_talk=txt_talk.replace('remain',txt_crs_remain)        
+        
+        return txt_talk
 
 class ReadDiet:
     def __init__(self,fn_diet='D:\\Documents\\WXWork\\1688851376227744\\WeDrive\\铭湖健身工作室\\05-专业资料\\减脂饮食建议表.xlsx'):
@@ -401,18 +502,23 @@ class ReadDiet:
 
         return diet_suggests
 
-
-
-
 class Vividict(dict):
     def __missing__(self, key):
         value = self[key] = type(self)()
         return value
 
 if __name__=='__main__':
-    p=ReadAndExportDataNew(adj_bfr='no')
-    res=p.exp_cus_prd(cus_file_dir='E:\\temp\\seven\\会员\\会员资料',cus='SV001测试',start_time='20210830',end_time='20210830')
-    print(res)
+    p=ReadCourses(work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室')
+    # res=p.cus_taken(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
+    # print(res)
+    # p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
+    # k=p.exp_txt(cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220527',crs_time='1000-1100',ins='INS001陆伟杰')
+    # print(k)
+
+
+    # p=ReadAndExportDataNew(adj_bfr='no')
+    # res=p.exp_cus_prd(cus_file_dir='E:\\temp\\minghu\\会员\\会员资料',cus='MH000唐青剑',start_time='20201201',end_time='20220523')
+    # print(res['train_stat']['total_train_amt'],res['train_stat']['train_amt_month'])
 
     # c=cals()
     # bmr=c.bmr(sex='m',ht=170,wt=64,age=41)

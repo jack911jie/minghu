@@ -3,6 +3,7 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__),'modules'))
 import main
 import seven_GUI
+import wxwork
 
 # print(os.path.join(os.path.dirname(__file__),'modules'))
 
@@ -34,6 +35,10 @@ def run_seven_gui(place='seven'):
     minghu_gui.creat_gui()
     # minghu_gui.get_cus_list()
 
+def wecom_send(place='minghu',work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室',
+                cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220527',crs_time='1000-1100',ins='MHINS002韦越棋'):
+    m=wxwork.WeComRobot(work_dir=work_dir)
+    m.send(cus_name=cus_name,crs_type=crs_type,crs_date=crs_date,crs_time=crs_time,ins=ins)
 
 if __name__=='__main__':
     #反馈

@@ -18,8 +18,9 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class GUI:
-    def __init__(self,place='seven'):
-        config=readconfig.exp_json(os.path.join(os.path.dirname(__file__),'configs','main_'+place+'.config'))
+    def __init__(self,place='seven',wecomid_replace='yes',wecomid_pair=['$wecomid$','1688850049985213']):
+        config=readconfig.exp_json(os.path.join(os.path.dirname(__file__),'configs','main_'+place+'.config'),
+                                    wecomid_replace=wecomid_replace,wecomid_pair=wecomid_pair)
         self.cus_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.public_dir=config['公共素材文件夹']
