@@ -1,6 +1,8 @@
 import os
 import sys
 import pandas as pd
+pd.set_option('display.unicode.ambiguous_as_wide', True)
+pd.set_option('display.unicode.east_asian_width', True)
 import days_cal
 import numpy as np
 from datetime import datetime
@@ -445,6 +447,36 @@ class ReadCourses:
 
         # print(gp_taken)
         return gp_taken
+    
+    def cus_buy(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'],data_fn='客户业务流水数据.xlsx'):
+        df_buy=pd.read_excel(os.path.join(self.work_dir,'02-运营规划','业务数据管理',data_fn),sheet_name='购课业务流水')
+        # df_buy['购课期数'].fillna(0,inplace=True)
+        # df_buy['购课节数'].fillna(0,inplace=True)
+        df_buy['购课时间'].fillna(0,inplace=True)
+        df_buy['备注'].fillna('无',inplace=True)
+        
+        _df_cus_buy=df_buy[df_buy['购课编号'].str[:-8]==cus_name]
+
+        _cus_buy=[]
+        for crs_type in crs_types:
+ 
+            if crs_type in ['常规私教课']:
+                pre_df_cus_buy_jieshu=_df_cus_buy[['购课编号','购课类型','购课节数','购课时间']]
+                pre_df_cus_buy_jieshu.columns=['购课编号','购课类型','购课数量','购课时间']
+                _cus_buy.append(pre_df_cus_buy_jieshu)
+            elif crs_type in ['团课','限时私教']:
+                pre_df_cus_buy_qishu=_df_cus_buy[['购课编号','购课类型','购课期数','购课时间']]
+                pre_df_cus_buy_qishu.columns=['购课编号','购课类型','购课数量','购课时间']
+                _cus_buy.append(pre_df_cus_buy_qishu)
+            else:
+                print('无效的课程类别')
+            
+        df_cus_buy=pd.concat(_cus_buy)
+        df_cus_buy.dropna(how='any',inplace=True)
+
+        df_cus_buy_cal=df_cus_buy.groupby(['购课类型']).sum().reset_index()
+
+        return df_cus_buy_cal
 
     def ins_info(self,ins='MHINS001陆伟杰'):
         df_all_ins=pd.read_excel(os.path.join(self.work_dir,'03-教练管理','教练资料','教练信息.xlsx'))
@@ -452,6 +484,7 @@ class ReadCourses:
         return df_ins
 
     def cal_crs_remain(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课']):
+        # 客户的课程节数/期数的底
         _df_cus_takens=[]
         for crs_type in crs_types:
             df_cus_base=self.df_base[(self.df_base['客户名称']==cus_name) & (self.df_base['购买课程类型']==crs_type)]
@@ -461,12 +494,19 @@ class ReadCourses:
         cus_base.columns=['客户名称','课程类型','剩余课时（节）']
         cus_base.groupby(['课程类型']).sum()
 
+        #客户购课的数
+        df_cus_buy=self.cus_buy(cus_name=cus_name,crs_types=crs_types)
+
+        #客户上课的数
         df_cus_taken=self.cus_taken(cus_name=cus_name,crs_types=crs_types)
         # df_cus_base['剩余节数']=df_cus_base
         res=pd.merge(cus_base,df_cus_taken,how='outer')
+        res=pd.merge(res,df_cus_buy,left_on='课程类型',right_on='购课类型',how='left')
         res['客户名称']=cus_name
         res['剩余课时（节）'].fillna(0,inplace=True)
-        res['本次剩余课时']=res['剩余课时（节）']-res['上课次数']
+        res['本次剩余课时']=res['剩余课时（节）']+res['购课数量']-res['上课次数']
+
+        res=res[['客户名称','课程类型','剩余课时（节）','购课数量','上课次数','本次剩余课时']]
 
         return res
 
@@ -476,7 +516,7 @@ class ReadCourses:
         # print(cus_name,crs_type,crs_date,crs_time,ins)
         crs_types=[crs_type]
         crs_remain=self.cal_crs_remain(cus_name=cus_name,crs_types=crs_types)
-        txt_crs_remain=str(crs_remain[crs_remain['课程类型']==crs_type]['本次剩余课时'].tolist()[0])
+        txt_crs_remain=str(int(crs_remain[crs_remain['课程类型']==crs_type]['本次剩余课时'].tolist()[0]))
 
         talk_template=pd.read_excel(os.path.join(self.work_dir,'01-会员管理','工作文档','预约客户话术模板.xlsx'))
         txt_datetime='\n【'+crs_date[:4]+'年'+crs_date[4:6]+'月'+crs_date[6:]+'日】\n【'+crs_time[:2]+':'+crs_time[2:7]+':'+crs_time[7:]+'】'
@@ -509,11 +549,14 @@ class Vividict(dict):
 
 if __name__=='__main__':
     p=ReadCourses(work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室')
+    # k=p.cus_buy(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
+    # print(k)
     # res=p.cus_taken(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
     # print(res)
-    # p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
-    # k=p.exp_txt(cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220527',crs_time='1000-1100',ins='INS001陆伟杰')
+    # k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
     # print(k)
+    k=p.exp_txt(cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220527',crs_time='1000-1100',ins='INS001陆伟杰')
+    print(k)
 
 
     # p=ReadAndExportDataNew(adj_bfr='no')
