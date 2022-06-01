@@ -8,6 +8,7 @@ import numpy as np
 from datetime import datetime
 import random
 from tkinter import simpledialog
+import re
 
 
 class ReadAndExportData:
@@ -413,7 +414,7 @@ class cals:
 class ReadCourses:
     def __init__(self,work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室'):
         self.work_dir=work_dir
-        self.base_fn=os.path.join(work_dir,'01-会员管理','工作文档','20220430私教会员剩余课程节数.xlsx')
+        self.base_fn=os.path.join(work_dir,'01-会员管理','工作文档','20220531私教会员剩余课程节数.xlsx')
         self.taken_fn='D:\\铭湖健身工作目录\\教练工作日志\\教练工作日志.xlsx'
         self.df_base=pd.read_excel(self.base_fn)
         self.df_base['备注'].fillna('无',inplace=True)
@@ -422,8 +423,11 @@ class ReadCourses:
         fn_shtnames=pd.ExcelFile(self.taken_fn).sheet_names
         df_takens=[]
         for shtname in fn_shtnames:
-            df_taken=pd.read_excel(self.taken_fn,sheet_name=shtname)
-            df_takens.append(df_taken)
+            if  re.match(r'\d{4}-\d{2}',shtname):
+                if shtname!='2022-05':
+                    # print(shtname)
+                    df_taken=pd.read_excel(self.taken_fn,sheet_name=shtname)
+                    df_takens.append(df_taken)
         df_all_taken=pd.concat(df_takens)
         df_all_taken.columns=["序号","日期","时间","时长","课程类型","会员姓名","教练","是否完成","备注","体验课出单","出单日期"]
         df_all_taken['是否完成'].fillna('否',inplace=True)
@@ -436,46 +440,60 @@ class ReadCourses:
     def cus_taken(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课']):
         all_cus_taken=self.read_excel_taken()
         _df_cus_takens=[]
-        for crs_type in crs_types:
-            df_cus_taken=all_cus_taken[(all_cus_taken['会员姓名']==cus_name) & (all_cus_taken['课程类型']==crs_type) ]
-            _df_cus_takens.append(df_cus_taken)
-        df_cus_takens=pd.concat(_df_cus_takens)
-        gp_taken=df_cus_takens.groupby(['课程类型']).count().reset_index()
-        gp_taken=gp_taken[['课程类型','会员姓名']]
-        gp_taken.columns=['课程类型','上课次数']
-        # gp_taken['上课次数']=gp_taken['上课次数'].apply(lambda x:x*-1)
+        try:
+            for crs_type in crs_types:
+                df_cus_taken=all_cus_taken[(all_cus_taken['会员姓名']==cus_name) & (all_cus_taken['课程类型']==crs_type) & (all_cus_taken['是否完成']=='是')]
+                _df_cus_takens.append(df_cus_taken)
+            df_cus_takens=pd.concat(_df_cus_takens)
+            gp_taken=df_cus_takens.groupby(['课程类型']).count().reset_index()
+            gp_taken=gp_taken[['课程类型','会员姓名']]
+            gp_taken.columns=['课程类型','上课次数']
+            # gp_taken['上课次数']=gp_taken['上课次数'].apply(lambda x:x*-1)
+        #如无上课的记录
+        except Exception as e: 
+            print(e)
+            # gp_taken=''
 
         # print(gp_taken)
         return gp_taken
     
-    def cus_buy(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'],data_fn='客户业务流水数据.xlsx'):
+    def cus_buy(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'],data_fn='客户业务流水数据.xlsx',start_time='20220601'):
         df_buy=pd.read_excel(os.path.join(self.work_dir,'02-运营规划','业务数据管理',data_fn),sheet_name='购课业务流水')
         # df_buy['购课期数'].fillna(0,inplace=True)
         # df_buy['购课节数'].fillna(0,inplace=True)
         df_buy['购课时间'].fillna(0,inplace=True)
         df_buy['备注'].fillna('无',inplace=True)
-        
-        _df_cus_buy=df_buy[df_buy['购课编号'].str[:-8]==cus_name]
 
-        _cus_buy=[]
-        for crs_type in crs_types:
- 
-            if crs_type in ['常规私教课']:
-                pre_df_cus_buy_jieshu=_df_cus_buy[['购课编号','购课类型','购课节数','购课时间']]
-                pre_df_cus_buy_jieshu.columns=['购课编号','购课类型','购课数量','购课时间']
-                _cus_buy.append(pre_df_cus_buy_jieshu)
-            elif crs_type in ['团课','限时私教']:
-                pre_df_cus_buy_qishu=_df_cus_buy[['购课编号','购课类型','购课期数','购课时间']]
-                pre_df_cus_buy_qishu.columns=['购课编号','购课类型','购课数量','购课时间']
-                _cus_buy.append(pre_df_cus_buy_qishu)
-            else:
-                print('无效的课程类别')
-            
-        df_cus_buy=pd.concat(_cus_buy)
-        df_cus_buy.dropna(how='any',inplace=True)
+        df_buy=df_buy[df_buy['购课时间']>=datetime.strptime(start_time[:4]+'-'+start_time[4:6]+'-'+start_time[6:],'%Y-%m-%d')]
 
-        df_cus_buy_cal=df_cus_buy.groupby(['购课类型']).sum().reset_index()
+        # print('df_buy:',df_buy)
+        try:
+            _df_cus_buy=df_buy[df_buy['购课编号'].str[:-8]==cus_name]
 
+            _cus_buy=[]
+            for crs_type in crs_types:
+    
+                if crs_type in ['常规私教课']:
+                    pre_df_cus_buy_jieshu=_df_cus_buy[['购课编号','购课类型','购课节数','购课时间']]
+                    pre_df_cus_buy_jieshu.columns=['购课编号','购课类型','购课数量','购课时间']
+                    _cus_buy.append(pre_df_cus_buy_jieshu)
+                elif crs_type in ['团课','限时私教']:
+                    pre_df_cus_buy_qishu=_df_cus_buy[['购课编号','购课类型','购课期数','购课时间']]
+                    pre_df_cus_buy_qishu.columns=['购课编号','购课类型','购课数量','购课时间']
+                    _cus_buy.append(pre_df_cus_buy_qishu)
+                else:
+                    print('无效的课程类别')
+                
+            df_cus_buy=pd.concat(_cus_buy)
+            df_cus_buy.dropna(how='any',inplace=True)
+
+            df_cus_buy_cal=df_cus_buy.groupby(['购课类型']).sum().reset_index()
+        #如无购课的记录
+        except Exception as e:
+            print(e)
+            # df_cus_buy_cal=''
+
+        # print('test buy cal',df_cus_buy_cal)
         return df_cus_buy_cal
 
     def ins_info(self,ins='MHINS001陆伟杰'):
@@ -496,12 +514,30 @@ class ReadCourses:
 
         #客户购课的数
         df_cus_buy=self.cus_buy(cus_name=cus_name,crs_types=crs_types)
+        #如客户购课数为空，构建一个空表。
+        if df_cus_buy.empty:
+            dic_empty_buy=[]
+            for crs_type in crs_types:
+                _dic_empty_buy={'购课类型':crs_type,'购课数量':0}
+                dic_empty_buy.append(_dic_empty_buy)
+            
+            df_cus_buy=pd.DataFrame(dic_empty_buy)
+
+
 
         #客户上课的数
         df_cus_taken=self.cus_taken(cus_name=cus_name,crs_types=crs_types)
-        # df_cus_base['剩余节数']=df_cus_base
-        res=pd.merge(cus_base,df_cus_taken,how='outer')
+        #如客户上课数为空，构建一个空表。
+        if df_cus_taken.empty:
+            dic_empty_taken=[]
+            for crs_type in crs_types:
+                _dic_empty_taken={'课程类型':crs_type,'上课次数':0}
+                dic_empty_taken.append(_dic_empty_taken)
+            df_cus_taken=pd.DataFrame(dic_empty_taken)
+
+        res=pd.merge(cus_base,df_cus_taken,how='left')
         res=pd.merge(res,df_cus_buy,left_on='课程类型',right_on='购课类型',how='left')
+
         res['客户名称']=cus_name
         res['剩余课时（节）'].fillna(0,inplace=True)
         res['本次剩余课时']=res['剩余课时（节）']+res['购课数量']-res['上课次数']
@@ -555,7 +591,7 @@ if __name__=='__main__':
     # print(res)
     # k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
     # print(k)
-    k=p.exp_txt(cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220527',crs_time='1000-1100',ins='INS001陆伟杰')
+    k=p.exp_txt(cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220527',crs_time='1000-1100',ins='MHINS001陆伟杰')
     print(k)
 
 
