@@ -87,7 +87,7 @@ class WeComRobot:
             # print(split_line)
 
 
-        print('\n发送完成')
+        print('\n全部发送完成')
 
 
 if __name__=='__main__':
