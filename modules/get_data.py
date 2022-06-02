@@ -544,11 +544,34 @@ class ReadCourses:
 
         res=res[['客户名称','课程类型','剩余课时（节）','购课数量','上课次数','本次剩余课时']]
 
+        # print(res)
+
         return res
 
         # print(res)
     
+    def cus_info(self,cus_name='MH016徐颖丽'):
+        df_info=pd.read_excel(os.path.join(self.work_dir,'01-会员管理','会员资料',cus_name+'.xlsx'),sheet_name='基本情况')
+        t_name=df_info['姓名'].tolist()[0]
+        t_nickname=df_info['昵称'].tolist()[0]
+        t_sex=df_info['性别'].tolist()[0]
+        t_birth=df_info['出生年月'].tolist()[0]
+
+        if t_nickname==t_name[1:]:
+            callit=t_name
+        else:
+            callit=t_nickname
+        
+        if t_sex=='女':
+            title='女士'
+        else:
+            title='先生'
+        
+        return {'name':t_name,'nickname':t_nickname,'sex':t_sex,'birthday':t_birth,'callit':callit,'title':title}
+
+    
     def exp_txt(self,cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220527',crs_time='1000-1100',ins='MHINS001陆伟杰'):
+        cus_info=self.cus_info(cus_name=cus_name)
         # print(cus_name,crs_type,crs_date,crs_time,ins)
         crs_types=[crs_type]
         crs_remain=self.cal_crs_remain(cus_name=cus_name,crs_types=crs_types)
@@ -559,7 +582,7 @@ class ReadCourses:
 
 
         txt_talk=talk_template[talk_template['课程类型']==crs_type]['话术'].tolist()[0]
-        txt_talk=txt_talk.replace('cus_name',' '+cus_name[5:]+' ')
+        txt_talk=txt_talk.replace('cus_name',' '+cus_info['callit']+' '+cus_info['title'])
         txt_talk=txt_talk.replace('time',' '+txt_datetime+' ')
         txt_talk=txt_talk.replace('ins','【'+ins[8:]+'】')
         txt_talk=txt_talk.replace('remain',txt_crs_remain)        
@@ -591,8 +614,9 @@ if __name__=='__main__':
     # print(res)
     # k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
     # print(k)
-    k=p.exp_txt(cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220527',crs_time='1000-1100',ins='MHINS001陆伟杰')
+    k=p.exp_txt(cus_name='MH064阿柏',crs_type='常规私教课',crs_date='20220603',crs_time='1000-1100',ins='MHINS001陆伟杰')
     print(k)
+    # p.cus_info(cus_name='MH016徐颖丽')
 
 
     # p=ReadAndExportDataNew(adj_bfr='no')
