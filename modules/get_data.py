@@ -416,8 +416,10 @@ class ReadCourses:
     def __init__(self,work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室'):
         self.work_dir=work_dir
         self.base_fn=os.path.join(work_dir,'01-会员管理','工作文档','20220531私教会员剩余课程节数.xlsx')
+        self.gp_base_fn=os.path.join(work_dir,'01-会员管理','工作文档','20220430限时课程会员剩余课程节数.xlsx')
         self.taken_fn='D:\\铭湖健身工作目录\\教练工作日志\\教练工作日志.xlsx'
         self.df_base=pd.read_excel(self.base_fn)
+        self.gp_base=pd.read_excel(self.gp_base_fn)
         self.df_base['备注'].fillna('无',inplace=True)
 
     def read_excel_taken(self):
@@ -478,7 +480,7 @@ class ReadCourses:
                     pre_df_cus_buy_jieshu=_df_cus_buy[['购课编号','购课类型','购课节数','购课时间']]
                     pre_df_cus_buy_jieshu.columns=['购课编号','购课类型','购课数量','购课时间']
                     _cus_buy.append(pre_df_cus_buy_jieshu)
-                elif crs_type in ['团课','限时私教']:
+                elif crs_type in ['初级团课','限时私教','踏板团课']:
                     pre_df_cus_buy_qishu=_df_cus_buy[['购课编号','购课类型','购课期数','购课时间']]
                     pre_df_cus_buy_qishu.columns=['购课编号','购课类型','购课数量','购课时间']
                     _cus_buy.append(pre_df_cus_buy_qishu)
@@ -506,6 +508,9 @@ class ReadCourses:
             df_ins=df_all_ins[df_all_ins['姓名']==ins]
         return df_ins
 
+    def gp_base(self):
+        pass
+    
     def cal_crs_remain(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课']):
         # 客户的课程节数/期数的底
         _df_cus_takens=[]
@@ -650,7 +655,7 @@ if __name__=='__main__':
     # print(k)
     # res=p.cus_taken(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
     # print(res)
-    k=p.cal_crs_remain(cus_name='MH999丘巧',crs_types=['常规私教课','团课'])
+    k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'])
     print(k)
     # k=p.exp_txt(cus_name='MH064阿柏',crs_type='常规私教课',crs_date='20220603',crs_time='1000-1100',ins='MHINS001陆伟杰')
     # print(k)
