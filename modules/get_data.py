@@ -10,6 +10,7 @@ from datetime import timedelta
 import random
 from tkinter import simpledialog
 import re
+import copy
 
 
 class ReadAndExportData:
@@ -422,16 +423,17 @@ class ReadCourses:
         self.gp_base=pd.read_excel(self.gp_base_fn)
         self.df_base['备注'].fillna('无',inplace=True)
 
-    def read_excel_taken(self):
+    def read_excel_taken(self,start_time='20220501',nowtime='20220604'):
         fn_shtnames=pd.ExcelFile(self.taken_fn).sheet_names
         df_takens=[]
         for shtname in fn_shtnames:
             if  re.match(r'\d{4}-\d{2}',shtname):
-                if shtname!='2022-05':
-                    # print(shtname)
-                    df_taken=pd.read_excel(self.taken_fn,sheet_name=shtname)
-                    df_takens.append(df_taken)
-        df_all_taken=pd.concat(df_takens)
+                # print(shtname)
+                df_taken=pd.read_excel(self.taken_fn,sheet_name=shtname)
+                df_takens.append(df_taken)
+        _df_all_taken=pd.concat(df_takens)
+        df_all_taken=copy.deepcopy(_df_all_taken)
+        df_all_taken=df_all_taken[(df_all_taken['日期']>=datetime.strptime(start_time, '%Y%m%d')) & (df_all_taken['日期']<=datetime.strptime(nowtime, '%Y%m%d'))]
         df_all_taken.columns=["序号","日期","时间","时长","课程类型","会员姓名","教练","是否完成","备注","体验课出单","出单日期"]
         df_all_taken['是否完成'].fillna('否',inplace=True)
         df_all_taken['备注'].fillna('无',inplace=True)
@@ -440,8 +442,8 @@ class ReadCourses:
 
         return  df_all_taken
 
-    def cus_taken(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课']):
-        all_cus_taken=self.read_excel_taken()
+    def cus_taken(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'],start_time='20220501',nowtime='20220604'):
+        all_cus_taken=self.read_excel_taken(start_time=start_time,nowtime=nowtime)
         _df_cus_takens=[]
         try:
             for crs_type in crs_types:
@@ -461,17 +463,17 @@ class ReadCourses:
         return gp_taken
     
     def cus_buy(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'],data_fn='客户业务流水数据.xlsx',start_time='20220601'):
-        df_buy=pd.read_excel(os.path.join(self.work_dir,'02-运营规划','业务数据管理',data_fn),sheet_name='购课业务流水')
-        # df_buy['购课期数'].fillna(0,inplace=True)
-        # df_buy['购课节数'].fillna(0,inplace=True)
-        df_buy['购课时间'].fillna(0,inplace=True)
-        df_buy['备注'].fillna('无',inplace=True)
+        df_gp_buy=pd.read_excel(os.path.join(self.work_dir,'02-运营规划','业务数据管理',data_fn),sheet_name='购课业务流水')
+        # df_gp_buy['购课期数'].fillna(0,inplace=True)
+        # df_gp_buy['购课节数'].fillna(0,inplace=True)
+        df_gp_buy['购课时间'].fillna(0,inplace=True)
+        df_gp_buy['备注'].fillna('无',inplace=True)
 
-        df_buy=df_buy[df_buy['购课时间']>=datetime.strptime(start_time[:4]+'-'+start_time[4:6]+'-'+start_time[6:],'%Y-%m-%d')]
+        df_gp_buy=df_gp_buy[df_gp_buy['购课时间']>=datetime.strptime(start_time,'%Y%m%d')]
 
-        # print('df_buy:',df_buy)
+        # print('df_gp_buy:',df_gp_buy)
         try:
-            _df_cus_buy=df_buy[df_buy['购课编号'].str[:-8]==cus_name]
+            _df_cus_buy=df_gp_buy[df_gp_buy['购课编号'].str[:-8]==cus_name]
 
             _cus_buy=[]
             for crs_type in crs_types:
@@ -508,8 +510,102 @@ class ReadCourses:
             df_ins=df_all_ins[df_all_ins['姓名']==ins]
         return df_ins
 
-    def gp_base(self):
-        pass
+
+#####################################
+
+    def gp_cus_taken(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'],start_time='20210501',nowtime='20220604'):
+        all_gp_cus_taken=self.read_excel_taken(start_time=start_time,nowtime=nowtime)
+        _df_gp_cus_takens=[]
+        # print(all_cus_taken)
+        try:
+            for crs_type in crs_types:
+                df_gp_cus_taken=all_gp_cus_taken[(all_gp_cus_taken['会员姓名']==cus_name) & 
+                                            (all_gp_cus_taken['课程类型']==crs_type) & (all_gp_cus_taken['是否完成']=='是') &
+                                            (all_gp_cus_taken['日期']>=datetime.strptime(start_time,'%Y%m%d')) & (all_gp_cus_taken['日期']<=datetime.strptime(nowtime,'%Y%m%d'))]
+                _df_gp_cus_takens.append(df_gp_cus_taken)
+            df_gp_cus_takens=pd.concat(_df_gp_cus_takens)
+            gp_taken=df_gp_cus_takens.groupby(['课程类型']).count().reset_index()
+            gp_taken=gp_taken[['课程类型','会员姓名']]
+            gp_taken.columns=['课程类型','上课次数']
+            # gp_taken['上课次数']=gp_taken['上课次数'].apply(lambda x:x*-1)
+        #如无上课的记录
+        except Exception as e: 
+            print(e)
+            # gp_taken=''
+
+        # print(gp_taken)
+        return gp_taken
+
+    def gp_cus_prd(self,cus_name='MH010苏云',start_time='20220501',nowtime='20220604'):
+        s_time=datetime.strptime(start_time, '%Y%m%d')
+        df_all_cus_prd=pd.read_excel(os.path.join(self.work_dir,'02-运营规划','业务数据管理','限时课程启动及结束记录表.xlsx'))
+        res_df_gp_cus_prd=df_all_cus_prd[(df_all_cus_prd['会员姓名及编号']==cus_name) & (df_all_cus_prd['课程开始时间']>s_time) & (df_all_cus_prd['课程开始时间']<=datetime.strptime(nowtime,'%Y%m%d'))]
+        
+
+        return res_df_gp_cus_prd
+
+    def gp_cus_buy(self,cus_name='MH010苏云',crs_types=['初级团课'],start_time='20220501',nowtime='20220604',data_fn='客户业务流水数据.xlsx'):
+        df_gp_buy=pd.read_excel(os.path.join(self.work_dir,'02-运营规划','业务数据管理',data_fn),sheet_name='购课业务流水')
+        # df_gp_buy['购课期数'].fillna(0,inplace=True)
+        # df_gp_buy['购课节数'].fillna(0,inplace=True)
+        df_gp_buy['购课时间'].fillna(0,inplace=True)
+        df_gp_buy['备注'].fillna('无',inplace=True)
+
+        df_gp_buy=df_gp_buy[(df_gp_buy['购课时间']>=datetime.strptime(start_time,'%Y%m%d')) & (df_gp_buy['购课时间']<=datetime.strptime(nowtime,'%Y%m%d'))]
+
+        # print('df_gp_buy:\n',df_gp_buy)
+        try:
+            _df_gp_cus_buy=df_gp_buy[df_gp_buy['购课编号'].str[:-8]==cus_name]
+
+            _gp_cus_buy=[]
+            for crs_type in crs_types:
+    
+                if crs_type in ['常规私教课']:
+                    pre_df_gp_cus_buy_jieshu=_df_gp_cus_buy[['购课编号','购课类型','购课节数','购课时间']]
+                    pre_df_gp_cus_buy_jieshu.columns=['购课编号','购课类型','购课数量','购课时间']
+                    _gp_cus_buy.append(pre_df_gp_cus_buy_jieshu)
+                elif crs_type in ['初级团课','限时私教','踏板团课']:
+                    pre_df_gp_cus_buy_qishu=_df_gp_cus_buy[['购课编号','购课类型','购课期数','购课节数','购课时间']]
+                    # pre_df_gp_cus_buy_qishu.columns=['购课编号','购课类型','购课数量','购课时间']
+                    _gp_cus_buy.append(pre_df_gp_cus_buy_qishu)
+                else:
+                    print('无效的课程类别')
+
+            df_gp_cus_buy=pd.concat(_gp_cus_buy)
+            df_gp_cus_buy.dropna(how='any',inplace=True)
+            #读取的excel基数为object格式，转为int格式
+            df_gp_cus_buy['购课期数']=df_gp_cus_buy['购课期数'].astype('int')
+            # print(df_gp_cus_buy['购课期数'].dtypes)
+            df_gp_cus_buy_cal=df_gp_cus_buy.groupby('购课类型').sum().reset_index()
+        #如无购课的记录
+        except Exception as e:
+            print(e)
+            # df_cus_buy_cal=''
+
+        # print('test buy cal',df_cus_buy_cal)
+        return df_gp_cus_buy_cal
+
+    def gp_cal_crs_remain(self,cus_name='MH010苏云',crs_types=['常规私教课','初级团课'],data_fn='客户业务流水数据.xlsx',start_time='20220501',nowtime='20220604'):
+        print(start_time,'   ',nowtime)
+        #客户在start_time及nowtime之间的购课记录
+        gp_cus_buy=self.gp_cus_buy(cus_name=cus_name,crs_types=crs_types,start_time=start_time,nowtime=nowtime,data_fn=data_fn)
+
+        #客户在start_time及nowtime之间的课程开启及结束记录
+        df_gp_cus_prd=self.gp_cus_prd(cus_name=cus_name,start_time=start_time,nowtime=nowtime)
+        max_date=df_gp_cus_prd['课程开始时间'].max()
+        latest_cus_prd=df_gp_cus_prd[df_gp_cus_prd['课程开始时间']==max_date]
+
+        #客户在start_time及nowtime之间的上课记录,在nowtime小于课程结束时间情况下方有效,计算期间的上课次数。  
+        if pd.isnull(latest_cus_prd['课程实际结束时间'].tolist()):
+            end_time=latest_cus_prd['课程结束时间'].tolist()[0].strftime('%Y%m%d')
+        else:
+            end_time=latest_cus_prd['课程实际结束时间'].tolist()[0].strftime('%Y%m%d')
+        # if datetime.strptime(nowtime,'%Y%m%d')<=latest_cus_prd['课程结束时间']  
+        gp_cus_taken=self.gp_cus_taken(cus_name=cus_name,crs_types=crs_types,start_time=latest_cus_prd['课程开始时间'].tolist()[0].strftime('%Y%m%d'),nowtime=end_time)
+
+        
+        print(gp_cus_buy,'\n\n',latest_cus_prd,'\n\n',gp_cus_taken)
+        
     
     def cal_crs_remain(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课']):
         # 客户的课程节数/期数的底
@@ -655,15 +751,14 @@ if __name__=='__main__':
     # print(k)
     # res=p.cus_taken(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
     # print(res)
-    k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'])
-    print(k)
+    # k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'])
+    # print(k)
     # k=p.exp_txt(cus_name='MH064阿柏',crs_type='常规私教课',crs_date='20220603',crs_time='1000-1100',ins='MHINS001陆伟杰')
     # print(k)
     # p.cus_info(cus_name='MH016徐颖丽')
     # k=p.group_exp_txt(y_m='202206',crs_type='常规私教课')
-    # for kk in k:
-    #     for pp in k[kk]:
-    #         print(k[kk][pp])
+    p.gp_cal_crs_remain(cus_name='MH010苏云',crs_types=['初级团课'],data_fn='客户业务流水数据.xlsx',start_time='20210501',nowtime='20220616')
+
 
     # p=ReadAndExportDataNew(adj_bfr='no')
     # res=p.exp_cus_prd(cus_file_dir='E:\\temp\\minghu\\会员\\会员资料',cus='MH000唐青剑',start_time='20201201',end_time='20220523')
