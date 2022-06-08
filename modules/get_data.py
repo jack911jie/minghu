@@ -433,16 +433,19 @@ class ReadCourses:
                 df_takens.append(df_taken)
         _df_all_taken=pd.concat(df_takens)
         df_all_taken=copy.deepcopy(_df_all_taken)
-        print('llllllllll:',nowtime)
+        # print('llllllllll:',nowtime)
         if nowtime=='':
             df_all_taken=df_all_taken[df_all_taken['日期']>=datetime.strptime(start_time, '%Y%m%d')]
         else:
             df_all_taken=df_all_taken[(df_all_taken['日期']>=datetime.strptime(start_time, '%Y%m%d')) & (df_all_taken['日期']<=datetime.strptime(nowtime, '%Y%m%d'))]
+        # print(df_all_taken)
         df_all_taken.columns=["序号","日期","时间","时长","课程类型","会员姓名","教练","是否完成","备注","体验课出单","出单日期"]
         df_all_taken['是否完成'].fillna('否',inplace=True)
         df_all_taken['备注'].fillna('无',inplace=True)
         df_all_taken['体验课出单'].fillna('不适用',inplace=True)
         df_all_taken['出单日期'].fillna('不适用',inplace=True)
+
+        # print(df_all_taken)
 
         return  df_all_taken
     
@@ -476,6 +479,7 @@ class ReadCourses:
                 df_cus_taken=all_cus_taken[(all_cus_taken['会员姓名']==cus_name) & (all_cus_taken['课程类型']==crs_type) & (all_cus_taken['是否完成']=='是')]
                 _df_cus_takens.append(df_cus_taken)
             df_cus_takens=pd.concat(_df_cus_takens)
+            print(_df_cus_takens)
             gp_taken=df_cus_takens.groupby(['课程类型']).count().reset_index()
             gp_taken=gp_taken[['课程类型','会员姓名']]
             gp_taken.columns=['课程类型','上课次数']
@@ -774,12 +778,12 @@ if __name__=='__main__':
     # print(res)
     # k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'])
     # print(k)
-    # k=p.exp_txt(cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220603',crs_time='1000-1100',ins='MHINS001陆伟杰')
-    # print(k)
+    k=p.exp_txt(cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220608',crs_time='1000-1100',ins='MHINS001陆伟杰')
+    print(k)
     # p.cus_info(cus_name='MH016徐颖丽')
     # k=p.group_exp_txt(y_m='202206',crs_type='常规私教课')
     # k=p.gp_cus_taken(cus_name='MH010苏云',crs_types=['常规私教课','初级团课'],start_time='20210501',nowtime='20220523')
-    print(k)
+    # print(k)
     # p.gp_cal_crs_remain(cus_name='MH010苏云',crs_types=['初级团课'],data_fn='客户业务流水数据.xlsx',start_time='20210501',nowtime='20220531')
 
 
