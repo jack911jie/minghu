@@ -751,8 +751,6 @@ class ReadCourses:
 
         return txt_out
 
-
-
 class ReadDiet:
     def __init__(self,fn_diet='D:\\Documents\\WXWork\\1688851376227744\\WeDrive\\铭湖健身工作室\\05-专业资料\\减脂饮食建议表.xlsx'):
         self.fn_diet=fn_diet
@@ -765,21 +763,198 @@ class ReadDiet:
 
         return diet_suggests
 
+class ReadWebData:
+    def __init__(self,fn='e:/temp/minghu/test.xlsx'):
+        self.fn=fn
+        self.df_fn=pd.read_excel(self.fn)
+
+    def deal_data(self,df):
+        # print(df)
+        cus_name=df['Q4_会员姓名'].tolist()[0]
+        train_date=datetime.strftime(df['Q3_训练日期'].tolist()[0],'%Y-%m-%d')
+        ins_name=df['Q2_教练姓名'].tolist()[0]
+        calories=df['Q7_消耗热量'].tolist()[0]
+        ins_cmt=df['Q8_教练评语'].tolist()[0]
+        cus_star=df['Q9_为会员本次训练情况打分_选项1'].tolist()[0]
+
+
+        ########################抗阻####################
+        # if pd.isna(df['Q5_抗阻训练内容_训练项目']):
+        # print(df['Q5_抗阻训练内容_训练项目'])
+
+        if df['Q5_抗阻训练内容_训练项目'].empty or pd.isna(df['Q5_抗阻训练内容_训练项目'].tolist()[0]):
+            print('抗阻内容为空')
+            # res_muscle={'内容':'','目标肌群':'','重量（Kg）':'','距离（m）':'','次数':''}
+            # df_muscle=pd.DataFrame(res_muscle,index=[0])
+            # df_muscle.fillna('',inplace=True)
+            df_res_muscle=''
+        else:
+            if '||' in df['Q5_抗阻训练内容_训练项目'].tolist()[0]:
+                #多项内容
+                train_parts=df['Q5_抗阻训练内容_训练部位'].tolist()[0].split('||')
+                train_items=df['Q5_抗阻训练内容_训练项目'].tolist()[0].split('||')
+                train_wts=df['Q5_抗阻训练内容_重量（Kg）'].tolist()[0].split('||')
+                train_diss=df['Q5_抗阻训练内容_距离（m）'].tolist()[0].split('||')
+                train_nums=df['Q5_抗阻训练内容_次数'].tolist()[0].split('||')
+                train_grps=df['Q5_抗阻训练内容_组数'].tolist()[0].split('||')
+
+                muscle_train_part,muscle_train_item,muscle_train_wt,muscle_train_num,muscle_train_dis=[],[],[],[],[]
+                for itm_no,grp in enumerate(train_grps):
+                    for ct in range(int(grp)):
+                        muscle_train_part.append(train_parts[itm_no])
+                        muscle_train_item.append(train_items[itm_no][2:])
+                        muscle_train_wt.append(train_wts[itm_no])
+                        muscle_train_dis.append(train_diss[itm_no])
+                        muscle_train_num.append(train_nums[itm_no])
+                res_muscle={'目标肌群':muscle_train_part,'内容':muscle_train_item,'重量（Kg）':muscle_train_wt,'距离（m）':muscle_train_dis,'次数':muscle_train_num}
+                # print(train_items,train_wts,train_diss,train_nums,train_grps)
+                # print(res_muscle)
+                df_muscle=pd.DataFrame(res_muscle)
+                # df_muscle.replace('',0,inplace=True)               
+
+            else:
+                #一项内容
+                train_part=df['Q5_抗阻训练内容_训练部位'].tolist()[0]
+                train_item=df['Q5_抗阻训练内容_训练项目'].tolist()[0]
+                train_wt=df['Q5_抗阻训练内容_重量（Kg）'].tolist()[0]
+                train_dis=df['Q5_抗阻训练内容_距离（m）'].tolist()[0]
+                train_num=df['Q5_抗阻训练内容_次数'].tolist()[0]
+                train_grps=df['Q5_抗阻训练内容_组数'].tolist()[0]
+                # print(train_grps)
+                # print(muscle_train_item,muscle_train_wt,muscle_train_dis,muscle_train_num)
+
+                muscle_train_part,muscle_train_item,muscle_train_wt,muscle_train_dis,muscle_train_num=[],[],[],[],[]
+                for ct in range(int(train_grps)):
+                    muscle_train_part.append(train_part)
+                    muscle_train_item.append(train_item[2:])
+                    muscle_train_wt.append(train_wt)
+                    muscle_train_dis.append(train_dis)
+                    muscle_train_num.append(train_num)
+
+                    res_muscle={'目标肌群':muscle_train_part,'内容':muscle_train_item,'重量（Kg）':muscle_train_wt,'距离（m）':muscle_train_dis,'次数':muscle_train_num}
+                # print(res_muscle)
+                df_muscle=pd.DataFrame(res_muscle)
+                df_muscle.fillna('',inplace=True)
+        
+            df_muscle['时间']=train_date
+            df_muscle['形式']='抗阻训练'
+            df_muscle['消耗热量']=int(calories)
+            df_muscle['教练姓名']=ins_name
+            df_muscle['教练评语']=ins_cmt
+            df_muscle['评分']=int(cus_star)
+            df_muscle['有氧项目']=''
+            df_muscle['有氧时长']=''
+
+            # print(df_muscle)
+            df_res_muscle=df_muscle[['时间','形式','目标肌群','有氧项目','有氧时长','内容','重量（Kg）','距离（m）','次数','消耗热量','教练姓名','教练评语','评分']]
+            # print(df_res_muscle)
+
+        ########################有氧################
+        # if pd.isna(df['Q6_有氧训练内容_训练项目']):
+        if df['Q6_有氧训练内容_训练项目'].empty or pd.isna(df['Q6_有氧训练内容_训练项目'].tolist()[0]):
+            print('有氧训练内容为空')
+            # res_muscl={'项目':'','时长（s）':''}
+            # df_muscle=pd.DataFrame(res_muscle,index=[0])
+            # df_muscle.fillna('',inplace=True)
+            df_res_oxy=''
+        else:
+            if '||' in df['Q6_有氧训练内容_训练项目'].tolist()[0]:
+                #多项内容
+                oxy_train_items=df['Q6_有氧训练内容_训练项目'].tolist()[0].split('||')
+                oxy_train_wts=df['Q6_有氧训练内容_重量（Kg）'].tolist()[0].split('||')
+                oxy_train_times=df['Q6_有氧训练内容_时间（秒）'].tolist()[0].split('||')
+                oxy_train_grps=df['Q6_有氧训练内容_组数'].tolist()[0].split('||')
+
+                oxy_train_item,oxy_train_wt,oxy_train_time=[],[],[]
+                for itm_no,grp in enumerate(oxy_train_grps):
+                    for ct in range(int(grp)):
+                        oxy_train_item.append(oxy_train_items[itm_no][2:])
+                        oxy_train_wt.append(oxy_train_wts[itm_no])
+                        oxy_train_time.append(oxy_train_times[itm_no])
+                res_oxy={'项目':oxy_train_item,'重量':oxy_train_wt,'时长（s）':oxy_train_time}
+                # print(train_items,train_wts,train_diss,train_nums,train_grps)
+                # print(res_muscle)
+                df_oxy=pd.DataFrame(res_oxy)
+                # df_muscle.replace('',0,inplace=True)               
+
+            else:
+                #一项内容
+                train_item=df['Q6_有氧训练内容_训练项目'].tolist()[0]
+                train_wt=df['Q6_有氧训练内容_重量（Kg）'].tolist()[0]
+                train_time=df['Q6_有氧训练内容_时间（秒）'].tolist()[0]
+                train_grp=df['Q6_有氧训练内容_组数'].tolist()[0]
+
+                oxy_train_item,oxy_train_wt,oxy_train_time=[],[],[]
+                for ct in range(int(train_grp)):
+                    oxy_train_item.append(train_item[2:])
+                    oxy_train_wt.append(train_wt)
+                    oxy_train_time.append(train_time)
+                res_oxy={'项目':oxy_train_item,'重量（Kg）':oxy_train_wt,'时长（s）':oxy_train_time}
+                    # print(res_oxy)
+                df_oxy=pd.DataFrame(res_oxy)
+                df_oxy.fillna('',inplace=True)
+
+            df_oxy['时间']=train_date
+            df_oxy['形式']='有氧训练'
+            df_oxy['消耗热量']=int(calories)
+            df_oxy['教练姓名']=ins_name
+            df_oxy['教练评语']=ins_cmt
+            df_oxy['评分']=int(cus_star)
+            df_oxy['内容']=''
+            df_oxy['重量（Kg）']=''
+            df_oxy['距离（m）']=''
+            df_oxy['次数']=''
+            df_oxy['目标肌群']=''
+
+            df_oxy.rename(columns={'项目':'有氧项目','时长（s）':'有氧时长','重量':'有氧重量'},inplace=True)
+
+            #去年有氧重量项目
+            df_res_oxy=df_oxy[['时间','形式','目标肌群','有氧项目','有氧时长','内容','重量（Kg）','距离（m）','次数','消耗热量','教练姓名','教练评语','评分']]
+        
+            # print(df_res_oxy)
+
+        return {'df_muscle':df_res_muscle,'df_oxy':df_res_oxy}
+
+    def exp_data_one(self,cus_name='MH003吕雅颖',date_input='20220729'):
+        df_match=self.df_fn[(self.df_fn['Q4_会员姓名']==cus_name) & (self.df_fn['Q3_训练日期']==datetime.strptime(date_input,'%Y%m%d'))]
+        # df_match.iloc[:,5:]=df_match.iloc[:,5:].astype(str)
+        if df_match.empty:
+            print('无数据')
+            res=''
+        else:
+            res=self.deal_data(df_match)
+        return res
+        # df_row=self.df_fn[self.df_fn['']]
+        # df_row=self.df_fn.iloc[0,:]
+        # res=self.deal_data(df_match)
+        # return res
+
+
+        
+
 class Vividict(dict):
     def __missing__(self, key):
         value = self[key] = type(self)()
         return value
 
 if __name__=='__main__':
-    p=ReadCourses(work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室')
+    p=ReadWebData(fn='e:/temp/minghu/test.xlsx')
+    res=p.exp_data_one(cus_name='MH003吕雅颖',date_input='20220729')
+    print(res)
+
+    # print(res['df_muscle'])
+    # print(res)
+
+
+    # p=ReadCourses(work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室')
     # k=p.cus_buy(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
     # print(k)
     # res=p.cus_taken(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
     # print(res)
     # k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'])
     # print(k)
-    k=p.exp_txt(cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220608',crs_time='1000-1100',ins='MHINS001陆伟杰')
-    print(k)
+    # k=p.exp_txt(cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220608',crs_time='1000-1100',ins='MHINS001陆伟杰')
+    # print(k)
     # p.cus_info(cus_name='MH016徐颖丽')
     # k=p.group_exp_txt(y_m='202206',crs_type='常规私教课')
     # k=p.gp_cus_taken(cus_name='MH010苏云',crs_types=['常规私教课','初级团课'],start_time='20210501',nowtime='20220523')
