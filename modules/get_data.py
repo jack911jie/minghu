@@ -414,11 +414,11 @@ class cals:
         return bmr
 
 class ReadCourses:
-    def __init__(self,work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室'):
+    def __init__(self,work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室',dl_taken_fn='D:\\铭湖健身工作目录\\教练工作日志\\教练工作日志.xlsx'):
         self.work_dir=work_dir
         self.base_fn=os.path.join(work_dir,'01-会员管理','工作文档','20220531私教会员剩余课程节数.xlsx')
         self.gp_base_fn=os.path.join(work_dir,'01-会员管理','工作文档','20220430限时课程会员剩余课程节数.xlsx')
-        self.taken_fn='D:\\铭湖健身工作目录\\教练工作日志\\教练工作日志.xlsx'
+        self.taken_fn=dl_taken_fn
         self.df_base=pd.read_excel(self.base_fn)
         self.gp_base=pd.read_excel(self.gp_base_fn)
         self.df_base['备注'].fillna('无',inplace=True)
@@ -479,7 +479,7 @@ class ReadCourses:
                 df_cus_taken=all_cus_taken[(all_cus_taken['会员姓名']==cus_name) & (all_cus_taken['课程类型']==crs_type) & (all_cus_taken['是否完成']=='是')]
                 _df_cus_takens.append(df_cus_taken)
             df_cus_takens=pd.concat(_df_cus_takens)
-            print(_df_cus_takens)
+            # print(_df_cus_takens)
             gp_taken=df_cus_takens.groupby(['课程类型']).count().reset_index()
             gp_taken=gp_taken[['课程类型','会员姓名']]
             gp_taken.columns=['课程类型','上课次数']
@@ -764,12 +764,12 @@ class ReadDiet:
         return diet_suggests
 
 class ReadWebData:
-    def __init__(self,fn='e:/temp/minghu/test.xlsx'):
-        self.fn=fn
-        self.df_fn=pd.read_excel(self.fn,parse_dates=['Q3_训练日期'])
+    def __init__(self):
+        pass
+        
 
     def deal_data(self,df):
-        # print(df)
+        # print(df)        
         cus_name=df['Q4_会员姓名'].tolist()[0]
         train_date=datetime.strftime(df['Q3_训练日期'].tolist()[0],'%Y-%m-%d')
         ins_name=df['Q2_教练姓名'].tolist()[0]
@@ -880,7 +880,7 @@ class ReadWebData:
                 oxy_train_item,oxy_train_wt,oxy_train_time=[],[],[]
                 for itm_no,grp in enumerate(oxy_train_grps):
                     for ct in range(int(grp)):
-                        oxy_train_item.append(oxy_train_items[itm_no][2:])
+                        oxy_train_item.append(oxy_train_items[itm_no])
                         # oxy_train_wt.append(oxy_train_wts[itm_no])
                         oxy_train_time.append(oxy_train_times[itm_no])
                 res_oxy={'项目':oxy_train_item,'时长（s）':oxy_train_time}
@@ -898,7 +898,7 @@ class ReadWebData:
 
                 oxy_train_item,oxy_train_wt,oxy_train_time=[],[],[]
                 for ct in range(int(train_grp)):
-                    oxy_train_item.append(train_item[2:])
+                    oxy_train_item.append(train_item)
                     # oxy_train_wt.append(train_wt)
                     oxy_train_time.append(train_time)
                 res_oxy={'项目':oxy_train_item,'时长（s）':oxy_train_time}
@@ -929,8 +929,9 @@ class ReadWebData:
 
         return {'df_muscle':df_res_muscle,'df_oxy':df_res_oxy}
 
-    def exp_data_one(self,cus_name='MH003吕雅颖',date_input='20220729'):
-        df_match=self.df_fn[(self.df_fn['Q4_会员姓名']==cus_name) & (self.df_fn['Q3_训练日期']==datetime.strptime(date_input,'%Y%m%d'))]
+    def exp_data_one(self,cus_name='MH003吕雅颖',date_input='20220729',fn='e:/temp/minghu/test.xlsx'):
+        df_fn=pd.read_excel(fn,parse_dates=['Q3_训练日期'])
+        df_match=df_fn[(df_fn['Q4_会员姓名']==cus_name) & (df_fn['Q3_训练日期']==datetime.strptime(date_input,'%Y%m%d'))]
         # df_match.iloc[:,5:]=df_match.iloc[:,5:].astype(str)
         if df_match.empty:
             # print('无数据')
@@ -943,8 +944,38 @@ class ReadWebData:
         # res=self.deal_data(df_match)
         # return res
 
+    def body_data(self,cus_name='MH003吕雅颖',date_input='20220803',webfn='e:/temp/minghu/body.xlsx'):
+        df_body=pd.read_excel(webfn,parse_dates=['Q3_日期'])
+        df_body=df_body[(df_body['Q3_日期']==datetime.strptime(date_input,'%Y%m%d')) & (df_body['Q1_客户编码及姓名']==cus_name)]
+        return df_body
 
-        
+class CusInfo:
+    def __init__(self):
+        pass
+
+    def get_cus_list(self,work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料'):
+        cus_list=[]
+        for fns in os.listdir(work_dir):
+            if re.match(r'MH\d{3}.*.xlsx',fns):
+                # print(d[:-5])
+                cus_list.append(fns[:-5])
+        return cus_list 
+
+    def get_cus_body_data(self,cus_fn='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH003吕雅颖.xlsx'):
+        df_body=pd.read_excel(cus_fn,sheet_name='身体数据')
+        return df_body
+
+    def get_cus_basic_data(self,cus_fn='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH003吕雅颖.xlsx'):
+        df_basic=pd.read_excel(cus_fn,sheet_name='基本情况')
+        return df_basic
+
+class InsInfo:
+    def __init__(self):
+        pass
+
+    def get_info(self,ins_fn='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\03-教练管理\\教练资料\\教练信息.xlsx'):
+        df_ins=pd.read_excel(ins_fn,sheet_name='教练信息')
+        return df_ins
 
 class Vividict(dict):
     def __missing__(self, key):
@@ -952,18 +983,25 @@ class Vividict(dict):
         return value
 
 if __name__=='__main__':
-    p=ReadWebData(fn='e:/temp/minghu/test.xlsx')
-    res=p.exp_data_one(cus_name='MH000唐青剑',date_input='20220730')
-    print(res)
+    p=InsInfo()
+    p.get_info()
+
+    # p=ReadWebData()
+    # res=p.exp_data_one(cus_name='MH000唐青剑',date_input='20220730',fn='e:/temp/minghu/test.xlsx')
+    # print(res)
+    # res=p.body_data(cus_name='MH003吕雅颖',date_input='20220803',webfn='e:/temp/minghu/body.xlsx')
+    # print(res)
+    
 
     # print(res['df_muscle'])
     # print(res)
 
 
-    # p=ReadCourses(work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室')
+    # p=ReadCourses(work_dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室',dl_taken_fn='e:\\temp\\minghu\\教练工作日志.xlsx')
+
     # k=p.cus_buy(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
     # print(k)
-    # res=p.cus_taken(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
+    # res=p.cus_taken(cus_name='MH010苏云',crs_types=['常规私教课','初级团课'],start_time='20220501',nowtime='20220804')
     # print(res)
     # k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'])
     # print(k)
@@ -971,7 +1009,7 @@ if __name__=='__main__':
     # print(k)
     # p.cus_info(cus_name='MH016徐颖丽')
     # k=p.group_exp_txt(y_m='202206',crs_type='常规私教课')
-    # k=p.gp_cus_taken(cus_name='MH010苏云',crs_types=['常规私教课','初级团课'],start_time='20210501',nowtime='20220523')
+    # k=p.gp_cus_taken(cus_name='MH010苏云',crs_types=['常规私教课','初级团课'],start_time='20210501',nowtime='20220804')
     # print(k)
     # p.gp_cal_crs_remain(cus_name='MH010苏云',crs_types=['初级团课'],data_fn='客户业务流水数据.xlsx',start_time='20210501',nowtime='20220531')
 
