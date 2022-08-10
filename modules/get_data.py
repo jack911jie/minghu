@@ -805,6 +805,12 @@ class ReadWebData:
                 train_diss=df['Q5_抗阻训练内容_距离（m）'].tolist()[0].split('||')
                 train_nums=df['Q5_抗阻训练内容_次数'].tolist()[0].split('||')
                 train_grps=df['Q5_抗阻训练内容_组数'].tolist()[0].split('||')
+                
+                train_wts=['0' if x=='' else x for x in train_wts]
+                train_diss=['0' if x=='' else x for x in train_diss]
+                train_nums=['0' if x=='' else x for x in train_nums]
+                train_grps=['0' if x=='' else x for x in train_grps]
+                
 
                 muscle_train_part,muscle_train_item,muscle_train_wt,muscle_train_num,muscle_train_dis=[],[],[],[],[]
                 for itm_no,grp in enumerate(train_grps):
@@ -832,6 +838,11 @@ class ReadWebData:
                 train_dis=df['Q5_抗阻训练内容_距离（m）'].tolist()[0]
                 train_num=df['Q5_抗阻训练内容_次数'].tolist()[0]
                 train_grps=df['Q5_抗阻训练内容_组数'].tolist()[0]
+
+                train_wts='0' if train_wts=='' else train_wts
+                train_dis='0' if train_wts=='' else train_dis
+                train_num='0' if train_wts=='' else train_num
+                train_grps='0' if train_wts=='' else train_grps
                 # print(train_grps)
                 # print(muscle_train_item,muscle_train_wt,muscle_train_dis,muscle_train_num)
 
@@ -877,6 +888,10 @@ class ReadWebData:
                 oxy_train_times=df['Q6_有氧训练内容_时间（秒）'].tolist()[0].split('||')
                 oxy_train_grps=df['Q6_有氧训练内容_组数'].tolist()[0].split('||')
 
+                oxy_train_items=['0' if x=='' else x for x in oxy_train_items]
+                oxy_train_times=['0' if x=='' else x for x in oxy_train_times]
+                oxy_train_grps=['1' if  np.isnan(x) else x for x in oxy_train_grps]
+
                 oxy_train_item,oxy_train_wt,oxy_train_time=[],[],[]
                 for itm_no,grp in enumerate(oxy_train_grps):
                     for ct in range(int(grp)):
@@ -895,6 +910,12 @@ class ReadWebData:
                 # train_wt=df['Q6_有氧训练内容_重量（Kg）'].tolist()[0]
                 train_time=df['Q6_有氧训练内容_时间（秒）'].tolist()[0]
                 train_grp=df['Q6_有氧训练内容_组数'].tolist()[0]
+
+                train_item='0' if train_item=='' else train_item
+                train_time='0' if train_time=='' else train_time
+                train_grp='1' if np.isnan(train_grp) else train_grp
+
+                # print('train_grp',np.isnan(train_time),type(train_grp))
 
                 oxy_train_item,oxy_train_wt,oxy_train_time=[],[],[]
                 for ct in range(int(train_grp)):
@@ -983,12 +1004,12 @@ class Vividict(dict):
         return value
 
 if __name__=='__main__':
-    p=InsInfo()
-    p.get_info()
+    # p=InsInfo()
+    # p.get_info()
 
-    # p=ReadWebData()
-    # res=p.exp_data_one(cus_name='MH000唐青剑',date_input='20220730',fn='e:/temp/minghu/test.xlsx')
-    # print(res)
+    p=ReadWebData()
+    res=p.exp_data_one(cus_name='MH077陈静怡',date_input='20220809',fn='e:/temp/minghu/webdl.xlsx')
+    print(res)
     # res=p.body_data(cus_name='MH003吕雅颖',date_input='20220803',webfn='e:/temp/minghu/body.xlsx')
     # print(res)
     
