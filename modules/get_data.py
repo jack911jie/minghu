@@ -890,7 +890,8 @@ class ReadWebData:
 
                 oxy_train_items=['0' if x=='' else x for x in oxy_train_items]
                 oxy_train_times=['0' if x=='' else x for x in oxy_train_times]
-                oxy_train_grps=['1' if  np.isnan(x) else x for x in oxy_train_grps]
+
+                oxy_train_grps=['1' if  np.isnan(int(x)) else x for x in oxy_train_grps]
 
                 oxy_train_item,oxy_train_wt,oxy_train_time=[],[],[]
                 for itm_no,grp in enumerate(oxy_train_grps):
@@ -913,7 +914,12 @@ class ReadWebData:
 
                 train_item='0' if train_item=='' else train_item
                 train_time='0' if train_time=='' else train_time
+
+                if isinstance(train_grp,str):
+                    train_grp=int(train_grp)
                 train_grp='1' if np.isnan(train_grp) else train_grp
+
+             
 
                 # print('train_grp',np.isnan(train_time),type(train_grp))
 
@@ -1008,8 +1014,8 @@ if __name__=='__main__':
     # p.get_info()
 
     p=ReadWebData()
-    res=p.exp_data_one(cus_name='MH077陈静怡',date_input='20220809',fn='e:/temp/minghu/webdl.xlsx')
-    print(res)
+    res=p.exp_data_one(cus_name='MH077陈静怡',date_input='20220817',fn='e:/temp/minghu/webdl.xlsx')
+    print(res['df_oxy'])
     # res=p.body_data(cus_name='MH003吕雅颖',date_input='20220803',webfn='e:/temp/minghu/body.xlsx')
     # print(res)
     
