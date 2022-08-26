@@ -795,15 +795,36 @@ class ReadWebData:
                 try:
                     train_items_upper=pd.DataFrame(df['Q5_抗阻训练内容_● 训练项目（上肢及胸部）'].tolist()[0].split('||'))
                     train_items_upper_detail=pd.DataFrame(df['Q5_抗阻训练内容_---- 上肢及胸部详细内容'].tolist()[0].split('||'))
-                    train_items_upper_complete=[str(it_up)+'（'+str(dt_up)+'）' for it_up in train_i ]
+
+                    train_items_upper_complete=[]
+                    for dt_up_num,item_up in enumerate(train_items_upper[0].tolist()):
+                        dt_up=train_items_upper_detail[0].tolist()[dt_up_num]
+                        if dt_up!='':
+                            up_train=str(item_up)+'（'+str(dt_up)+'）'
+                        else:
+                            up_train=item_up
+                        train_items_upper_complete.append(up_train)
+
                     train_items_legs=pd.DataFrame(df['Q5_抗阻训练内容_● 训练项目（下肢/背部/核心）'].tolist()[0].split('||'))
                     train_items_legs_detail=pd.DataFrame(df['Q5_抗阻训练内容_---- 下肢/背部/核心详细内容'].tolist()[0].split('||'))
-                    df_train_items=pd.concat([train_items_upper,train_items_legs],axis=1)
+                    train_items_legs_complete=[]
+                    for dt_leg_num,item_leg in enumerate(train_items_legs[0].tolist()):
+                        dt_leg=train_items_legs_detail[0].tolist()[dt_leg_num]
+                        if dt_leg!='':
+                            leg_train=str(item_leg)+'（'+str(dt_leg)+'）'
+                        else:
+                            leg_train=item_leg
+                        train_items_legs_complete.append(leg_train)
+
+                    # print(train_items_upper_complete,train_items_legs_complete)
+
+                    df_train_items=pd.concat([pd.DataFrame(train_items_upper_complete),pd.DataFrame(train_items_legs_complete)],axis=1)
+
                     df_train_items.columns=['upper','down']                    
                     df_train_items['训练项目']=df_train_items.apply(lambda x: x['upper'] if x['down']=='' else x['down'],axis=1)
                     train_items=df_train_items['训练项目'].tolist()
                 except Exception as e:
-                    print(e)
+                    print('错误:',e)
                 train_wts=df['Q5_抗阻训练内容_重量（Kg）'].tolist()[0].split('||')
                 train_diss=df['Q5_抗阻训练内容_距离（m）'].tolist()[0].split('||')
                 train_nums=df['Q5_抗阻训练内容_次数'].tolist()[0].split('||')
@@ -827,30 +848,36 @@ class ReadWebData:
                 # print(train_items,train_wts,train_diss,train_nums,train_grps)
                 # print(res_muscle)
                 df_muscle=pd.DataFrame(res_muscle)
-                # df_muscle.replace('',0,inplace=True)               
-
+                # df_muscle.replace('',0,inplace=True)        
+                
             else:
                 #一项内容
                 train_part=df['Q5_抗阻训练内容_训练部位'].tolist()[0]
                 if train_part in ['上肢肌群','胸部肌群']:
                     train_item=df['Q5_抗阻训练内容_● 训练项目（上肢及胸部）'].tolist()[0]
+                    train_item_detail=df['Q5_抗阻训练内容_---- 上肢及胸部详细内容'].tolist()[0]
+                    if train_item_detail!='':
+                        train_item=str(train_item)+'（'+str(train_item_detail)+'）'
                 else:
                     train_item=df['Q5_抗阻训练内容_● 训练项目（下肢/背部/核心）'].tolist()[0]
+                    train_item_detail=df['Q5_抗阻训练内容_---- 下肢/背部/核心详细内容'].tolist()[0]
+                    if train_item_detail!='':
+                        train_item=str(train_item)+str(train_item_detail)
 
                 train_wt=df['Q5_抗阻训练内容_重量（Kg）'].tolist()[0]
                 train_dis=df['Q5_抗阻训练内容_距离（m）'].tolist()[0]
                 train_num=df['Q5_抗阻训练内容_次数'].tolist()[0]
-                train_grps=df['Q5_抗阻训练内容_组数'].tolist()[0]
+                train_grp=df['Q5_抗阻训练内容_组数'].tolist()[0]
 
-                train_wts='0' if train_wts=='' else train_wts
-                train_dis='0' if train_wts=='' else train_dis
-                train_num='0' if train_wts=='' else train_num
-                train_grps='0' if train_wts=='' else train_grps
+                train_wts='0' if train_wt=='' else train_wt
+                train_dis='0' if train_wt=='' else train_dis
+                train_num='0' if train_wt=='' else train_num
+                train_grp='0' if train_wt=='' else train_grp
                 # print(train_grps)
                 # print(muscle_train_item,muscle_train_wt,muscle_train_dis,muscle_train_num)
 
                 muscle_train_part,muscle_train_item,muscle_train_wt,muscle_train_dis,muscle_train_num=[],[],[],[],[]
-                for ct in range(int(train_grps)):
+                for ct in range(int(train_grp)):
                     muscle_train_part.append(train_part)
                     muscle_train_item.append(train_item)
                     muscle_train_wt.append(train_wt)
