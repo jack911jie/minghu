@@ -109,7 +109,7 @@ if __name__=='__main__':
     # p.deal_data(dl_xlsx='e:/temp/minghu/test.xlsx',cus_name='MH003吕雅颖',date_input='20220720')
     # p.append_to_target(target_xlsx='e:/temp/minghu/MH011小韦.xlsx',target_sheet='训练情况',
     #                     dl_xlsx='e:/temp/minghu/test.xlsx',cus_name='MH011小韦',date_input='20220729')
-    p.batch_deal_train_data(web_file='E:/temp/minghu/webdl.xlsx',target_dir='e:/temp/minghu',date_input='20220807')
+    p.batch_deal_train_data(web_file='E:/temp/minghu/webdl.xlsx',target_dir='e:/temp/minghu',date_input='20220824')
 
     # p.append_to_body_sheet(cus_name='MH003吕雅颖',date_input='20220803',webfn='e:/temp/minghu/body.xlsx')
     # p.batch_deal_bodydata_on_date(web_file='e:/temp/minghu/body.xlsx',target_dir='e:/temp/minghu',date_input='20220803')

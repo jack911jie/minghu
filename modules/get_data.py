@@ -793,8 +793,11 @@ class ReadWebData:
                 #多项内容
                 train_parts=df['Q5_抗阻训练内容_训练部位'].tolist()[0].split('||')
                 try:
-                    train_items_upper=pd.DataFrame(df['Q5_抗阻训练内容_训练项目（上肢及胸部）'].tolist()[0].split('||'))
-                    train_items_legs=pd.DataFrame(df['Q5_抗阻训练内容_训练项目（下肢/背部/核心）'].tolist()[0].split('||'))
+                    train_items_upper=pd.DataFrame(df['Q5_抗阻训练内容_● 训练项目（上肢及胸部）'].tolist()[0].split('||'))
+                    train_items_upper_detail=pd.DataFrame(df['Q5_抗阻训练内容_---- 上肢及胸部详细内容'].tolist()[0].split('||'))
+                    train_items_upper_complete=[str(it_up)+'（'+str(dt_up)+'）' for it_up in train_i ]
+                    train_items_legs=pd.DataFrame(df['Q5_抗阻训练内容_● 训练项目（下肢/背部/核心）'].tolist()[0].split('||'))
+                    train_items_legs_detail=pd.DataFrame(df['Q5_抗阻训练内容_---- 下肢/背部/核心详细内容'].tolist()[0].split('||'))
                     df_train_items=pd.concat([train_items_upper,train_items_legs],axis=1)
                     df_train_items.columns=['upper','down']                    
                     df_train_items['训练项目']=df_train_items.apply(lambda x: x['upper'] if x['down']=='' else x['down'],axis=1)
@@ -830,9 +833,9 @@ class ReadWebData:
                 #一项内容
                 train_part=df['Q5_抗阻训练内容_训练部位'].tolist()[0]
                 if train_part in ['上肢肌群','胸部肌群']:
-                    train_item=df['Q5_抗阻训练内容_训练项目（上肢及胸部）'].tolist()[0]
+                    train_item=df['Q5_抗阻训练内容_● 训练项目（上肢及胸部）'].tolist()[0]
                 else:
-                    train_item=df['Q5_抗阻训练内容_训练项目（下肢/背部/核心）'].tolist()[0]
+                    train_item=df['Q5_抗阻训练内容_● 训练项目（下肢/背部/核心）'].tolist()[0]
 
                 train_wt=df['Q5_抗阻训练内容_重量（Kg）'].tolist()[0]
                 train_dis=df['Q5_抗阻训练内容_距离（m）'].tolist()[0]
@@ -1014,8 +1017,8 @@ if __name__=='__main__':
     # p.get_info()
 
     p=ReadWebData()
-    res=p.exp_data_one(cus_name='MH077陈静怡',date_input='20220817',fn='e:/temp/minghu/webdl.xlsx')
-    print(res['df_oxy'])
+    res=p.exp_data_one(cus_name='MH075黄子严',date_input='20220825',fn='e:/temp/minghu/webdl.xlsx')
+    print(res)
     # res=p.body_data(cus_name='MH003吕雅颖',date_input='20220803',webfn='e:/temp/minghu/body.xlsx')
     # print(res)
     
