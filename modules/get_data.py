@@ -471,7 +471,7 @@ class ReadCourses:
         return {'name':t_name,'nickname':t_nickname,'sex':t_sex,'birthday':t_birth,'callit':callit,'title':title}
 
 
-####################常规私教#####################
+####################常规私教-旧#####################
 
     def cus_taken(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'],start_time='20220501',nowtime='20220604'):
         all_cus_taken=self.read_excel_taken(start_time=start_time,nowtime=nowtime)
@@ -495,10 +495,10 @@ class ReadCourses:
         return gp_taken
 
 
-####################限时课程#####################
+####################限时课程-旧#####################
 
     def cus_taken_intime(self,cus_name='MH075黄子严',crs_types=['限时私教课'],start_time='20220501',nowtime='20220826'):
-        df_intime=pd.read_excel(os.path.join(self.work_dir,'02-运营规划','业务数据管理','限时课程启动及结束记录表.xlsx'),engine="openpyxl")
+        df_intime=pd.read_excel(os.path.join(self.work_dir,'10-工作室管理文件','业务数据管理','限时课程启动及结束记录表.xlsx'),engine="openpyxl")
         cus_taken_intime=df_intime[df_intime['会员姓名及编号']==cus_name]
 
         if not cus_taken_intime.empty:
@@ -536,9 +536,110 @@ class ReadCourses:
         else:
             return 0
 
+    def cus_buy_from_person(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','常规团课']):
+        cus_fn=os.path.join(self.work_dir,'01-会员管理','会员资料',cus_name+'.xlsx')
+        # cus_fn=os.path.join('e:\\temp\\minghu','01-会员管理','会员资料',cus_name+'.xlsx')
+        df_cus_buy=pd.read_excel(cus_fn,sheet_name='购课表')
+        gp_crs=df_cus_buy.groupby('购课类型').sum().reset_index()[['购课类型','购课节数','购课时长（天）','限时课程起始日','限时课程结束日','限时课程实际结束日','购课金额']]
+        return gp_crs
+
+####################常规课程数量-新#####################
+    def cus_normal_crs_amt(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','常规团课'],normal_list=['常规私教课','常规团课']):
+        df_crs_all=self.cus_buy_from_person(cus_name=cus_name,crs_types=crs_types)
+        nml_amts=[]
+        for crs_type in normal_list:
+            nml_amt=df_crs_all.loc[df_crs_all['购课类型']==crs_type]
+            nml_amts.append(nml_amt)
+        crs_nml_amt=pd.concat(nml_amts)
+        crs_nml_amt=crs_nml_amt[['购课类型','购课节数']]
+        crs_nml_amt.columns=['购课类型','购课数量']
+
+        cus_crs_types=[]
+        for cus_crs_type in crs_types:
+            cus_nml_crs=crs_nml_amt.loc[crs_nml_amt['购课类型']==cus_crs_type]
+            cus_crs_types.append(cus_nml_crs)
+        cus_nml=pd.concat(cus_crs_types)
+
+
+        #以输入的课程类型作为列名输出，如无数据，则为0
+        cus_nml.set_index('购课类型',inplace=True)        
+        df_input=pd.DataFrame({'购课类型':crs_types,'购课数量':0})
+        df_input.set_index('购课类型',inplace=True)
+        cus_nml=df_input+cus_nml
+        cus_nml=cus_nml.reset_index().fillna(0)
+    
+
+        if cus_nml.empty:
+            return np.nan
+        else:
+            return cus_nml
+    
+ ####################限时课程数量及时间-新#####################   
+    def read_prd_crs_amt(self,cus_name='MH016徐颖丽'):
+            cus_fn=os.path.join(self.work_dir,'01-会员管理','会员资料',cus_name+'.xlsx')
+            # cus_fn=os.path.join('e:\\temp\\minghu','01-会员管理','会员资料',cus_name+'.xlsx')
+            df_cus_buy_prd=pd.read_excel(cus_fn,sheet_name='购课表')
+            df_cus_buy_prd['日期']=df_cus_buy_prd['日期'].apply(lambda x: datetime.strptime(str(x),'%Y%m%d'))
+            
+
+            #总的节数，总的天数
+            # total_amt=df_cus_buy['购课节数'].sum()
+            # total_days=df_cus_buy['购课时长（天）'].sum()
+            return df_cus_buy_prd
+     
+    def cus_prd_crs_amt(self,cus_name='MH075黄子严',now_time_input='20220920',crs_type='限时私教课'):
+            df_cus_buy_prd=self.read_prd_crs_amt(cus_name=cus_name)
+            lst_buy=df_cus_buy_prd[df_cus_buy_prd['购课类型']==crs_type]
+            lst_buy=lst_buy[lst_buy['日期']==lst_buy['日期'].max()]
+            now_time=datetime.strptime(str(now_time_input),'%Y%m%d')
+            try:
+                lst_buy['限时课程起始日']=lst_buy['限时课程起始日'].apply(lambda x: datetime.strptime(str(x),'%Y%m%d'))
+                lst_buy['限时课程结束日']=lst_buy['限时课程结束日'].apply(lambda x: datetime.strptime(str(x),'%Y%m%d'))
+                lst_buy['限时课程实际结束日']=lst_buy['限时课程实际结束日'].apply(lambda x: datetime.strptime(str(x),'%Y%m%d'))
+            except Exception as err:
+                # print(err)
+                pass
+
+            #奇怪但有用的判断空值
+            # prd_end_date=lst_buy['限时课程结束日'] if 'true' in str(pd.isnull(lst_buy['限时课程实际结束日'])).lower() else lst_buy['限时课程实际结束日']
+
+            #时段内上课次数
+        
+            start_time=str(lst_buy['限时课程起始日'].tolist()[0])[:10].replace('-','')
+            end_time=str(lst_buy['限时课程结束日'].tolist()[0])[:10].replace('-','')
+            fmt_start_time=datetime.strptime(start_time,'%Y%m%d')
+            fmt_end_time=datetime.strptime(end_time,'%Y%m%d')
+
+            
+            # "现在时间点"处于起止日内
+            if now_time>=fmt_start_time and now_time<=fmt_end_time:
+                #在限时课程最后一条记录的起止日内，该会员的上课表
+                prd_amt=self.read_excel_taken(start_time=start_time,nowtime=end_time) 
+                try:
+                    df_cus_prd_taken_amt=prd_amt[(prd_amt['会员姓名']==cus_name) & (prd_amt['课程类型']==crs_type) & (prd_amt['日期']>=fmt_start_time) & (prd_amt['日期']<=fmt_end_time)]
+                except KeyError as err_coach_tbl:
+                    print(err_coach_tbl,' 未找到 ',crs_type)
+                    return {'crs_type':crs_type,'err':err_coach_tbl+'未找到'+crs_type}
+                #该段起止日内剩余天数
+                days_remain=fmt_end_time-now_time
+                days_remain=days_remain.days
+
+                #该会员在最后一条记录起止日内上课次数统计
+                cus_prd_taken_amt=df_cus_prd_taken_amt['会员姓名'].count()
+
+                #上课次数小于等于购课次数
+                if cus_prd_taken_amt<=lst_buy['购课节数'].tolist()[0]:
+                    crs_remain=lst_buy['购课节数'].tolist()[0]-cus_prd_taken_amt
+
+                    return {'crs_type':crs_type,'days_remain':days_remain,'crs_remain':crs_remain,'prd':[start_time,end_time],'err':np.nan}
+                else:
+                    return {'crs_type':crs_type,'err':'上课次数已超过该时间段内有效次数'}
+            else:
+                return {'crs_type':crs_type,'err':'输入时间点不在课程有效时间内。'}
+
 
     def cus_buy(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'],data_fn='客户业务流水数据.xlsx',start_time='20220601'):
-        df_gp_buy=pd.read_excel(os.path.join(self.work_dir,'02-运营规划','业务数据管理',data_fn),sheet_name='购课业务流水')
+        df_gp_buy=pd.read_excel(os.path.join(self.work_dir,'10-工作室管理文件','业务数据管理',data_fn),sheet_name='购课业务流水')
         # df_gp_buy['购课期数'].fillna(0,inplace=True)
         # df_gp_buy['购课节数'].fillna(0,inplace=True)
         df_gp_buy['购课时间'].fillna(0,inplace=True)
@@ -585,7 +686,7 @@ class ReadCourses:
             df_ins=df_all_ins[df_all_ins['姓名']==ins]
         return df_ins
 
-    def cal_crs_remain(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课']):
+    def cal_crs_remain(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','常规团课']):
 
         # 客户的课程节数/期数的底
         _df_cus_takens=[]
@@ -598,7 +699,13 @@ class ReadCourses:
         cus_base.groupby(['课程类型']).sum()
 
         #客户购课的数
-        df_cus_buy=self.cus_buy(cus_name=cus_name,crs_types=crs_types)
+        # df_cus_buy=self.cus_buy(cus_name=cus_name,crs_types=crs_types)
+
+            #新方法，从客户资料表中提取数据
+        df_cus_buy=self.cus_normal_crs_amt(cus_name=cus_name,crs_types=crs_types)
+        # print(df_cus_buy)
+
+
         #如客户购课数为空，构建一个空表。
         if df_cus_buy.empty:
             dic_empty_buy=[]
@@ -628,15 +735,29 @@ class ReadCourses:
 
         res['客户名称']=cus_name
         res['剩余课时（节）'].fillna(0,inplace=True)
-        res['本次剩余课时']=res['剩余课时（节）']+res['购课数量']-res['上课次数']
 
-        res=res[['客户名称','课程类型','剩余课时（节）','购课数量','上课次数','本次剩余课时']]
+
+        # res['本次剩余课时']=res['剩余课时（节）']+res['购课数量']-res['上课次数']
+        # res=res[['客户名称','课程类型','剩余课时（节）','购课数量','上课次数','本次剩余课时']]
+
+
+            #新的计算方法
+        res['本次剩余课时']=res['购课数量']-res['上课次数']
+        res=res[['客户名称','课程类型','购课数量','上课次数','本次剩余课时']]
 
         # print(res)
 
         return res
 
         # print(res)
+    def cal_prd_remain(self,cus_name='MH075黄子严',now_time_input='20221011',crs_types=['限时私教课','限时团课']):
+        res_prds=[]
+        for crs_type in crs_types:
+            res_prd=self.cus_prd_crs_amt(cus_name=cus_name,now_time_input=now_time_input,crs_type=crs_type)
+            res_prds.append(res_prd)
+        
+        return res_prds
+            
     
     def exp_txt(self,cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220527',crs_time='1000-1100',ins='MHINS001陆伟杰'):
         talk_template=pd.read_excel(os.path.join(self.work_dir,'01-会员管理','工作文档','预约客户话术模板.xlsx'))
@@ -677,9 +798,6 @@ class ReadCourses:
             txt_talk=txt_talk.replace('duedate',txt_duedate)    
 
             return txt_talk
-
-
-
 
 
     def gp_cus_taken(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'],start_time='20210501',nowtime='20220604'):
@@ -1122,18 +1240,31 @@ if __name__=='__main__':
     # print(res)
 
 
-    p=ReadCourses(work_dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室',dl_taken_fn='e:\\temp\\minghu\\教练工作日志.xlsx')
+    p=ReadCourses(work_dir='E:\\temp\\minghu',dl_taken_fn='e:\\temp\\minghu\\教练工作日志合并.xlsx')
+    # p=ReadCourses(work_dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室',dl_taken_fn='e:\\temp\\minghu\\教练工作日志合并.xlsx')
+
+    # k=p.read_excel_taken(start_time='20221131',nowtime='20230202')
+    # print(k)
     # res=p.cus_taken_intime()
     # print(res)
+    # p.cus_buy_from_person(cus_name='MH016徐颖丽',crs_types=['常规私教课','常规团课'],start_time='20200101')
+    # nml_amt=p.cus_normal_crs_amt(cus_name='MH016徐颖丽',crs_types=['常规私教课','常规团课'])
+    # print(nml_amt)
+
+    # prd_amt=p.cus_prd_crs_amt(cus_name='MH016徐颖丽',crs_types=['限时私教课'])
+    # print(prd_amt)
 
     # k=p.cus_buy(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
     # print(k)
     # res=p.cus_taken(cus_name='MH010苏云',crs_types=['常规私教课','初级团课'],start_time='20220501',nowtime='20220804')
     # print(res)
-    # k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'])
-    # print(k)
-    k=p.exp_txt(cus_name='MH075黄子严',crs_type='限时私教课',crs_date='20220827',crs_time='1000-1100',ins='MHINS001陆伟杰')
+    # k=p.cus_prd_crs_amt(cus_name='MH075黄子严',now_time_input='20221011',crs_type='限时私教课')
+    k=p.cal_prd_remain(cus_name='MH075黄子严',now_time_input='20220811',crs_types=['限时私教课','限时团课'])
+    # k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','常规团课'])
     print(k)
+    # print(k)
+    # k=p.exp_txt(cus_name='MH075黄子严',crs_type='限时私教课',crs_date='20220827',crs_time='1000-1100',ins='MHINS001陆伟杰')
+    # print(k)
     # p.cus_info(cus_name='MH016徐颖丽')
     # k=p.group_exp_txt(y_m='202206',crs_type='常规私教课')
     # k=p.gp_cus_taken(cus_name='MH010苏云',crs_types=['常规私教课','初级团课'],start_time='20210501',nowtime='20220804')

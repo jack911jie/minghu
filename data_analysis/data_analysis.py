@@ -28,7 +28,8 @@ class Data:
             if re.match(r'20\d\d-\d\d',li):
                 sht=pd.read_excel(xlsx,sheet_name=li)
                 if  self.contain_space(list(sht.columns)):
-                    print('在 ',li,' 标题行中有空数据。')
+                    
+                    print('在 ',li,' 标题行中有空数据。\n',list(sht.columns))
                     exit(0)
                 else:
                     coach.append(sht)
@@ -37,13 +38,31 @@ class Data:
         df_coach=_df_coach[~pd.isnull(_df_coach['会员姓名'])]
         df_coach=df_coach.iloc[:,1:]
 
-        save_dir=os.path.join(work_dir,'教练工作日志合并.xlsx')
-        df_coach.to_excel(save_dir,index=False)
-        os.startfile(work_dir)
+        return df_coach
+
+    def batch_coach_data(self,work_dir='D:\\工作目录\\铭湖健身\\数据'):
+        df_list=[]
+        for fn in os.listdir(work_dir):
+            if re.match(r'教练工作日志-\d{4}.xlsx',fn):
+                df=self.coach_data(work_dir=work_dir,fn=fn)
+                df_list.append(df)
+        
+        df_all=pd.concat(df_list)
+
+        return df_all
+
+    def exp_coach_data(self,save_dir_input='D:\\工作目录\\铭湖健身\\数据'):
+        df_all=self.batch_coach_data(work_dir=save_dir_input)
+        save_name=os.path.join(save_dir_input,'教练工作日志合并.xlsx')
+        df_all.to_excel(save_name,index=False)
+        os.startfile(save_dir_input)
         print('完成')
 
 
 
 if __name__=='__main__':
     p=Data()
-    p.coach_data(work_dir='e:\\工作目录\\铭湖健身\\数据',fn='教练工作日志.xlsx')
+    # p.coach_data(work_dir='e:\\工作目录\\铭湖健身\\数据',fn='教练工作日志.xlsx')
+    p.exp_coach_data(save_dir_input='E:\\temp\\minghu')
+    # k=p.batch_coach_data(work_dir='E:\\temp\\minghu')
+    # print(k)
