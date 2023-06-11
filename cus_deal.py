@@ -1,7 +1,12 @@
 import os
 import sys
+sys.path.append(os.path.join(os.path.dirname(__file__),'modules'))
+import write_data
 import pandas as pd
+pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
+
 import  openpyxl
+import re
 
 
 class WriteData:
@@ -36,7 +41,7 @@ class Xlsx(WriteData):
             workbook.save(xls)
             print('原 {} 已删除'.format(sht_name))
         except:
-            print('无 {} 表',format(sht_name))
+            print('无 {} 表'.format(sht_name))
 
     def add_sht(self,cls=['日期','时间','时长（小时）','工作内容','会员姓名','教练'],sht_name='上课记录',xls='e:/temp/minghu/000.xlsx'):
         df_empty=pd.DataFrame(columns=cls)
@@ -45,9 +50,36 @@ class Xlsx(WriteData):
         writer.save()
         print('增加 {} 表完成'.format(sht_name))
 
-class ReadData:
+    def xlsx_deal(self,xls='e:/temp/minghu/000.xlsx'):        
+        cls=['日期','时间','时长（小时）','工作内容','会员姓名','教练']
+        sht_name='上课记录'
+        
+        self.del_sht(sht_name=sht_name,xls=xls)    
+        self.add_sht(cls=cls,sht_name=sht_name,xls=xls)
+
+        cls=['收款日期','收款编码','购课类型','购课节数','购课时长（天）','应收金额','实收金额','收款人','收入类别','客户来源','备注']
+        sht_name='购课表'
+        self.del_sht(sht_name=sht_name,xls=xls)
+        self.add_sht(cls=cls,sht_name=sht_name,xls=xls)
+
+
+        cls=['已上课时数']
+        sht_name='修正参数'
+        self.del_sht(sht_name=sht_name,xls=xls)    
+        self.add_sht(cls=cls,sht_name=sht_name,xls=xls)
+
+    def batch_dir_deal(self,dir):
+        for fn in os.listdir(dir):
+            if re.match(r'MH\d{3}.*.xlsx$',fn):
+                print('\n',fn)
+                fn=os.path.join(dir,fn)
+                self.xlsx_deal(xls=fn)
+    
+
+
+class DealData:
     def __init__(self):
-        pass
+        self.each_cus_buy=self.read_cus_buy()
 
     def read_cus_buy(self,xls='E:\\temp\\minghu\\10-工作室管理文件\\财务流水\\客户业务流水数据.xlsx',sht_name='购课财务流水'):
         df_cus_buy=pd.read_excel(xls,sheet_name=sht_name)
@@ -65,33 +97,80 @@ class ReadData:
         df_new['限时课程起始日']=''
         df_new['限时课程结束日']=''
         df_new['限时课程实际结束日']=''
-        df_new['购课金额']=df_cus_buy['实收金额']
+        df_new['应收金额']=df_cus_buy['应收金额']
+        df_new['实收金额']=df_cus_buy['实收金额']
         df_new['收款人']=df_cus_buy['收款人']
         df_new['备注']=df_cus_buy['备注']
 
 
-        print(df_new)
+        df_gp_cusname=df_new.groupby('客户编码及姓名')
+        lst=list(df_gp_cusname)
+        dic_cus={}
+        for cusname in lst:
+            dic_cus[cusname[0]]=cusname[1]
+        
+        return dic_cus
 
 
+    def write_cus_buy_xlsx(self,xls='e:/temp/minghu/MH017李俊娴.xlsx'):
+        dat=self.each_cus_buy
 
+        cus_name=xls.split('\\')[-1].split('.')[0]
+        cus_dat=dat[cus_name]
+
+        df_input=pd.DataFrame()
+        df_input['收款日期']=cus_dat['日期']
+        df_input['收款编码']=cus_dat['收款编码']
+        df_input['购课类型']=cus_dat['购课类型']
+        df_input['购课节数']=''
+        df_input['购课时长（天）']=''
+        df_input['应收金额']=cus_dat['应收金额']
+        df_input['实收金额']=cus_dat['实收金额']
+        df_input['收款人']=cus_dat['收款人']
+        df_input['收入类别']=''
+        df_input['客户来源']=''
+        df_input['备注']=''
+
+        #删除重复
+        df_old=pd.read_excel(xls,sheet_name='购课表').dropna(how='any',subset=['收款编码'])
+        df_new=write_data.WriteData().verify_data(df_old=df_old,df_new=df_input,cols=['收款编码'])
+        #写入不重复的数据
+        res=write_data.WriteData().write_to_xlsx(input_dataframe=df_new,output_xlsx=xls,sheet_name='购课表',parse_date_col_name='收款日期')
+        print(res)
+
+    def batch_write_cus_buy_dir(self,dir):
+        for fn in os.listdir(dir):
+            if re.match(r'MH\d{3}.*.xlsx$',fn):
+                try:
+                    print('\n',fn)
+                    fn=os.path.join(dir,fn)
+                    print('\n',fn)
+                    self.write_cus_buy_xlsx(xls=fn)
+                except Exception as err:
+                    print('错误',err)
+
+
+# class WriteData:
+#     def write_to_xlsx(self,input_dataframe,output_xlsx,sheet_name,parse_date_col_name='时间'):
 
 if __name__=='__main__':
-    p=ReadData()
-    p.read_cus_buy()
 
-
-
-
-    # xls='e:/temp/minghu/000.xlsx'
-    # cls=['日期','时间','时长（小时）','工作内容','会员姓名','教练']
-    # sht_name='上课记录'
+    #批处理修改个人档案中的上课记录、购课表、修正参数等子表
 
     # p=Xlsx()
-    # p.del_sht(sht_name=sht_name)    
-    # p.add_sht(cls=cls,sht_name=sht_name,xls=xls)
+    # # p.xlsx_deal(xls='E:\\temp\\minghu\\01-会员管理\\会员资料\\MH003吕雅颖.xlsx')
+    # p.batch_dir_deal(dir='E:\\temp\\minghu\\01-会员管理\\会员资料')
+
+    #------------------------------------------------------------------
+
+    #将【财务流水】中的购课信息写入个人档案中
+    p=DealData()
+    # p.read_cus_buy()
+    # p.write_cus_buy_xlsx(xls='E:\\temp\\minghu\\01-会员管理\\会员资料\\MH003吕雅颖.xlsx')
+    p.batch_write_cus_buy_dir(dir='E:\\temp\\minghu\\01-会员管理\\会员资料')
+
+    
+    
 
 
-    # cls=['已上课时数']
-    # sht_name='修正参数'
-    # p.del_sht(sht_name=sht_name)    
-    # p.add_sht(cls=cls,sht_name=sht_name,xls=xls)
+    

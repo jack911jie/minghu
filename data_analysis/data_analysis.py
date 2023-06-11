@@ -27,6 +27,7 @@ class Data:
         for li in df_coach_list:
             if re.match(r'20\d\d-\d\d',li):
                 sht=pd.read_excel(xlsx,sheet_name=li)
+
                 if  self.contain_space(list(sht.columns)):
                     
                     print('在 ',li,' 标题行中有空数据。\n',list(sht.columns))
@@ -35,8 +36,11 @@ class Data:
                     coach.append(sht)
         
         _df_coach=pd.concat(coach)
+        
+        
         df_coach=_df_coach[~pd.isnull(_df_coach['会员姓名'])]
-        df_coach=df_coach.iloc[:,1:]
+        df_coach=df_coach.iloc[:,1:]       
+
 
         return df_coach
 
@@ -62,7 +66,7 @@ class Data:
 
 if __name__=='__main__':
     p=Data()
-    # p.coach_data(work_dir='e:\\工作目录\\铭湖健身\\数据',fn='教练工作日志.xlsx')
-    p.exp_coach_data(save_dir_input='E:\\temp\\minghu')
+    p.coach_data(work_dir='E:\\temp\\minghu',fn='教练工作日志-2023.xlsx')
+    # p.exp_coach_data(save_dir_input='E:\\temp\\minghu')
     # k=p.batch_coach_data(work_dir='E:\\temp\\minghu')
     # print(k)
