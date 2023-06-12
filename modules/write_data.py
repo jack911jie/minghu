@@ -21,6 +21,8 @@ class WriteData:
         
 
     def verify_data(self,df_old,df_new,cols):
-        df_diff=pd.concat([df_new,df_old]).drop_duplicates(subset=cols,keep=False,inplace=False)
+        # print(df_old,'\n',df_new,'\n')
+        df_diff=pd.concat([df_new,df_old,df_old]).drop_duplicates(subset=cols,keep=False,inplace=False)
+        # print(df_diff)
         
         return df_diff
