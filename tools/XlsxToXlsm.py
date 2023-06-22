@@ -47,8 +47,12 @@ class XlsxToXlsm:
     def batch_copy_data(self,xlsx_dir,xlsm_dir):
         xlsx_list=self.get_list(input_dir=xlsx_dir)
         for xlsx in xlsx_list:
+            
             xlsx_name=os.path.join(xlsx_dir,xlsx)
-            xlsm_name=os.path.join(xlsm_dir,xlsx.split('\\')[-1].split('.')[0]+'.xlsm')
+            xlsm=xlsx.split('\\')[-1].split('.')[0]+'.xlsm'
+            xlsm_name=os.path.join(xlsm_dir,xlsm)
+
+            print('{} --> {}'.format(xlsx,xlsm))
             self.copy_data(xlsx=xlsx_name,xlsm=xlsm_name)
         print('done')
 
@@ -88,9 +92,11 @@ class CopyRecs:
             df_had.loc[:,'购课节数']=''
             df_had.loc[:,'购课时长（天）']=''
             df_input=df_had[['收款日期','购课编码','购课类型','购课节数','购课时长（天）','应收金额','实收金额','收款人','收入类别','备注']]
-
-            append_log=write_data.WriteData().write_to_xlsx(input_dataframe=df_input,output_xlsx=fn,sheet_name='购课表',parse_date_col_name='收款日期')
-            # print(append_log)
+            try:
+                append_log=write_data.WriteData().write_to_xlsx(input_dataframe=df_input,output_xlsx=fn,sheet_name='购课表',parse_date_col_name='收款日期')
+            except Exception as e:
+                append_log=e
+            print(append_log)
 
     def append_taken_to_fn(self,fn='E:\\temp\\minghu\\xlsm\\MH016徐颖丽.xlsm'):
         cus_name=fn.split('\\')[-1].split('.')[0]
@@ -100,19 +106,22 @@ class CopyRecs:
             df_input.rename(columns={'工作内容':'课程类型'},inplace=True)
             # print(df_input)
             df_input=df_input[['日期','时间','时长\n（小时）','课程类型','教练','备注']]
-            apd_log=write_data.WriteData().write_to_xlsx(input_dataframe=df_input,output_xlsx=fn,sheet_name='上课记录',parse_date_col_name='日期')
+            try:
+                apd_log=write_data.WriteData().write_to_xlsx(input_dataframe=df_input,output_xlsx=fn,sheet_name='上课记录',parse_date_col_name='日期')
+            except Exception as e:
+                apd_log=e
             print(apd_log)
 
     def batch_append_buy(self,dir):
-        for fn in os.list(dir):
-            print('正在添加 {} 的购课记录'.format(fn))
+        for fn in os.listdir(dir):
+            print('\n正在添加 {} 的购课记录'.format(fn))
             filename=os.path.join(dir,fn)
             self.append_buy_to_fn(fn=filename)
         print('完成')
 
     def batch_append_taken(self,dir):
-        for fn in os.list(dir):
-            print('正在添加 {} 的上课记录'.format(fn))
+        for fn in os.listdir(dir):
+            print('\n正在添加 {} 的上课记录'.format(fn))
             filename=os.path.join(dir,fn)
             self.append_taken_to_fn(fn=filename)
         print('完成')
@@ -122,6 +131,7 @@ class CopyRecs:
                             '限时课程记录':['限时课程起始日','限时课程结束日','限时课程实际结束日']}
 
         for fn in os.listdir(dir):
+            print('正在修改 {} 的格式'.format(fn))
             if re.match(r'MH\d{3}.*.xlsm$',fn):
                 filename=os.path.join(dir,fn)
                 for key in shts.keys():

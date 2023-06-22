@@ -37,27 +37,32 @@ class WriteData:
         return df_diff
 
     def convert_column_to_date_format(self,file_path,sheet_name, column_name):
-        wb = openpyxl.load_workbook(file_path,keep_vba=True)
-        sheet = wb[sheet_name]
+        try:
+            wb = openpyxl.load_workbook(file_path,keep_vba=True)
+            sheet = wb[sheet_name]
 
-        # 获取列索引
-        column_index = None
-        for cell in sheet[1]:
-            if cell.value == column_name:
-                column_index = cell.column_letter
-                break
+            # 获取列索引
+            column_index = None
+            for cell in sheet[1]:
+                if cell.value == column_name:
+                    column_index = cell.column_letter
+                    break
 
-        if column_index is not None:
-            # 设置日期格式
-            # date_style = NamedStyle(name='date_format')
-            # date_style.number_format = numbers.FORMAT_DATE_XLSX14
-            sheet.column_dimensions[column_index].width = 13  # 设置列宽
-            for cell in sheet[column_index]:
-                cell.number_format='yyyy/mm/dd'
-            wb.save(file_path)
-        wb.close()
+            if column_index is not None:
+                # 设置日期格式
+                # date_style = NamedStyle(name='date_format')
+                # date_style.number_format = numbers.FORMAT_DATE_XLSX14
+                sheet.column_dimensions[column_index].width = 13  # 设置列宽
+                for cell in sheet[column_index]:
+                    cell.number_format='yyyy/mm/dd'
+                wb.save(file_path)
+            wb.close()
+        except Exception as e:
+            res=e
+        res=''
 
-        print('{} 修改为短日期格式完成'.format(column_name))
+        # print('{} 修改为短日期格式完成'.format(column_name))
+        return res
 
         
 if __name__=='__main__':
