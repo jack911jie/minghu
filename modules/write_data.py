@@ -7,8 +7,11 @@ class WriteData:
         if input_dataframe.shape[0]==0:
             return '无数据追加'
         else:
-            old=pd.read_excel(output_xlsx,sheet_name=sheet_name,parse_dates=[parse_date_col_name])
-            book=openpyxl.load_workbook(output_xlsx)
+            if parse_date_col_name:
+                old=pd.read_excel(output_xlsx,sheet_name=sheet_name,parse_dates=[parse_date_col_name])
+            else:
+                old=pd.read_excel(output_xlsx,sheet_name=sheet_name)
+            book=openpyxl.load_workbook(output_xlsx,keep_vba=True)
             writer=pd.ExcelWriter(output_xlsx,engine='openpyxl')
             writer.book=book
             writer.sheets=dict((ws.title,ws) for ws in book.worksheets)         
