@@ -1,38 +1,39 @@
 import pandas as pd
+
+# pd.set_option('max_columns', None) # 显示最多列数
+pd.set_option('expand_frame_repr', False) # 当列太多时显示不清楚
+pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
 import numpy as np
 import openpyxl
-from openpyxl.utils import get_column_letter
-from openpyxl.styles import NamedStyle
-from openpyxl.styles import numbers
 
 class WriteData:
     def write_to_xlsx(self,input_dataframe,output_xlsx,sheet_name,parse_date_col_name='时间'):
-        if input_dataframe.shape[0]==0:
-            return '无数据追加'
+        if parse_date_col_name:
+            old=pd.read_excel(output_xlsx,sheet_name=sheet_name,parse_dates=[parse_date_col_name])
         else:
-            if parse_date_col_name:
-                old=pd.read_excel(output_xlsx,sheet_name=sheet_name,parse_dates=[parse_date_col_name])
-            else:
-                old=pd.read_excel(output_xlsx,sheet_name=sheet_name)
-            book=openpyxl.load_workbook(output_xlsx,keep_vba=True)
+            old=pd.read_excel(output_xlsx,sheet_name=sheet_name)
+        if input_dataframe.shape[0]>0:
+            book=openpyxl.load_workbook(output_xlsx)
             writer=pd.ExcelWriter(output_xlsx,engine='openpyxl')
             writer.book=book
             writer.sheets=dict((ws.title,ws) for ws in book.worksheets)         
-            old_rows=old.shape[0]
+            old_rows=old.shape[0]        
             input_dataframe.to_excel(writer,sheet_name=sheet_name,startrow=old_rows+1,index=False,header=False)
-            
-            writer.save()
+            writer.save()        
             log_txt=str(input_dataframe.shape[0])+' 条数据追加完成，行号：'+str(old_rows+2)+'-'+str(old_rows+input_dataframe.shape[0]+1)
+        else:
+            log_txt='无新记录，写入0条'
 
-            # self.convert_column_to_date_format(file_path=output_xlsx,sheet_name=sheet_name,column_name=parse_date_col_name)
-
-            return log_txt
-        
-
-    def verify_data(self,df_old,df_new,cols):
-        # print(df_old,'\n',df_new,'\n')
-        df_diff=pd.concat([df_new,df_old,df_old]).drop_duplicates(subset=cols,keep=False,inplace=False)
-        # print(df_diff)
+        return log_txt
+    
+    def verify_data(self,df_old,df_new,cols,method='keep_new'):
+        if method=='keep_new':
+            df_diff=pd.concat([df_new,df_old,df_old]).drop_duplicates(subset=cols,keep=False,inplace=False)
+        elif method=='keep_old':
+            df_diff=pd.concat([df_new,df_old,df_new]).drop_duplicates(subset=cols,keep=False,inplace=False)
+        else:
+            print('未设置方式')
+            df_diff=pd.DataFrame()
         
         return df_diff
 
@@ -64,7 +65,6 @@ class WriteData:
         # print('{} 修改为短日期格式完成'.format(column_name))
         return res
 
-        
-if __name__=='__main__':
-    p=WriteData()
-    p.convert_column_to_date_format(file_path='E:\\temp\\minghu\\xlsm\\MH016徐颖丽.xlsm',sheet_name='购课表',column_name='收款日期')
+
+if  __name__=='__main__':
+    pass
