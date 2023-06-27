@@ -141,12 +141,12 @@ class CopyRecs:
 
 if __name__=='__main__':
     #一、从xlsx生成xlsm至目录
-    # p=XlsxToXlsm()
-    # fnlist=p.get_list(input_dir='E:\\temp\\minghu\\01-会员管理\\会员资料')
-    # p.new_xlsm(template='E:\\temp\\minghu\\01-会员管理\\模板.xlsm',fn_list=fnlist,out_dir='E:\\temp\\minghu\\xlsm')
+    p=XlsxToXlsm()
+    fnlist=p.get_list(input_dir='E:\\temp\\minghu\\01-会员管理\\会员资料')
+    p.new_xlsm(template='E:\\temp\\minghu\\01-会员管理\\模板.xlsm',fn_list=fnlist,out_dir='E:\\temp\\minghu\\xlsm')
 
     #二、批量将xlsx数据copy到新的xlsm中
-    # p.batch_copy_data(xlsx_dir='E:\\temp\\minghu\\01-会员管理\\会员资料',xlsm_dir='E:\\temp\\minghu\\xlsm')
+    p.batch_copy_data(xlsx_dir='E:\\temp\\minghu\\01-会员管理\\会员资料',xlsm_dir='E:\\temp\\minghu\\xlsm')
 
     #三、复制既往的上课及购课数据
     q=CopyRecs(buy_fn='E:\\temp\\minghu\\客户业务流水数据.xlsx',taken_fn='E:\\temp\\minghu\\教练工作日志合并.xlsx')

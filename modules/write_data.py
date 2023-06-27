@@ -19,7 +19,7 @@ class WriteData:
                 input_dataframe=self.verify_data(df_old=old,df_new=input_dataframe,cols=cols,method='keep_new')
                 #有判断重复列名的输入
                 if dup_judge_by_cols:
-                    book=openpyxl.load_workbook(output_xlsx)
+                    book=openpyxl.load_workbook(output_xlsx,keep_vba=True)
                     writer=pd.ExcelWriter(output_xlsx,engine='openpyxl')
                     writer.book=book
                     writer.sheets=dict((ws.title,ws) for ws in book.worksheets)      
@@ -44,7 +44,7 @@ class WriteData:
                     print('追加记录出错：',err_not_cover)
             #允许重复（直接追加）
             else:
-                book=openpyxl.load_workbook(output_xlsx)
+                book=openpyxl.load_workbook(output_xlsx,keep_vba=True)
                 writer=pd.ExcelWriter(output_xlsx,engine='openpyxl')
                 writer.book=book
                 writer.sheets=dict((ws.title,ws) for ws in book.worksheets)     
