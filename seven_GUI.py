@@ -63,10 +63,10 @@ class GUI:
 
         menubar=tk.Menu(window)
         after_class_menu=tk.Menu(menubar,tearoff=0)
-        menubar.add_cascade(label='课后反馈生成',menu=after_class_menu)
-        after_class_menu.add_cascade(label='批量',command=self.after_batch)        
+        menubar.add_cascade(label='课后反馈生成',menu=after_class_menu)              
         after_class_menu.add_cascade(label='个人',command=self.after_individual)        
-
+        after_class_menu.add_cascade(label='批量',command=self.after_batch)  
+        
         menubar.add_cascade(label='生成会员总结',command=self.cus_summary_menu)
         menubar.add_cascade(label='批量录入会员训练信息',command=self.gp_input_train_menu)
         menubar.add_cascade(label='生成新的会员资料表',command=self.new_cus_excel)
@@ -156,7 +156,7 @@ class GUI:
             def open_cus_file():
                 cus_name=var_cus_name.get().upper()
                 if cus_name in cus_list:
-                    os.startfile(os.path.join(self.cus_dir,cus_name+'.xlsx'))
+                    os.startfile(os.path.join(self.cus_dir,cus_name+'.xlsm'))
                 else:
                     feed_back.delete('1.0','end')
                     feed_back.insert('insert','会员ID不在列表内，请检查。')
@@ -367,7 +367,7 @@ class GUI:
     def get_cus_list(self):
         cus_list=[]
         for fn in os.listdir(os.path.join(self.cus_dir)):
-            if re.match(self.prefix+'.*.xlsx$',fn):
+            if re.match(self.prefix+'.*.xlsm$',fn):
                cus_list.append(fn[0:-5]) 
         return cus_list
 
