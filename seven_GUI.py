@@ -341,7 +341,7 @@ class GUI:
                     print(new_cus_fn)
                     if new_cus_fn:
                         print('正在打开文件……')
-                        os.startfile(os.path.join(self.cus_dir,new_cus_fn+'.xlsx'))
+                        os.startfile(os.path.join(self.cus_dir,new_cus_fn+'.xlsm'))
                     new_msg.restoreStd()                    
                 else:
                     msg_box.insert('insert','请输入姓名')            
