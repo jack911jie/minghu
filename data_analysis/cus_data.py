@@ -16,8 +16,10 @@ class CusData:
         return df_cus_buy
 
     def batch_get_cus_buy(self,dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料'):
-        dfs=[]        
-        for fn in tqdm(os.listdir(dir)):
+        dfs=[]    
+        pbar=tqdm(os.listdir(dir))    
+        for fn in pbar:
+            pbar.set_description("正在读取客户购课信息")
             if re.match(r'^MH\d{3}.*.xlsm$',fn):
                 realfn=os.path.join(dir,fn) 
                 df=self.get_cus_buy(realfn)
