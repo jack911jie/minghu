@@ -55,7 +55,7 @@ class CusData:
         for fn in pbar:
             pbar.set_description("正在读取教练上课记录")
             if re.match(r'^MH\d{3}.*.xlsm$',fn):
-                df_tk=pd.read_excel(os.path.join(dir,fn),sheet_name='上课记录')
+                df_tk=self.formal_cls_taken(os.path.join(dir,fn))
                 dfs_tk.append(df_tk)
         
         df_taken=pd.concat(dfs_tk)
@@ -92,7 +92,8 @@ class CusData:
 
 if __name__=='__main__':
     p=CusData()
-    p.batch_fomral_cls_taken()
+    p.batch_fomral_cls_taken(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',out_fn='E:\\temp\\minghu\\教练上课记录合并.xlsx')
+
     # res=p.get_cus_buy()
     # res=p.batch_get_cus_buy()
     # p.exp_all_cus_buy(input_dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',output_dir='e:\\temp\\minghu')
