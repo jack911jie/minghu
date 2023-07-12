@@ -89,10 +89,101 @@ class CusData:
         df_all_trial=pd.concat(trial)
         return df_all_trial
 
+    def cus_lmt_cls_rec(self,fn='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH120肖婕.xlsm'):
+        df_tkn=pd.read_excel(fn,sheet_name='上课记录')
+        df_buy=pd.read_excel(fn,sheet_name='购课表')
+        df_ltm_prd=pd.read_excel(fn,sheet_name='限时课程记录')
+        #排序
+        # df_tkn.sort_values(by=['日期'],ascending=[True],inplace=True)
+        # df_buy.sort_values(by=['收款日期'],ascending=[True],inplace=True)
+        df_ltm_prd.sort_values(by=['限时课程起始日'],ascending=[True],inplace=True)
+
+        cus_name=fn.split('\\')[-1].split('.')[0]
+
+        try:
+        #上课次数
+            tkn_num=df_tkn['日期'].count()     
+        except:
+            tkn_num=0
+
+        try:
+        #上课总天数
+            interval=df_tkn['日期'].max()-df_tkn['日期'].min()
+            interval=interval.days
+        except:
+            interval=0
+
+        try:
+        #上课频率
+            tkn_frqc=interval/tkn_num
+        except:
+            tkn_frqc=0
+        
+
+
+        try:
+        #到期日        
+            latest_ltm=df_ltm_prd.iloc[-1]
+            if pd.isna(latest_ltm['限时课程实际结束日']):
+                end_date=latest_ltm['限时课程结束日']
+            else:
+                end_date=''        
+        except:
+            end_date=''
+
+        try:
+        #购课次数
+            buy_num=df_buy['购课编码'].nunique()
+        #消费总金额
+            total_pay=df_buy['实收金额'].sum()
+        #平均每单消费金额
+            avg_pay=total_pay/buy_num
+
+            #续课资料
+            if buy_num>0:
+                ctn_buy_num=buy_num-1
+            else:
+                ctn_buy_num=0
+        except:
+            buy_num=0
+            total_pay=0
+            avg_pay=0
+            ctn_buy_num=0
+
+  
+        try:
+            df_out=pd.DataFrame(data={'会员编码及姓名':cus_name,'限时课程到期日':end_date,'消费次数':buy_num,'总消费金额':total_pay,'平均每单消费金额':avg_pay,
+                                '开始上课日期':df_tkn['日期'].min(),'最后一次上课日期':df_tkn['日期'].max(),'上课总天数':interval,'上课总次数':tkn_num,
+                                '上课频率':tkn_frqc},index=[0])
+        except Exception as err:
+            df_out=pd.DataFrame()
+            print(cus_name,'：',err)
+
+
+        return df_out
+
+    def all_cus_lmt_rec(self,dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料'):
+        dfs=[]
+        pbar=tqdm(os.listdir(dir))
+        for fn in pbar:
+            pbar.set_description('正在读取所有客户信息 ')
+            if re.match(r'^MH\d{3}.*.xlsm$',fn):
+                df=self.cus_lmt_cls_rec(fn=os.path.join(dir,fn))
+                if not df.empty:
+                    dfs.append(df)
+        dfs_out=pd.concat(dfs)
+
+        # print(dfs_out)
+        return dfs_out
+
 
 if __name__=='__main__':
     p=CusData()
-    p.batch_fomral_cls_taken(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',out_fn='E:\\temp\\minghu\\教练上课记录合并.xlsx')
+    # p.batch_fomral_cls_taken(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',out_fn='E:\\temp\\minghu\\教练上课记录合并.xlsx')
+    # res=p.cus_lmt_cls_rec()
+    # print(res)
+    res=p.all_cus_lmt_rec()
+    res.to_excel('e:\\temp\\minghu\\客户上课及购课信息.xlsx',sheet_name='客户上课及购课信息表',index=False)
 
     # res=p.get_cus_buy()
     # res=p.batch_get_cus_buy()
