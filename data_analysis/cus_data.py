@@ -5,6 +5,7 @@ from datetime import datetime
 from tqdm import tqdm
 import pandas as pd
 pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
+pd.set_option('display.max_columns', None) #显示所有列
 
 
 class CusData:
@@ -89,7 +90,9 @@ class CusData:
         df_all_trial=pd.concat(trial)
         return df_all_trial
 
-    def cus_lmt_cls_rec(self,fn='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH120肖婕.xlsm'):
+    # def cus_lmt_cls_rec(self,fn='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH120肖婕.xlsm'):
+    def cus_cls_rec(self,fn='E:\\temp\\minghu\\MH017李俊娴.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课']):
+
         df_tkn=pd.read_excel(fn,sheet_name='上课记录')
         df_buy=pd.read_excel(fn,sheet_name='购课表')
         df_ltm_prd=pd.read_excel(fn,sheet_name='限时课程记录')
@@ -103,6 +106,10 @@ class CusData:
         try:
         #上课次数
             tkn_num=df_tkn['日期'].count()     
+            tkn_nums={}
+            for cls_type in cls_types:
+                tkn_nums['上课次数-'+cls_type]=df_tkn[df_tkn['课程类型']==cls_type]['日期'].count()
+            df_tkn_nums=pd.DataFrame(data=tkn_nums,index=[0])
         except:
             tkn_num=0
 
@@ -133,8 +140,17 @@ class CusData:
 
         try:
         #购课次数
-            buy_num=df_buy['购课编码'].nunique()
+            buy_nums={}
+            for cls_type in cls_types:
+                buy_nums['购课次数-'+cls_type]=df_buy[df_buy['购课类型']==cls_type]['购课编码'].nunique()
+            df_buy_nums=pd.DataFrame(data=buy_nums,index=[0])
         #消费总金额
+            buy_pays={}
+            for cls_type in cls_types:
+                buy_pays['消费金额-'+cls_type]=df_buy[df_buy['购课类型']==cls_type]['实收金额'].sum()
+            buy_pays=pd.DataFrame(data=buy_pays,index=[0])
+
+            buy_num=df_buy['购课编码'].nunique()
             total_pay=df_buy['实收金额'].sum()
         #平均每单消费金额
             avg_pay=total_pay/buy_num
@@ -144,7 +160,8 @@ class CusData:
                 ctn_buy_num=buy_num-1
             else:
                 ctn_buy_num=0
-        except:
+        except Exception as err:
+            print('购课表统计错误：',err)
             buy_num=0
             total_pay=0
             avg_pay=0
@@ -152,9 +169,10 @@ class CusData:
 
   
         try:
-            df_out=pd.DataFrame(data={'会员编码及姓名':cus_name,'限时课程到期日':end_date,'消费次数':buy_num,'总消费金额':total_pay,'平均每单消费金额':avg_pay,
+            df_out=pd.DataFrame(data={'会员编码及姓名':cus_name,'限时课程到期日':end_date,'总消费金额':total_pay,'平均每单消费金额':avg_pay,
                                 '开始上课日期':df_tkn['日期'].min(),'最后一次上课日期':df_tkn['日期'].max(),'上课总天数':interval,'上课总次数':tkn_num,
                                 '上课频率':tkn_frqc},index=[0])
+            df_out=pd.concat([df_out,df_tkn_nums,df_buy_nums,buy_pays],axis=1)
         except Exception as err:
             df_out=pd.DataFrame()
             print(cus_name,'：',err)
@@ -162,13 +180,13 @@ class CusData:
 
         return df_out
 
-    def all_cus_lmt_rec(self,dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料'):
+    def all_cus_cls_rec(self,dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课']):
         dfs=[]
         pbar=tqdm(os.listdir(dir))
         for fn in pbar:
             pbar.set_description('正在读取所有客户信息 ')
             if re.match(r'^MH\d{3}.*.xlsm$',fn):
-                df=self.cus_lmt_cls_rec(fn=os.path.join(dir,fn))
+                df=self.cus_cls_rec(fn=os.path.join(dir,fn),cls_types=cls_types)
                 if not df.empty:
                     dfs.append(df)
         dfs_out=pd.concat(dfs)
@@ -180,9 +198,10 @@ class CusData:
 if __name__=='__main__':
     p=CusData()
     # p.batch_fomral_cls_taken(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',out_fn='E:\\temp\\minghu\\教练上课记录合并.xlsx')
-    # res=p.cus_lmt_cls_rec()
+    # res=p.cus_cls_rec(fn='E:\\temp\\minghu\\MH017李俊娴.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
     # print(res)
-    res=p.all_cus_lmt_rec()
+    # res=p.all_cus_cls_rec(dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
+    res=p.all_cus_cls_rec(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
     res.to_excel('e:\\temp\\minghu\\客户上课及购课信息.xlsx',sheet_name='客户上课及购课信息表',index=False)
 
     # res=p.get_cus_buy()
