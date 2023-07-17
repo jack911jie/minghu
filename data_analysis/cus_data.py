@@ -1,11 +1,13 @@
 import os
 import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)),'WeCom'))
+import agenda
 import re
 from datetime import datetime
 from tqdm import tqdm
 import pandas as pd
 pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
-pd.set_option('display.max_columns', None) #显示所有列
+# pd.set_option('display.max_columns', None) #显示所有列
 
 
 class CusData:
@@ -194,15 +196,57 @@ class CusData:
         # print(dfs_out)
         return dfs_out
 
+    def due_cus(self,df_data,month,userids=['AXiao'],input_data_type='xlsx',xlsx='e:\\temp\\minghu\\客户上课及购课信息.xlsx'):
+        if input_data_type=='xlsx':
+            df_data=pd.read_excel(xlsx,sheet_name='客户上课及购课信息表') 
+        if not month:
+            month=int(datetime.now().month)
+        
+        if not df_data.empty:
+            df_due=df_data[df_data['限时课程到期日'].dt.month==month]
+            
+            if not df_due.empty:
+                df_cusname=df_due[['会员编码及姓名','限时课程到期日']]
+                df_by_date=df_cusname.groupby(['限时课程到期日'])['会员编码及姓名'].apply(list).reset_index()
+                df_by_date['日程文本']=df_by_date['会员编码及姓名'].apply(lambda x: '今日有下列会员课程到期：\n'+'\n'.join(x).strip())
+                df_by_date['写入日程日期']=pd.to_datetime(df_by_date["限时课程到期日"]) + pd.Timedelta("8 hours")
+                df_by_date['写入日程日期及文本']=df_by_date['写入日程日期'].astype(str)+'|'+df_by_date['日程文本']
+                # print(df_by_date)
+                date_and_txts=df_by_date['写入日程日期及文本'].tolist()
+
+                writer=agenda.WeCom()
+                for d_and_t in date_and_txts:       
+                    start_time,agenda_txt=d_and_t.split('|')
+                    s_date=start_time.split(' ')[0]
+                    print(f'\n正在写入 {s_date} 的记录……',end='')
+                    end_time=datetime.strptime(start_time.split(' ')[0]+' 23:00:00','%Y-%m-%d %H:%M:%S')
+                    writer.create_schedule(userids, 
+                                    desp=agenda_txt, 
+                                    start_time=start_time,
+                                    end_time=end_time,                      
+                                    access_token_fn='e:\\temp\\minghu\\access_token\\access_token.txt')
+
+                return df_by_date
+            else:
+                print(f'{month} 月份没有到期的客户')
+                return
+        else:
+            print('客户上课及购课信息为空')
+            return
+
 
 if __name__=='__main__':
     p=CusData()
+
+    p.due_cus(df_data='',month='',userids=['AXiao','hal','WoShiXinMeiMei','WeiYueQi','likw'],input_data_type='xlsx',xlsx='e:\\temp\\minghu\\客户上课及购课信息.xlsx')
+    #input_data_type参数：可以为xlsx或dataframe，如果为dataframe，则df_data参数需输入一个dataframe，如为xlsx，则xlsx参数需输入一个xlsx表格。
+
     # p.batch_fomral_cls_taken(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',out_fn='E:\\temp\\minghu\\教练上课记录合并.xlsx')
     # res=p.cus_cls_rec(fn='E:\\temp\\minghu\\MH017李俊娴.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
     # print(res)
     # res=p.all_cus_cls_rec(dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
-    res=p.all_cus_cls_rec(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
-    res.to_excel('e:\\temp\\minghu\\客户上课及购课信息.xlsx',sheet_name='客户上课及购课信息表',index=False)
+    # res=p.all_cus_cls_rec(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
+    # res.to_excel('e:\\temp\\minghu\\客户上课及购课信息.xlsx',sheet_name='客户上课及购课信息表',index=False)
 
     # res=p.get_cus_buy()
     # res=p.batch_get_cus_buy()
