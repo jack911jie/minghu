@@ -1,13 +1,15 @@
 import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)),'WeCom'))
+sys.path.extend([os.path.join(os.path.dirname(os.path.dirname(__file__)),'WeCom'),os.path.join(os.path.dirname(os.path.dirname(__file__)),'modules')])
+import readconfig
 import agenda
 import re
 from datetime import datetime
 from tqdm import tqdm
+from flask import jsonify
 import pandas as pd
 pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
-# pd.set_option('display.max_columns', None) #显示所有列
+pd.set_option('display.max_columns', None) #显示所有列
 
 
 class CusData:
@@ -68,9 +70,6 @@ class CusData:
         print('完成')
         return df_taken
 
-
-
-
     def trial_cls(self,fn='E:\\temp\\minghu\\体验课上课记录表-2023.xlsx'):
         df_trial=pd.read_excel(fn,sheet_name='体验课上课记录表')
         return df_trial
@@ -93,7 +92,7 @@ class CusData:
         return df_all_trial
 
     # def cus_lmt_cls_rec(self,fn='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH120肖婕.xlsm'):
-    def cus_cls_rec(self,fn='E:\\temp\\minghu\\MH017李俊娴.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课']):
+    def cus_cls_rec(self,fn='E:\\temp\\minghu\\MH017李俊娴.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'],not_lmt_types=['常规私教课','常规团课']):
 
         df_tkn=pd.read_excel(fn,sheet_name='上课记录')
         df_buy=pd.read_excel(fn,sheet_name='购课表')
@@ -102,6 +101,7 @@ class CusData:
         # df_tkn.sort_values(by=['日期'],ascending=[True],inplace=True)
         # df_buy.sort_values(by=['收款日期'],ascending=[True],inplace=True)
         df_ltm_prd.sort_values(by=['限时课程起始日'],ascending=[True],inplace=True)
+        # print(df_ltm_prd.iloc[-1])
 
         cus_name=fn.split('\\')[-1].split('.')[0]
 
@@ -136,7 +136,7 @@ class CusData:
             if pd.isna(latest_ltm['限时课程实际结束日']):
                 end_date=latest_ltm['限时课程结束日']
             else:
-                end_date=''        
+                end_date=latest_ltm['限时课程实际结束日']     
         except:
             end_date=''
 
@@ -146,6 +146,23 @@ class CusData:
             for cls_type in cls_types:
                 buy_nums['购课次数-'+cls_type]=df_buy[df_buy['购课类型']==cls_type]['购课编码'].nunique()
             df_buy_nums=pd.DataFrame(data=buy_nums,index=[0])
+        
+        #非限时课程的购课节数
+            #读取校正节数
+            df_adj=pd.read_excel(fn,sheet_name='修正参数')
+            if df_adj.empty:
+                adj_tkn=0
+            else:
+                adj_tkn=df_adj['已上课时数'].tolist()[0]
+
+            for cls_type in cls_types:
+                if cls_type in not_lmt_types:
+                    df_buy_drop_dup=df_buy.drop_duplicates(subset=['购课编码'],keep='first')
+                    buy_nums['购课节数-'+cls_type]=df_buy_drop_dup[df_buy_drop_dup['购课类型']==cls_type]['购课节数'].sum()
+                    buy_nums['剩余节数-'+cls_type]=buy_nums['购课节数-'+cls_type]-df_tkn_nums['上课次数-'+cls_type]-adj_tkn
+            df_buy_nums=pd.DataFrame(data=buy_nums,index=[0])
+
+
         #消费总金额
             buy_pays={}
             for cls_type in cls_types:
@@ -156,8 +173,11 @@ class CusData:
             total_pay=df_buy['实收金额'].sum()
         #平均每单消费金额
             avg_pay=total_pay/buy_num
+        
+        #最后一次购课时间
+            latest_buy_date=df_buy['收款日期'].max()
 
-            #续课资料
+            #续课次数
             if buy_num>0:
                 ctn_buy_num=buy_num-1
             else:
@@ -171,7 +191,7 @@ class CusData:
 
   
         try:
-            df_out=pd.DataFrame(data={'会员编码及姓名':cus_name,'限时课程到期日':end_date,'总消费金额':total_pay,'平均每单消费金额':avg_pay,
+            df_out=pd.DataFrame(data={'会员编码及姓名':cus_name,'限时课程到期日':end_date,'总消费金额':total_pay,'平均每单消费金额':avg_pay,'最后一次购课日期':latest_buy_date,
                                 '开始上课日期':df_tkn['日期'].min(),'最后一次上课日期':df_tkn['日期'].max(),'上课总天数':interval,'上课总次数':tkn_num,
                                 '上课频率':tkn_frqc},index=[0])
             df_out=pd.concat([df_out,df_tkn_nums,df_buy_nums,buy_pays],axis=1)
@@ -181,6 +201,20 @@ class CusData:
 
 
         return df_out
+
+    def cus_cls_rec_toweb(self,fn='E:\\temp\\minghu\\MH017李俊娴.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'],not_lmt_types=['常规私教课','常规团课']):
+        df_web=self.cus_cls_rec(fn=fn,cls_types=cls_types,not_lmt_types=not_lmt_types)
+        try:
+            if df_web['限时课程到期日'].tolist()[0]>=datetime.now():
+                df_web['限时课程是否有效']='是'
+            else:
+                df_web['限时课程是否有效']='否'
+        except:
+            df_web['限时课程是否有效']='否'
+            df_web['限时课程到期日']='-'
+
+        df_web=df_web.fillna('-')
+        return df_web
 
     def all_cus_cls_rec(self,dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课']):
         dfs=[]
@@ -196,7 +230,7 @@ class CusData:
         # print(dfs_out)
         return dfs_out
 
-    def due_cus(self,df_data,month,userids=['AXiao'],input_data_type='xlsx',xlsx='e:\\temp\\minghu\\客户上课及购课信息.xlsx'):
+    def due_cus(self,df_data,month,input_data_type='xlsx',xlsx='e:\\temp\\minghu\\客户上课及购课信息.xlsx'):
         if input_data_type=='xlsx':
             df_data=pd.read_excel(xlsx,sheet_name='客户上课及购课信息表') 
         if not month:
@@ -212,20 +246,6 @@ class CusData:
                 df_by_date['写入日程日期']=pd.to_datetime(df_by_date["限时课程到期日"]) + pd.Timedelta("8 hours")
                 df_by_date['写入日程日期及文本']=df_by_date['写入日程日期'].astype(str)+'|'+df_by_date['日程文本']
                 # print(df_by_date)
-                date_and_txts=df_by_date['写入日程日期及文本'].tolist()
-
-                writer=agenda.WeCom()
-                for d_and_t in date_and_txts:       
-                    start_time,agenda_txt=d_and_t.split('|')
-                    s_date=start_time.split(' ')[0]
-                    print(f'\n正在写入 {s_date} 的记录……',end='')
-                    end_time=datetime.strptime(start_time.split(' ')[0]+' 23:00:00','%Y-%m-%d %H:%M:%S')
-                    writer.create_schedule(userids, 
-                                    desp=agenda_txt, 
-                                    start_time=start_time,
-                                    end_time=end_time,                      
-                                    access_token_fn='e:\\temp\\minghu\\access_token\\access_token.txt')
-
                 return df_by_date
             else:
                 print(f'{month} 月份没有到期的客户')
@@ -234,17 +254,78 @@ class CusData:
             print('客户上课及购课信息为空')
             return
 
+    def send_agenda_due_cus(self,df_data,month,userids=['AXiao'],input_data_type='xlsx',xlsx='e:\\temp\\minghu\\客户上课及购课信息.xlsx'):
+        df_by_date=self.due_cus(df_data=df_data,month=month,userids=userids,input_data_type=input_data_type,xlsx=xlsx)
+                # print(df_by_date)
+        if not df_by_date.empty:
+            date_and_txts=df_by_date['写入日程日期及文本'].tolist()
+            writer=agenda.WeCom()
+            for d_and_t in date_and_txts:       
+                start_time,agenda_txt=d_and_t.split('|')
+                s_date=start_time.split(' ')[0]
+                print(f'\n正在写入 {s_date} 的记录……',end='')
+                end_time=datetime.strptime(start_time.split(' ')[0]+' 23:00:00','%Y-%m-%d %H:%M:%S')
+                writer.create_schedule(userids, 
+                                desp=agenda_txt, 
+                                start_time=start_time,
+                                end_time=end_time,                      
+                                access_token_fn='e:\\temp\\minghu\\access_token\\access_token.txt')
+        else:
+            print('客户上课及购课信息为空')
+            return                      
+
+    def zombie_cus(self,df_data,today,input_data_type='xlsx',xlsx='e:\\temp\\minghu\\客户上课及购课信息.xlsx'):
+        #读取设置
+        zombie_cfg=readconfig.exp_json2(os.path.join(os.path.dirname(__file__),'config','zombie.config'))
+        #排除一些客户
+        exp_list=readconfig.txt_to_list(os.path.join(os.path.dirname(__file__),'config','zombie_except_list.config'))
+        zombie_lstbuy_days=zombie_cfg['zombie_lstbuy_days']
+        zombie_lsttkn_days=zombie_cfg['zombie_lsttkn_days']
+        if input_data_type=='xlsx':
+            df_data=pd.read_excel(xlsx,sheet_name='客户上课及购课信息表') 
+        if today:
+            today=datetime.strptime(today,'%Y-%m-%d')
+        else:
+            today=datetime.now()
+        
+        
+        if not df_data.empty:
+            #判断标准：最后一次购课日期与今天相比大于180日，& 最后一次上课日期与今天相比大于 180日
+            df_zombie=df_data[(df_data['最后一次购课日期']<=today-pd.Timedelta(days=zombie_lstbuy_days)) & (df_data['最后一次上课日期']<=today-pd.Timedelta(days=zombie_lsttkn_days))]
+            
+            #剔除排除名单里面的客户
+            if exp_list:
+                df_zombie=df_zombie[~df_zombie['会员编码及姓名'].isin(exp_list)]
+
+            df_zombie.reset_index(inplace=True,drop=True)
+            return df_zombie
+        else:
+            print('输入的表格或dataframe为空')
+            return
+
 
 if __name__=='__main__':
     p=CusData()
 
-    p.due_cus(df_data='',month='',userids=['AXiao','hal','WoShiXinMeiMei','WeiYueQi','likw'],input_data_type='xlsx',xlsx='e:\\temp\\minghu\\客户上课及购课信息.xlsx')
+    #僵尸客户
+    # res=p.zombie_cus(df_data='',today='',input_data_type='xlsx',xlsx='e:\\temp\\minghu\\客户上课及购课信息.xlsx')
+    # df_data：输入的dataframe
+    # today：与“今天”比较，可输入，格式为“2023-1-1”，如为空，则按今天的日期。
+    # input_data_type: xlsx或dataframe， 如为xlsx则后面的xlsx参数必须有，如为dataframe，则前面的df_data必须有。
+    
+    # res.to_excel('e:\\temp\\minghu\\zombie.xlsx',sheet_name='僵尸客户名单',index=False)
+    # print(res)
+    # p.send_agenda_due_cus(df_data='',month='',userids=['AXiao','hal','WoShiXinMeiMei','WeiYueQi','likw'],input_data_type='xlsx',xlsx='e:\\temp\\minghu\\客户上课及购课信息.xlsx')
     #input_data_type参数：可以为xlsx或dataframe，如果为dataframe，则df_data参数需输入一个dataframe，如为xlsx，则xlsx参数需输入一个xlsx表格。
 
     # p.batch_fomral_cls_taken(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',out_fn='E:\\temp\\minghu\\教练上课记录合并.xlsx')
     # res=p.cus_cls_rec(fn='E:\\temp\\minghu\\MH017李俊娴.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
-    # print(res)
+    res=p.cus_cls_rec_toweb(fn='E:\\temp\\minghu\\MH216罗苑升.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
+    res=res.fillna('-')
+    print(res)
     # res=p.all_cus_cls_rec(dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
+    
+    # 客户上课及购课信息
     # res=p.all_cus_cls_rec(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
     # res.to_excel('e:\\temp\\minghu\\客户上课及购课信息.xlsx',sheet_name='客户上课及购课信息表',index=False)
 

@@ -22,6 +22,17 @@ def exp_json2(t):
     config=json.loads(_line)
     return config
 
+def txt_to_list(t):
+    try:
+        with open (t,'r',encoding='utf-8') as f:
+            lines=f.readlines()
+        li=[]
+        for line in lines:
+            li.append(line.strip('\n'))
+        return li
+    except:
+        return 
+
 def readColorConfig(fn):
     with open(fn,'r',encoding='utf-8') as f:
         lines=f.readlines()
