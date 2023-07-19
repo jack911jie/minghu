@@ -6,8 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <h3>请输入客户编码及姓名：</h3> <button onclick="get_cus_info()">查询客户的信息</button>
-    <input type="text" id="searchInput" style="width: 90px;" oninput="handleInput()">
+    <h3>请输入客户编码及姓名：</h3>
+    
+    <input type="text" id="searchInput" style="width: 190px;" oninput="handleInput()">
+    <p></p>
+    <div><button  style="margin-right:5px;" onclick="get_cus_info()">查询客户信息</button><button onclick="open_cus_fn()">打开客户资料表</button></div>
+
     <ul id="resultList"></ul>
     <ul id="cus_info"></ul>
     <div class="inline" id="show_info">
@@ -18,10 +22,16 @@
         <div>限时课程到期日  <div class='result' id="lmt_due_date"></div></div>
         <div style="height: 5px;"></div>
         <div>上课总天数  <div class='result' id="total_cls_days"></div> 天</div>
-        <div>总消费金额  <div class='result' id="total_pay"></div> 元</div>        
+        <div>总消费金额  <div class='result' id="total_pay"></div> 元</div>    
+    </div>   
+    
+    <div  class="inline2" id="other_info" >
+        <p></p>
+        <p></p>
+        <div  id="open_cus_fn_res"></div>
+        <p></p>
+        <div id="err_no_result"></div>
     </div>
-    <div class="inline" id="err_no_result"></div>
-
     <script> 
         var cus_list
         // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
@@ -86,7 +96,7 @@
     
         function get_cus_info() {
             var selectedName = document.getElementById("searchInput").value;
-
+            clear_other_div()
             fetch('/get_cus_info', {
                 method: 'POST',
                 headers: {
@@ -110,6 +120,7 @@
             .catch(error => {
                 console.error('Error:', error) 
                 document.getElementById("show_info").style.display='none';
+                document.getElementById("open_cus_fn_res").innerText='';
                 document.getElementById("err_no_result").innerText='无结果';
             
                 });
@@ -140,15 +151,57 @@
                 // console.log(d['会员编码及姓名'])
                 var cusInfoBlock=document.getElementById("show_info");
                 var errBlock=document.getElementById("err_no_result");
-                errBlock.innerText=""
+                clear_other_div()
+
                 if(d['会员编码及姓名']!==""){   
                     cusInfoBlock.style.display='inline';
                 }else{
                     cusInfoBlock.style.display='none';
+                    // OpenCusFn.style.display='none';
+
                     errBlock.innerText='无结果';
                 }
             }catch(error){
-                errBlock.innerText='无结果';
+                errBlock.innerText='program error. 无结果';
+            }
+        }
+    
+        function open_cus_fn(){
+            var cus_name=document.getElementById('searchInput').value;
+            if(cus_name){
+                clear_other_div()
+                fetch('/open_cus_fn',{
+                    method:'POST',
+                    headers:{
+                        'Content-Type':'text/plain'
+                    },
+                    body:document.getElementById('searchInput').value
+
+                })
+                .then(response=>response.text())
+                .then(data=>{
+                    console.log(data)                    
+                    document.getElementById('open_cus_fn_res').innerText=data
+                })
+                .catch(error=>{
+                    console.error('Error:',error)
+                    document.getElementById("show_info").style.display='none'
+                    document.getElementById('open_cus_fn_res').innerText=''
+                });
+
+            }else{
+                console.log('cus_name empty')
+                document.getElementById("show_info").style.display='none'
+                document.getElementById('open_cus_fn_res').innerText=''
+            }
+            
+        }
+    
+        function clear_other_div(){
+            var p_div=document.getElementById("other_info");
+            var childDivs=p_div.getElementsByTagName("Div");
+            for(i=0;i<childDivs.length;i++){
+                childDivs[i].innerText="";
             }
 
         }

@@ -1,6 +1,7 @@
 Set objShell = CreateObject("Wscript.Shell")
 ' 启动 app.py，隐藏命令行窗口
-objShell.Run "cmd /c python app.py > C:\Users\admin\Desktop\app_log.txt 2>&1", 0, True
+' objShell.Run "cmd /c python app.py > C:\Users\admin\Desktop\app_log.txt 2>&1", 0, True
+objShell.Run "cmd /c python app.py ", 0, True
 
 ' 等待一段时间，确保 Flask 应用已经启动
 WScript.Sleep 2000

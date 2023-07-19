@@ -3,6 +3,7 @@ import sys
 sys.path.extend([os.path.join(os.path.dirname(os.path.dirname(__file__)),'data_analysis')])
 import cus_data
 import re
+import xlwings as xw
 import pandas as pd
 pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
 # pd.set_option('display.max_columns', None) #显示所有列
@@ -37,6 +38,10 @@ def get_cus_list():
 def index():
     return render_template('index.html')
 
+@app.route('/new_cus')
+def new_cus():
+    return render_template('new_cus.html')
+
 @app.route('/get_info', methods=['GET','POST'])
 def get_info():
     # 从前端获取选择的姓名
@@ -63,13 +68,69 @@ def get_cus_info():
     data=res.iloc[0].to_dict()
     return jsonify(data)
 
+@app.route('/open_cus_fn',methods=['POST'])
+def open_cus_fn():
+    cus_name=request.data.decode('utf-8')
+    cus_li=cus_list()
+    if cus_name and cus_name in cus_li:
+        work_dir=wecom_dir()
+        fn=os.path.join(work_dir,cus_name+'.xlsm')
+        # os.startfile(fn)
+        return f'正在打开 {cus_name} 的会员档案'
+    else:
+        return '会员编码及编码为空/无此会员档案'
+
+@app.route('/check_new',methods=['POST'])
+def check_new():
+    dat=request.data
+    cus_li=cus_list()
+    cus_num=[int(x[2:5]) for x in cus_li]
+    max_num=max(cus_num)
+    new_num=max_num+1
+    txt_num=str(new_num).zfill(3)
+    # new_name='MH'+new_num.zfill(3)+cus_name+'.xlsm'
+    # new_name=os.path.join(wecom_dir,new_name)
+    return txt_num
+
+@app.route('/generate_new',methods=['POST'])
+def generate_new():
+    try:
+        fn=request.data
+        fn='MH'+fn.decode('utf-8')
+        work_dir=wecom_dir()
+        tplt_dir=os.path.dirname(work_dir)
+        new_fn=os.path.join(work_dir,fn+'.xlsm')
+
+        app=xw.App(visible=False)
+        wb=app.books.open(os.path.join(tplt_dir,'模板.xlsm'))
+        sht=wb.sheets['基本情况']
+        sht['A2'].value=fn[0:5]
+        sht['B2'].value=fn[5:]
+        if len(fn[5:])>1:
+            sht['C2'].value=fn[5:][1:]
+        else:
+            sht['C2'].value=fn[5:]
+
+        wb.save(new_fn)
+        wb.close()
+        app.quit()
+
+        # os.startfile(work_dir)
+        os.startfile(new_fn)
+
+        return new_fn
+    except Exception as e:
+        return e
+
+
+
 
 @app.route('/welcome')
 def welcome():
     return '关于我们页面'
 
 if __name__ == '__main__':
-    # app.run(debug=True)
-    app.run(debug=True,host='192.168.1.38',port=5000)
+    app.run(debug=True)
+    # app.run(debug=True,host='192.168.1.38',port=5000)
     # res=wecom_dir()
     # print(res)

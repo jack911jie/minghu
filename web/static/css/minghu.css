@@ -4,6 +4,11 @@
     font-size: 16px;
     color:lightslategray
   }
+.inline2{
+    display: inline-block;
+    font-size: 16px;
+    color:rgb(204, 143, 119)
+  }
 
   .result{
     display: inline-block;

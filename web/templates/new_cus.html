@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>前端按钮功能示例</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h3>生成新的客户</h3>
+
+    <p></p>
+    <h4>输入新客户的姓名</h4>
+    <input type="text" id="cusName" style="width: 190px;" >
+    <button onclick="CheckFile()">生成文件</button>
+    <p></p>
+    <div class="inline2" id="new_cus_res"></div>
+    <script>
+        function CheckFile() {
+            document.getElementById("new_cus_res").innerText=''
+            var cusName=document.getElementById("cusName").value.trim()
+            if(cusName){
+                fetch('/check_new', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain'
+                    },
+                    body: 'new'
+                })
+                .then(response => response.text())
+                .then(data => {
+                    // 在这里处理后端返回的数据，例如给出成功提示
+                    console.log('new_code:',data)
+                    var confirmRes=confirm("现在的序号是 MH"+data+cusName+' ，如需修改序号请按【取消】修改。')
+                    if (confirmRes){
+                        generateFile(data+cusName);
+                    }else{
+                        var newNum = prompt("请输入序号（三位数字）：");
+                        const ptn=/^\d{3}$/;
+                        while (!ptn.test(newNum)){   
+                            newNum = prompt("输入的不是三位数字，请重新请输入。");                           
+                        }
+                        generateFile(newNum+cusName);  
+                        
+                    }
+                
+                })
+                .catch(error => console.error('Error:', error));
+            }else{
+                alert('未输入姓名')
+            }
+
+        }
+
+        function generateFile(NumName){
+            document.getElementById("new_cus_res").innerHTML='<p>正在生成新会员文件……</p>'
+            fetch('/generate_new',{
+                method:"POST",
+                headers:{
+                    'Content-Type':'text/plain'
+                },
+                body:NumName
+            })
+            .then(response=>response.text())
+            .then(data=>{
+                console.log(data)
+                document.getElementById("new_cus_res").innerHTML='<p>生成文件名：</p><p>'+data+'</p>'
+                // alert(data)
+            })
+            .catch(error=>console.error('Error:',error))
+        }
+
+
+    </script>
+</body>
+</html>
