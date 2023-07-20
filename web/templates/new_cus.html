@@ -15,7 +15,7 @@
     <p></p>
     <div class="inline2" id="new_cus_res"></div>
     <script>
-        function CheckFile() {
+        function CheckFile() {            
             document.getElementById("new_cus_res").innerText=''
             var cusName=document.getElementById("cusName").value.trim()
             if(cusName){
@@ -37,14 +37,21 @@
                         var newNum = prompt("请输入序号（三位数字）：");
                         const ptn=/^\d{3}$/;
                         while (!ptn.test(newNum)){   
-                            newNum = prompt("输入的不是三位数字，请重新请输入。");                           
+                            if(newNum==='不输入' || newNum==='取消' ){
+                                throw new Error('工作人员取消输入');
+                                break;
+                            }else{
+                                newNum = prompt("输入的不是三位数字，请重新请输入。");   
+                            }                        
                         }
                         generateFile(newNum+cusName);  
                         
                     }
                 
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => {
+                    alert(error);
+                    console.error('Error:', error)});
             }else{
                 alert('未输入姓名')
             }
@@ -52,13 +59,15 @@
         }
 
         function generateFile(NumName){
+            const isMo=isMobile();
+            dvc=isMo?"mobile":"pc";
             document.getElementById("new_cus_res").innerHTML='<p>正在生成新会员文件……</p>'
             fetch('/generate_new',{
                 method:"POST",
                 headers:{
                     'Content-Type':'text/plain'
                 },
-                body:NumName
+                body:NumName+"|"+dvc
             })
             .then(response=>response.text())
             .then(data=>{
@@ -67,6 +76,11 @@
                 // alert(data)
             })
             .catch(error=>console.error('Error:',error))
+        }
+
+        function isMobile(){
+            const userAgent = navigator.userAgent.toLowerCase();
+            return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
         }
 
 

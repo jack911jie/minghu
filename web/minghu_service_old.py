@@ -130,7 +130,7 @@ def welcome():
     return '关于我们页面'
 
 if __name__ == '__main__':
-    app.run(debug=True)
-    # app.run(debug=True,host='192.168.1.38',port=5000)
+    # app.run(debug=True)
+    app.run(debug=True,host='192.168.1.38',port=5023)
     # res=wecom_dir()
     # print(res)
