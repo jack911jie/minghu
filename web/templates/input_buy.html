@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>铭湖健身客户信息查询</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div id="inputContents">
+        <h3>请输入客户编码及姓名（支持模糊查询）：</h3>
+        
+        <input type="text" id="cusNameInput" style="width: 190px;" oninput="handleInput()">
+        <ul id="resultList"></ul>
+        <p></p>
+
+        <h3>购课日期</h3>
+        <div id="date">
+            <form>
+                <label for="dateInput"></label>
+                <input type="date" id="dateInput" name="dateInput" oninput="fillBuyCode()">
+                <br>
+            </form>
+        </div>
+        <h3>客户购课编号</h3>
+        <input type="text" id="buyCode" style="width: 190px;" oninput="isValidDate()" onclick="get_cus_buy()" onblur="hide_cus_buy()">
+        <div id="buyHistory" class="buy-list"></div>
+        <div id="buyCodeErr" class="inline2"></div>
+        <p></p>    
+
+        <ul id="resultList"></ul>
+        <ul id="cus_info"></ul>
+
+        <h3>购课类型</h3>
+        <select id="buyType">
+            <option value="">请选择</option>
+        </select>
+        <div id="errBuyType" class="inline2"></div>
+
+        <h3>购课节数</h3>
+        <input type="number" id="buyNum" name="buyNum" step="1" oninput="onInputBuyNumDaysCheck(this.id)">
+        <div id="errBuyNum" class="inline2" ></div>
+        <p></p>
+
+        <h3>购课时长（天）</h3>
+        <input type="number" id="buyDays" name="buyDays" step="1" oninput="onInputBuyNumDaysCheck(this.id)">
+        <div id="errBuyDays" class="inline2" ></div>
+        <p></p>
+
+        <h3>应收金额</h3>
+        <input type="number" id="pay" name="pay" step="0.01">
+        <p></p>
+
+        <h3>实收金额</h3>
+        <input type="number" id="realPay" name="realPay" step="0.01">
+        <p></p>
+
+        <h3>收款人</h3>
+        <select id="cashier">
+            <option value="">请选择</option>
+        </select>
+
+        <h3>收入类别</h3>
+        <select id="incomeType">
+            <option value="">请选择</option>
+        </select>
+
+        <h3>备注</h3>
+        <input type="text" id="comment" style="width: 190px;height: 80px;">
+
+        
+        <div  class="inline2" id="other_info" >
+            <p></p>
+            <p></p>
+            <div  id="open_cus_fn_res"></div>
+            <p></p>
+            <div id="err_no_result"></div>
+        </div>
+
+        <div class="inline2" id="status"></div>
+    </div>
+
+    <div><button  style="margin-right:5px;" onclick="submit()">提交</button></div>
+
+    <script src="../static/js/moment.min.js"></script>
+    <script> 
+        let cus_list
+        let selectedName
+        let tmplt_info
+        const allError={'dateError':0,'buyNumError':0};
+        // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
+        document.addEventListener("DOMContentLoaded", function() {   
+
+            selectToday('dateInput')
+
+            fetch('/get_template_info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                tmplt_info=data;
+                console.log(data)
+                buyTypeSelect(data);
+                cashierSelect(data);
+                incomeTypeSelect(data);
+                  })
+                .catch(error => console.error('Error:', error));
+
+            fetch('/get_cus_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                cus_list=data
+                  })
+                .catch(error => console.error('Error:', error));
+
+            fetch('/get_cus_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                //将data赋值给块变量cus_list，供后面的handleInput使用
+                    cus_list=data
+                })
+            .catch(error => console.error('Error:', error));
+            // 这里可以通过 JavaScript 来遍历某个文件夹中的文件，生成名字列表
+            // var names = ["Alice", "Bob", "Charlie", "David"];    
+
+            
+        });
+
+        function hide_cus_buy(){
+            document.getElementById('buyHistory').innerHTML='';
+        }
+
+        function onInputBuyNumDaysCheck(id){
+            console.log(id)
+            console.log(document.getElementById('buyType').value,document.getElementById('buyNum').value,document.getElementById('buyDays').value)
+            const InputBox=document.getElementById(id)
+            document.getElementById('errBuyDays').innerText='';
+            document.getElementById('errBuyNum').innerText='';
+            document.getElementById('errBuyType').innerText='';
+         
+            if(document.getElementById('buyType').value==='限时私教课'){
+                if(document.getElementById('buyDays').value==='' &&  document.getElementById('buyNum').value ||
+                    document.getElementById('buyDays').value===0 &&  document.getElementById('buyNum').value){
+                    document.getElementById('errBuyDays').innerText='限时私教课必须输入天数';
+                }else if(document.getElementById('buyDays').value &&  document.getElementById('buyNum').value==='' ||
+                    document.getElementById('buyDays').value &&  document.getElementById('buyNum').value===0){
+                    document.getElementById('errBuyNum').innerText='限时私教课必须输入节数';
+                }else if(!(document.getElementById('buyDays').value &&  document.getElementById('buyNum').value)){
+                    document.getElementById('errBuyType').innerText='限时私教课必须同时输入节数和天数';
+                }else{
+                    document.getElementById('errBuyDays').innerText='';
+                    document.getElementById('errBuyNum').innerText='';
+                    document.getElementById('errBuyType').innerText='';
+                }
+                
+            }
+
+        }
+
+        function buyTypeSelect(data){
+            let buyTypeSelect=document.getElementById('buyType')
+            const buyTypes=data.cls_types;
+            buyTypes.forEach(function(buyType){
+                let option=document.createElement('option');
+                option.value=buyType;
+                option.innerText=buyType;
+                buyTypeSelect.appendChild(option);
+            })
+            buyTypeSelect.addEventListener("change",function(){
+                console.log(buyTypeSelect.value);
+                const buyDaysInput=document.getElementById('buyDays');               
+                buyDaysInput.removeAttribute('disabled');
+                document.getElementById('errBuyDays').innerText='';
+                document.getElementById('errBuyNum').innerText='';
+                document.getElementById('errBuyType').innerText='';
+                if(buyTypeSelect.value==='限时私教课'){                    
+                    buyDaysInput.removeAttribute('disabled');
+                    if(document.getElementById('buyDays').value==='' &&  document.getElementById('buyNum').value ||
+                        document.getElementById('buyDays').value===0 &&  document.getElementById('buyNum').value){
+                        document.getElementById('errBuyDays').innerText='限时私教课必须输入天数'
+                    }else if(document.getElementById('buyDays').value &&  document.getElementById('buyNum').value==='' ||
+                        document.getElementById('buyDays').value &&  document.getElementById('buyNum').value===0){
+                        document.getElementById('errBuyNum').innerText='限时私教课必须输入节数'
+                    }else if(!(document.getElementById('buyDays').value &&  document.getElementById('buyNum').value)){
+                        document.getElementById('errBuyType').innerText='限时私教课必须同时输入节数和天数'
+                    }else{
+                        document.getElementById('errBuyDays').innerText='';
+                        document.getElementById('errBuyNum').innerText='';
+                        document.getElementById('errBuyType').innerText='';
+                    }                    
+                }
+                if(buyTypeSelect.value==='常规私教课'){      
+                    buyDaysInput.value='';              
+                    buyDaysInput.setAttribute('disabled','true');
+                }
+
+            })
+        }
+
+        function submitCheck(){
+            const allInputBox=document.getElementById('inputContents');
+            const inputElements=allInputBox.querySelectorAll('input');
+            const selectElements=allInputBox.querySelectorAll('select');
+            try{
+                inputElements.forEach((input)=>{              
+                    console.log(input.value);
+                    if(document.getElementById('buyType').value==='限时私教课'){
+                        if(input.id!=='comment' && !input.value){
+                        throw new Error('输入项 '+input.id+' 有空值或未选择');                        
+                        }
+                    }else{
+                        if(input.id!=='comment' && input.id!=='buyDays' && !input.value){
+                        throw new Error('输入项 '+input.id+' 有空值或未选择'); 
+                        }
+                    }
+                    
+                    if(document.getElementById('buyDays').value==='0'|| document.getElementById('buyNum').value==='0'
+                        || document.getElementById('pay').value==='0' || document.getElementById('realPay').value==='0'
+                        ){
+                        throw new Error('不能有0值');
+                    }                   
+                    if(document.getElementById('buyType').value==='限时私教课'){
+                        if(
+                            document.getElementById('buyDays').value==='' || document.getElementById('buyNum').value===''
+                            || document.getElementById('buyDays').value===0 || document.getElementById('buyNum').value===0
+                        ){
+                            throw new Error('限时课程必须同时输入购课节数及购课时长（天）');
+                        }
+                    }                    
+                });
+                selectElements.forEach((select)=>{
+                    console.log(select.value);
+                    if(!select.value){
+                        throw new Error('选择项 '+select.id+' 未选择');
+                    }
+                });
+                return 'True';
+            }catch(error){
+                // alert('字段 '+error+' 有空格/未选择');
+                return error;
+            }
+        }
+
+        function submit(){
+            try{
+                if(submitCheck()==='True'){
+                    const inputContents=document.getElementById('inputContents');
+                    const inputElements=inputContents.querySelectorAll('input');
+                    const dataKey=['客户编码及姓名','收款日期','客户购课编号','购课节数','购课时长（天）','应收金额','实收金额','备注'];
+                    n=0;
+                    let data={};
+                    // data加入输入的内容    
+                    inputElements.forEach((input)=>{
+                        console.log(input.value);
+                        data[dataKey[n]]=input.value;
+                        n+=1;
+                    });   
+                    // data加入选择的内容                 
+                    data['购课类型']=document.getElementById('buyType').value;
+                    data['收款人']=document.getElementById('cashier').value;
+                    data['收入类别']=document.getElementById('incomeType').value;
+
+                    //改写页面的状态提示
+                    document.getElementById('status').innerText='正在写入'
+
+                    fetch('/write_buy',{
+                        method:"POST",
+                        headers:{
+                            'Content-Type':'application/json'
+                        },
+                        body:JSON.stringify(data)
+                    })
+                    .then(response=>response.text())
+                    .then(data=>{
+                        console.log(data)
+                        alert(data)
+                        window.location.href='./success';
+                    })
+                    .catch(error=>{
+                        console.error('Error:',error.message)
+                    });
+
+
+
+
+                    console.log(data);
+                }else{
+                    throw new Error(submitCheck());
+                }            
+            }catch(error){
+                alert(error.message);
+            }
+
+        }
+
+        function incomeTypeSelect(data){
+            let incomeTypeSelect=document.getElementById('incomeType')
+            const incomeTypes=data.income_types;
+            incomeTypes.forEach(function(incomeType){
+                let option=document.createElement('option');
+                option.value=incomeType;
+                option.innerText=incomeType;
+                incomeTypeSelect.appendChild(option)
+            })
+        }
+
+        function cashierSelect(data){
+            let cashierSelect=document.getElementById('cashier')
+            const cashiers=data.cashiers;
+            cashiers.forEach(function(cashier){
+                let option=document.createElement('option');
+                option.value=cashier;
+                option.innerText=cashier;
+                cashierSelect.appendChild(option)
+            })
+        }
+
+        function fillBuyCode(){
+            var cusName=document.getElementById('cusNameInput').value.trim();
+            var dateInput=document.getElementById('dateInput').value.trim()
+            var dateTxt=dateInput.replace(/-/g,"")
+            const ptn=/^MH\d{3}.*\d{8}$/;
+            if (cusName !== "" && dateInput !== "" ) {
+                // var cusIDName=document.getElementById('cusNameInput').value
+                const testBuyCode=cusName+dateTxt
+                console.log(testBuyCode)
+                if(ptn.test(testBuyCode)){
+                    var buyCodeInput=document.getElementById('buyCode');
+                    buyCodeInput.setAttribute("value", testBuyCode);   
+                }else{
+                    // input3.style.display = "none";
+                }
+                
+            } else {
+                // input3.style.display = "none";
+            }
+        }
+
+        function selectToday(id){
+            const today = new Date();
+            // 将日期格式化为 yyyy-mm-dd 的形式
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            // const hours = String(today.getHours()).padStart(2, '0');
+            // const minutes = String(today.getMinutes()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`
+
+            // 将日期设置为输入框的默认值
+            document.getElementById(id).value = formattedDate;
+        }
+
+        function handleInput() {
+            // 获取输入框中的值
+            const searchTerm = document.getElementById("cusNameInput").value.trim();
+            const UpperSearchTerm=searchTerm.toUpperCase();
+            // 获取展示结果的列表元素
+            const resultList = document.getElementById("resultList");
+
+            // 清空列表
+            resultList.innerHTML = "";
+
+            if (UpperSearchTerm === "") {
+                resultList.style.display = "none";
+                return; // 输入框为空，不做处理
+            }else{
+                resultList.style.display = "block";
+            }
+
+            // 遍历给定的数组，进行模糊匹配
+            cus_list.forEach(function(name) {
+                if (name.includes(UpperSearchTerm)) {
+                    // 创建列表项元素，并设置其文本内容为匹配到的结果
+                    const listItem = document.createElement("li");
+                    listItem.innerText = name;
+                    
+
+                    // 添加点击事件监听器
+                    listItem.addEventListener("click", function() {
+                        // 点击后将完整的姓名设置为输入框的值
+                        selectedName=name;
+                        document.getElementById("cusNameInput").value = name;
+                        // 填写进购课编号
+                        fillBuyCode()
+                        // 清空结果列表
+                        resultList.innerHTML = "";  
+                    });
+
+                    // 将列表项添加到结果列表中
+                    resultList.appendChild(listItem);
+                }
+            });
+        
+            resultList.classList.add("cus-list");
+        }
+    
+        function get_cus_info() {
+            var selectedName = document.getElementById("cusNameInput").value;
+            clear_other_div()
+            fetch('/get_cus_info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ selected_name: selectedName })
+            })
+            .then(response => response.json())
+            .then(data => {                
+                console.log(data)
+                show_cus_info(data)
+                document.getElementById("cus_name").innerText = data['会员编码及姓名'];
+                document.getElementById("total_cls_days").innerText = data['上课总天数'];
+                document.getElementById("total_pay").innerText = data['总消费金额'];
+                document.getElementById("normal_remain").innerText = data['剩余节数-常规私教课']
+                document.getElementById("lmt_yn").innerText = data['限时课程是否有效']
+                document.getElementById("lmt_due_date").innerText = data['限时课程到期日']
+
+                format_date();
+            })
+            .catch(error => {
+                console.error('Error:', error) 
+                document.getElementById("show_info").style.display='none';
+                document.getElementById("open_cus_fn_res").innerText='';
+                document.getElementById("err_no_result").innerText='无结果';
+            
+                });
+            
+
+        }
+
+        function format_date(){
+            var dateContent = document.getElementById("lmt_due_date").innerText;
+            if (dateContent!='-'){
+                var dateObject = new Date(dateContent);
+                // 将日期按照你想要的格式进行处理
+                var year = dateObject.getFullYear();
+                var month = ("0" + (dateObject.getMonth() + 1)).slice(-2);
+                var day = ("0" + dateObject.getDate()).slice(-2);
+
+                // 拼接日期字符串，例如：YYYY-MM-DD
+                var formattedDate = year + "-" + month + "-" + day;
+
+                // 将日期显示在页面上
+                document.getElementById("lmt_due_date").innerText = formattedDate;
+            }
+            
+        }
+  
+        function get_cus_buy(){
+            
+            fetch('/get_cus_buy',{
+            method:"POST",
+            headers:{
+                "Content-Type":"text/plain"
+            },
+            body: document.getElementById('cusNameInput').value
+            })
+            .then(response=>response.json())
+            .then(jsonData=>{
+                console.log(jsonData)
+                const tableContainer = document.getElementById('buyHistory');
+                tableContainer.innerHTML=''
+
+                // 创建表格元素
+                const table = document.createElement('table');
+
+                // 创建表头行
+                const headerRow = table.insertRow();
+                headerRow.classList.add('header-row');
+                for (const header of ['购课编码','课程类型','应收金额','实收金额','未收金额','收款次数','收款日期']) {
+                const cell = headerRow.insertCell();
+                cell.textContent = header;
+                }
+
+                // 创建表格内容
+                for (let i = 0; i < Object.keys(jsonData).length; i++) {
+                const row = table.insertRow();
+                for (let j=0;j<jsonData[0].length;j++) {
+                    const cell = row.insertCell();
+                    cell.textContent = jsonData[i][j];
+                }
+                }
+
+                // 将表格添加到div中
+                tableContainer.appendChild(table);
+            })
+            .catch(error=>{
+                console.log(error)
+            });
+        }
+
+        function isValidDate(){
+            let buyCodeErrBox=document.getElementById('buyCodeErr');
+            let buyCode=document.getElementById('buyCode').value;
+            let dateStr=buyCode.substring(buyCode.length-8);
+            const ptn=/^\d{8}/;
+            console.log(moment(dateStr,"YYYYMMDD").isValid() && ptn.test(dateStr))
+            if(moment(dateStr,"YYYYMMDD").isValid() && ptn.test(dateStr)){    
+                buyCodeErrBox.innerText='';
+            }else{
+                buyCodeErrBox.innerText='日期错误';
+                allError.dateError=1;
+            }
+            console.log(allError);
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>客户训练内容录入</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h1>上课基本信息</h1>
+
+    <div id="BasicInfo">
+        <h3>客户编码及姓名</h3>
+            <input type="text" id="nameInput" placeholder="请输入客户姓名" onclick="handleInput()">
+        <div id="cusNameList" class="cus-list"></div>
+        <div>        
+            <h3>客户性别</h3>
+            <label>
+                <input type="radio" id="gender" name='gender' value='男'>
+                男
+            </label>
+            <label>
+            <input type="radio" id="gender" name='gender' value='女'checked>
+                女
+            </label>
+        </div>
+        <div id="insRadio">
+            <h3>上课教练</h3>
+            <div id="insRadioOptions"></div>
+        </div>        
+
+        <h3>上课的课程类型</h3>
+        <select id="buyType">
+        </select>
+        <div id="errBuyType" class="inline2"></div>
+
+        <div id="date">
+            <h3> 上课日期和时间</h3>
+                <form>
+                    <label for="datetime"></label>
+                    <input type="datetime-local" id="datetime" name="datetime">
+                    <br>
+                </form>
+        </div>    
+
+        <div>
+            <h3>上课时长</h3>
+            <label for="clsPeriod"></label>
+            <select id="clsPeriod" style="width:50px;">
+                <option value=1>1</option>
+                <option value=1>2</option>
+            </select>
+            小时
+        </div>
+        
+
+    </div>
+    <div style="margin-bottom:10px;"></div>
+    <hr>
+    <h1>训练内容</h1>    
+
+    <div id="trainItems">
+        <div id="trainItemDetail-0" name="trainItemDetail">
+            <h3>项目筛选方式</h3>
+            <label for="selectTrainForm"></label>
+            <select id="selectTrainForm-0" name="selectTrainForm" onclick="generateTrainFormRadio(this)">        
+                <option value="部位" selected>按部位筛选</option>
+                <option value="动作大类">按动作大类筛选</option>
+            </select>
+            <br>
+            <div id="radioContainer-0"></div>
+            <input id="actionName-0" oninput="handleInputAction()">            
+        </div>
+        
+    </div>
+
+    <button id="saveButton" onclick="copyTrain()">复制</button>
+    <hr>
+    <button id="saveButton" onclick="tempSave()">暂存</button>
+    <button id="editButton" onclick="enableEdit()">返回修改</button>
+    <button id="submit" onclick="submit()">提交</button>
+    
+    <script>
+        let cus_list;
+        let ins_list;
+        let train_list;
+        let copyCount=1;
+        // 在页面加载完成后，将返回修改按钮和性别输入框设置为不可见
+        document.addEventListener("DOMContentLoaded", function(){
+            document.getElementById("editButton").style.display = "none";
+            document.getElementById("submit").setAttribute("disabled", true);
+            selectToday();
+
+            fetch('/get_template_info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'texp/plain'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log(data);
+                buyTypeSelect(data);
+                  })
+                .catch(error => console.error('Error:', error));
+
+            fetch('/get_cus_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                cus_list=data
+                  })
+                .catch(error => console.error('Error:', error));
+
+
+            fetch('/get_ins_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log(data);
+                ins_radios(data);
+                 })
+                .catch(error => console.error('Error:', error));
+
+                fetch('/get_train_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log(data);
+                train_list=data;
+                 })
+                .catch(error => console.error('Error:', error));
+
+        })
+
+        function handleInputAction(){
+            console.log('input action');
+        }
+
+        function copyTrain(){
+    
+            const originalDiv=document.getElementById('trainItemDetail-0');
+            const copiedDiv=originalDiv.cloneNode(true);
+            copiedDiv.setAttribute("id",'trainItemDetail'+'-'+copyCount);
+            copiedDiv.querySelector("#selectTrainForm-0").setAttribute('id','selectTrainForm'+'-'+copyCount);
+            copiedDiv.querySelector("#radioContainer-0").setAttribute('id','radioContainer'+'-'+copyCount);
+            copiedDiv.querySelector("#actionName-0").setAttribute('id','actionName'+'-'+copyCount);
+            const oldRadioNames=copiedDiv.querySelectorAll('input');
+            oldRadioNames.forEach(radio=>radio.setAttribute('name','trainItem'+'-'+copyCount))
+
+            originalDiv.parentNode.appendChild(copiedDiv);
+            copyCount+=1;
+
+        }
+
+
+        function generateTrainFormRadio(selectElement){
+            const TrainFormRadio=document.getElementById('radioContainer-0');
+            TrainFormRadio.innerHTML='';
+            const filterType=selectElement.value;
+            // const container=document.getElementById('radioContainer');
+            let trainList;
+            
+            if(filterType==='部位'){
+                trainList=Object.keys(train_list.by_muscle);
+                console.log(trainList);
+            }else if(filterType==='动作大类'){
+                trainList=Object.keys(train_list.by_category);
+            }
+
+
+            let firstRadio=true;
+            // 遍历数组，为每个选项生成radio，并添加到容器中
+            trainList.forEach(function(option) {
+                // console.log(option);
+                // 创建一个radio元素
+                const radioInput = document.createElement("input");
+                radioInput.setAttribute("type", "radio");
+                radioInput.setAttribute("name", "trainItem-0");
+                radioInput.setAttribute("value", option);
+
+                if(firstRadio){
+                    radioInput.checked=true;
+                    firstRadio=false;
+                }
+                
+                // 创建一个label元素，并设置其内容为选项文字
+                const label = document.createElement("label");
+                label.innerText = option;
+                
+                // 将radio和label元素添加到容器中
+                TrainFormRadio.appendChild(radioInput);
+                TrainFormRadio.appendChild(label);
+            });
+        }
+
+        function buyTypeSelect(data){
+            let buyTypeSelect=document.getElementById('buyType')
+            const buyTypes=data.cls_types;
+            buyTypes.forEach(function(buyType){
+                let option=document.createElement('option');
+                option.value=buyType;
+                option.innerText=buyType;
+                buyTypeSelect.appendChild(option);
+            })
+        }
+
+        function handleInput() {
+            // 获取输入框中的值
+            const searchTerm = document.getElementById("nameInput").value.trim();
+            const UpperSearchTerm=searchTerm.toUpperCase();
+            // 获取展示结果的列表元素
+            const resultList = document.getElementById("cusNameList");
+
+            // 清空列表
+            resultList.innerHTML = "";
+
+            if (UpperSearchTerm === "") {
+                resultList.style.display = "none";
+                return; // 输入框为空，不做处理
+            }else{
+                resultList.style.display = "block";
+            }
+
+            // 遍历给定的数组，进行模糊匹配
+            cus_list.forEach(function(name) {
+                if (name.includes(UpperSearchTerm)) {
+                    // 创建列表项元素，并设置其文本内容为匹配到的结果
+                    const listItem = document.createElement("li");
+                    listItem.innerText = name;
+
+                    // 添加点击事件监听器
+                    listItem.addEventListener("click", function() {
+                        // 点击后将完整的姓名设置为输入框的值
+                        document.getElementById("nameInput").value = name;
+                        // 清空结果列表
+                        resultList.innerHTML = "";
+                    });
+
+                    // 将列表项添加到结果列表中
+                    resultList.appendChild(listItem);
+                }
+            });
+        
+            resultList.classList.add("cus-list");
+        }
+
+        function ins_radios(ins_list){
+            const radioOptionsContainer = document.getElementById("insRadioOptions");
+            let firstRadio=true;
+
+            // 遍历数组，为每个选项生成radio，并添加到容器中
+            ins_list.forEach(function(option) {
+                // console.log(option);
+                // 创建一个radio元素
+                const radioInput = document.createElement("input");
+                radioInput.setAttribute("type", "radio");
+                radioInput.setAttribute("name", "ins_list");
+                radioInput.setAttribute("id", "insName");
+                radioInput.setAttribute("value", option);
+
+                if(firstRadio){
+                    radioInput.checked=true;
+                    firstRadio=false;
+                }
+                
+                // 创建一个label元素，并设置其内容为选项文字
+                const label = document.createElement("label");
+                label.innerText = option;
+                
+                // 将radio和label元素添加到容器中
+                radioOptionsContainer.appendChild(radioInput);
+                radioOptionsContainer.appendChild(label);
+
+
+
+                
+                // 添加换行，使每个选项占一行
+                // radioOptionsContainer.appendChild(document.createElement("br"));
+            });
+        }
+
+        // 保存数据
+        function tempSave() {
+            const name = document.getElementById("nameInput").value;
+            const gender = document.getElementById("gender").value;
+
+            // 这里只是简单输出保存的信息到控制台，实际应用中可通过fetch等方式发送数据给后端
+            console.log("保存的姓名：" + name);
+            console.log("保存的性别：" + gender);
+
+            // 将客户信息保存到本地
+            customerInfo = { name, gender };
+            localStorage.setItem("customerInfo", JSON.stringify(customerInfo));
+
+            alert("客户信息已暂存");
+
+            // 保存完成后，禁用输入框，并显示返回修改按钮
+            document.getElementById("nameInput").setAttribute("disabled", true);
+            document.getElementById("submit").removeAttribute("disabled");
+
+            var radios = document.querySelectorAll('input[type="radio"]');
+            radios.forEach(function(radio){
+                radio.disabled=true;
+            })
+
+            document.getElementById("saveButton").style.display = "none";
+            document.getElementById("editButton").style.display = "inline";
+        }
+
+
+        function selectToday(){
+            const today = new Date();
+            // 将日期格式化为 yyyy-mm-dd 的形式
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const hours = String(today.getHours()).padStart(2, '0');
+            const minutes = String(today.getMinutes()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+            // 将日期设置为输入框的默认值
+            document.getElementById('datetime').value = formattedDate;
+        }
+
+        // 允许修改数据
+        function enableEdit() {
+            // 移除禁用属性，并显示保存按钮
+            document.getElementById("nameInput").removeAttribute("disabled");
+            var radios = document.querySelectorAll('input[type="radio"]');
+            radios.forEach(function(radio){
+                radio.disabled=false;
+            })
+
+            document.getElementById("editButton").style.display = "none";
+            document.getElementById("saveButton").style.display = "inline";
+        }
+
+
+        function submit(){
+            const storedCustomerInfo = localStorage.getItem("customerInfo");
+            if (storedCustomerInfo) {
+                customerInfo = JSON.parse(storedCustomerInfo);
+                
+                // 清除本地暂存的信息
+                localStorage.removeItem("customerInfo");
+
+                // 使用 Fetch API 或其他方式将客户信息提交到后端
+                // 在这里调用后端接口，将 customerInfo 作为参数提交给后端
+                // 例如：fetch('/submit_customer', { method: 'POST', body: JSON.stringify(customerInfo) })
+                //   .then(response => response.json())
+                //   .then(data => {
+                //       console.log(data);
+                //       alert("客户信息提交成功");
+                //   })
+                //   .catch(error => {
+                //       console.error('Error:', error);
+                //       alert("提交失败，请稍后再试");
+                //   });
+
+                // 这里暂时用 alert 代替后端提交
+                alert("客户信息提交成功");
+            } else {
+                alert("暂无客户信息，请先暂存信息再提交");
+            }
+        }
+    </script>
+</body>
+</html>

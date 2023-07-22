@@ -26,4 +26,54 @@
     background-color: rgb(245, 249, 254);
     z-index: 1;
   }
-  
+.buy-list {
+    font-size: 6px;
+    line-height: 25px;
+    position: absolute;
+    color:rgb(47, 54, 100);
+    padding-right: 3px;
+    top:260px;
+    left:5px;
+    background-color: rgb(245, 249, 254);
+    z-index: 1;
+  }
+.header-row{
+  color:cornflowerblue;
+  font-size:8px;
+}
+
+  /* 添加表格的样式 */
+  table {
+    border-collapse: collapse; /* 合并边框，避免重复显示 */
+    width: 100%; /* 设置表格宽度 */
+    /* table-layout: fixed; 固定列宽 */
+  }
+
+  /* 为表格的每一行添加下框线 */
+  tr,td {
+    border-bottom: 1px solid #ccc; /* 设置下框线颜色和宽度 */
+    /* width: 80px; 设置列宽为 100 像素，你可以根据需要自行调整 */
+    padding: 8px; /* 设置单元格内边距 */
+    border-bottom: 1px solid #ccc; /* 设置单元格边框 */
+  }
+
+  /* 鼠标悬停在行上时改变背景颜色 */
+  tr:hover {
+    background-color: #f2f2f2;
+  }
+
+  .header-row th:nth-child(1) { width: 140px; }
+  .header-row th:nth-child(2) { width: 90px; }
+  .header-row th:nth-child(3) { width: 20px; }
+  .header-row th:nth-child(4) { width: 20px; }
+  .header-row th:nth-child(5) { width: 20px; }
+  .header-row th:nth-child(6) { width: 20px; }
+  .header-row th:nth-child(7) { width: 100px; }
+
+ tr td:nth-child(1) { width: 140px; }
+ tr td:nth-child(2) { width: 90px; }
+ tr td:nth-child(3) { width: 20px; }
+ tr td:nth-child(4) { width: 20px; }
+ tr td:nth-child(5) { width: 30px; }
+ tr td:nth-child(6) { width: 30px; }
+ tr td:nth-child(7) { width: 100px; }
