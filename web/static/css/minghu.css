@@ -9,6 +9,39 @@
     font-size: 16px;
     color:rgb(204, 143, 119)
   }
+.train-reccount{
+  display: inline-block;
+}
+.train-list{
+  display: inline-block;
+  font-size: 16px;
+  color:rgb(139, 39, 78);
+  /* position:relative; */
+}
+.train-list2{
+  display: inline-block;
+  font-size: 16px;
+  color:rgb(139, 39, 78);
+  /* position:relative; */
+}
+.train-list3{
+  display: inline-block;
+  font-size: 16px;
+  color:rgb(139, 39, 78);
+  /* position:relative;
+  top:50px;
+  left:5px; */
+}
+  .block{
+    display: inline-block;
+    font-size: 16px;
+    color:rgb(204, 143, 119)
+  }
+  .dynamic-radio{
+    display: inline-block;
+    font-size: 16px;
+    color:rgb(26, 22, 21)
+  }
 
   .result{
     display: inline-block;

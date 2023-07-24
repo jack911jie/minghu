@@ -33,6 +33,142 @@ class MinghuService(Flask):
         self.add_url_rule('/success', view_func=self.success,methods=['GET','POST'])
         self.add_url_rule('/get_cus_buy', view_func=self.get_cus_buy,methods=['GET','POST'])
         self.add_url_rule('/get_train_list', view_func=self.get_train_list,methods=['GET','POST'])
+        self.add_url_rule('/deal_cls', view_func=self.deal_cls,methods=['GET','POST'])
+        
+
+    def deal_cls(self):
+        cls_data=request.json
+
+        cls_rec=cls_data['cls_tkn']
+        # train_rec=cls_data['train_rec']
+        # 写入上课记录
+        cls_tkn_res=self.write_cls_tkn(cls_rec)
+
+        # 写入训练情况
+        train_rec_res=self.write_train_rec(cls_data)
+
+        # print(cls_data)
+        return cls_tkn_res+'\n'+train_rec_res
+
+    def train_info(self,action_name,dic):
+    # print('162----',action_name,dic)
+        if action_name:
+            return dic['by_action_name'][action_name]
+        else:
+            return ['','','']
+
+    def write_cls_tkn(self,dic_tkn):
+        try:
+            fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',dic_tkn['cus_name']+'.xlsm')
+            df_tkn=pd.DataFrame(dic_tkn,index=[0])
+            df_tkn=df_tkn[['cls_tkn_date','cls_tkn_time','cls_long','cls_type','ins_name','basic_cls_comment']]
+            df_old=pd.read_excel(fn,sheet_name='上课记录')
+
+
+            app=xw.App(visible=False)
+            wb=app.books.open(fn)
+            sht=wb.sheets['上课记录']
+            row = df_old.shape[0]+2
+            rng='A'+str(row)+':F'+str(row)
+            sht.range(rng).value=df_tkn.iloc[0].tolist()
+
+            wb.save(fn)
+            wb.close()
+            app.quit()
+            return '\n写入上课表成功'
+        except Exception as e:
+            return  f'写入上课表错误： {e}'
+        
+    def write_train_rec(self,dic):
+        # dic=request.json
+        trainlist=self.get_train_dic()
+        # print(trainlist)
+        basic_cls_info=dic['cls_tkn']
+        cus_name,ins_name=basic_cls_info['cus_name'],basic_cls_info['ins_name']
+        # print(dic)
+        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name+'.xlsm')
+        # print(dic['train_rec'])
+    
+        
+        df_train_rec=pd.DataFrame(dic['train_rec']['train_recs'])
+        # print(df_train_rec)
+        #'nonOxyWt','nonOxyDis','nonOxyNum','nonOxyGroup','oxyTime','oxyGroup','calories'
+        df_train_rec['nonOxyGroup']=df_train_rec['nonOxyGroup'].replace('','1')
+        df_train_rec['oxyGroup']=df_train_rec['oxyGroup'].replace('','1')
+        df_train_rec['oxyTime']=df_train_rec['oxyTime'].replace('','0')
+        df_train_rec['nonOxyWt']=df_train_rec['nonOxyWt'].replace('','0')
+        df_train_rec['nonOxyDis']=df_train_rec['nonOxyDis'].replace('','0')
+        df_train_rec['nonOxyNum']=df_train_rec['nonOxyNum'].replace('','0')
+        # df_train_rec=df_train_rec[['cls_tkn_date','cls_tkn_time','cls_long','cls_type','ins_name','basic_cls_comment']]
+        # df_old=pd.read_excel(fn,sheet_name='训练情况')
+        try:
+            df_copy_rows_nonOxy= df_train_rec.loc[df_train_rec.index.repeat(df_train_rec['nonOxyGroup'].astype(int))]
+        except Exception as e:
+            return f'\n写入训练记录表错误：{e}'
+        try:
+            df_copy_rows= df_copy_rows_nonOxy.loc[df_train_rec.index.repeat(df_train_rec['oxyGroup'].astype(int))]
+        except Exception as e:
+            return f'\n写入训练记录表错误：{e}'
+        
+        df_copy_rows.reset_index(drop=True, inplace=True)
+
+        df_copy_rows['date']=dic['train_rec']['trainDate']
+        df_copy_rows['calories']=dic['train_rec']['calories']
+        df_copy_rows['train_comment']=dic['train_rec']['trainComment']
+        df_copy_rows['search_name']=df_copy_rows['nonOxyName']+df_copy_rows['oxyName']
+
+        print(df_copy_rows)
+
+        try:
+
+            df_copy_rows['big_type']=df_copy_rows['search_name'].apply(lambda x: self.train_info(x,trainlist)[0])
+            df_copy_rows['muscle']=df_copy_rows['search_name'].apply(lambda x: self.train_info(x,trainlist)[1]+'肌群')
+        except Exception as e:
+            print('err',e)
+            return 'err:'+e
+        df_copy_rows.loc[df_copy_rows['big_type'] == '有氧训练', 'muscle'] = ''
+        # print(df_copy_rows)
+
+        to_int_list=['nonOxyNum','nonOxyGroup','oxyGroup']
+        to_float_list=['oxyTime','nonOxyWt','nonOxyDis','calories']
+        for itm in to_int_list:
+            try:
+                df_copy_rows[itm]=df_copy_rows[itm].astype(int)
+            except Exception as e:
+                return 'err:'+e
+        for itm in to_float_list:
+            try:
+                df_copy_rows[itm]=df_copy_rows[itm].astype(float)
+            except Exception as e:
+                return 'err:'+e
+        try:
+            df_copy_rows['oxyTime']=df_copy_rows['oxyTime'].apply(lambda x: int(x)*60)
+        except Exception as e:
+            return 'err:'+e
+
+        df_copy_rows.replace(0,'',inplace=True)
+        df_train_recs=df_copy_rows[['date','big_type','muscle','oxyName','oxyTime','nonOxyName','nonOxyWt','nonOxyDis','nonOxyNum','calories','train_comment']]
+        df_train_recs_copy=df_train_recs.copy()
+        df_train_recs_copy['ins_name']=ins_name
+        df_write_train_rec=df_train_recs_copy[['date','big_type','muscle','oxyName','oxyTime','nonOxyName','nonOxyWt','nonOxyDis','nonOxyNum','calories','ins_name','train_comment']]
+        # print(df_write_train_rec)
+
+        df_old=pd.read_excel(fn,sheet_name='训练情况')
+        app=xw.App(visible=False)
+        wb=app.books.open(fn)
+        sht=wb.sheets['训练情况']
+        row_start = df_old.shape[0]+2
+        row_end=row_start+df_write_train_rec.shape[0]-1
+        # rng='A'+str(row_start)+':J'+str(row_end)
+        start_cell='A'+str(row_start)
+        # sht.range(rng).value=df_old.tolist()
+        sht.range(start_cell).options(index=False, header=False).value=df_write_train_rec
+
+        wb.save(fn)
+        wb.close()
+        app.quit()
+
+        return f'\n写入训练记录表成功'
 
     def wecom_dir(self):
         # fn=os.path.join(os.path.dirname(__file__),'config','wecom_dir.config')        
@@ -127,6 +263,68 @@ class MinghuService(Flask):
         ins_li=df['姓名'].tolist()
 
         return ins_li
+
+    def  get_train_dic(self):
+        fn=os.path.join(self.config_mh['work_dir'],'05-专业资料','训练项目.xlsx')
+        df=pd.read_excel(fn,sheet_name='训练项目')
+        df.fillna('',inplace=True)
+        
+        train_data={}
+    
+        train_data_by_action_name={}
+        for index,row in df.iterrows():
+            action_name=row['动作名称']
+            form=row['形式']
+            muscle = row['肌肉部位']
+            category = row['动作大类']
+            
+            # 判断动作名称是否已经在字典中，若不在则添加
+            if action_name not in train_data_by_action_name:
+                train_data_by_action_name[action_name] = []
+            
+            # 将相关信息添加到对应动作名称的列表中
+            train_data_by_action_name[action_name].append(form)
+            train_data_by_action_name[action_name].append(muscle)
+            train_data_by_action_name[action_name].append(category)
+
+        train_data_by_muscle={}
+        for index,row in df.iterrows():
+            action_name=row['动作名称']
+            form=row['形式']
+            muscle = row['肌肉部位']
+            category = row['动作大类']
+            
+            # 判断动作名称是否已经在字典中，若不在则添加
+            if muscle not in train_data_by_muscle:
+                train_data_by_muscle[muscle] = []
+            
+            # 将相关信息添加到对应动作名称的列表中
+            train_data_by_muscle[muscle].append([form,category,action_name])   
+            # train_data_by_muscle[muscle].append(form)
+            # train_data_by_muscle[muscle].append(category)
+            # train_data_by_muscle[muscle].append(action_name) 
+
+        train_data_by_category={}
+        for index,row in df.iterrows():
+            action_name=row['动作名称']
+            form=row['形式']
+            muscle = row['肌肉部位']
+            category = row['动作大类']
+            
+            # 判断动作名称是否已经在字典中，若不在则添加
+            if category not in train_data_by_category:
+                train_data_by_category[category] = []
+            
+            # 将相关信息添加到对应动作名称的列表中
+            train_data_by_category[category].append([form,muscle,action_name])    
+            # train_data_by_category[category].append(form)
+            # train_data_by_category[category].append(muscle)
+            # train_data_by_category[category].append(action_name)
+
+        train_data['by_action_name']=train_data_by_action_name
+        train_data['by_muscle']=train_data_by_muscle
+        train_data['by_category']=train_data_by_category
+        return train_data
 
     def  get_train_list(self):
         fn=os.path.join(self.config_mh['work_dir'],'05-专业资料','训练项目.xlsx')
@@ -301,8 +499,9 @@ class MinghuService(Flask):
 
 if __name__ == '__main__':
     app = MinghuService(__name__)
-    # app.run(debug=True)
+    app.run(debug=True)
     # app.run(debug=True,host='192.168.158.71',port=5000)
-    app.run(debug=True,host='192.168.1.41',port=5000)
+    # app.run(debug=True,host='192.168.10.2',port=5000)
+    # app.run(debug=True,host='192.168.1.41',port=5000)
     # res=wecom_dir()
     # print(res)
