@@ -196,8 +196,9 @@
         let cus_list;
         let ins_list;
         let train_list;
-        let copyCount=1;
-        let deleteCount=1;
+        let copyCount=0;
+        let deleteCount=0;
+        let blockOrder=1;
         // 在页面加载完成后，将返回修改按钮和性别输入框设置为不可见
         document.addEventListener("DOMContentLoaded", function(){
             document.getElementById("editButton").style.display = "none";
@@ -320,7 +321,6 @@
 
          // 保存数据
          function tempSave() {   
-
             // 将客户信息保存到本地
             cls_tkn = {
                 'cus_name':document.getElementById('nameInput').value,
@@ -343,20 +343,39 @@
 
             localStorage.setItem("cls_recs", JSON.stringify(cls_recs));
 
-
-
-
-
             alert("客户信息已暂存");
 
             // 保存完成后，禁用输入框，并显示返回修改按钮
             document.getElementById("nameInput").setAttribute("disabled", true);
             document.getElementById("submit").removeAttribute("disabled");
 
-            var radios = document.querySelectorAll('input[type="radio"]');
-            radios.forEach(function(radio){
-                radio.disabled=true;
+            const inputItems = document.querySelectorAll('input');
+            inputItems.forEach(function(inputItem){
+                inputItem.disabled=true;
             })
+
+            const deleteButtons=document.querySelectorAll('[id*="deleteTrain-"]')
+            deleteButtons.forEach(deleteButton=>{
+                deleteButton.style.display='none';
+            })
+
+            const selects1 = document.querySelectorAll('[id*="itemSelectRadio-"]');
+            selects1.forEach(function(select){
+                select.style.display='none';
+            })
+
+            const selects2 = document.querySelectorAll('[id*="oxyGroup-"]');
+            selects2.forEach(function(select){
+                select.disabled=true;
+            })
+
+            const selects3 = document.querySelectorAll('[id*="nonOxyGroup-"]');
+            selects3.forEach(function(select){
+                select.disabled=true;
+            })
+
+            document.getElementById('buyType').disabled=true;
+            document.getElementById('clsLong').disabled=true;
 
             document.getElementById("saveButton").style.display = "none";
             document.getElementById("editButton").style.display = "inline";
@@ -365,15 +384,39 @@
         // 允许修改数据
         function enableEdit() {
             // 移除禁用属性，并显示保存按钮
-            document.getElementById("nameInput").removeAttribute("disabled");
-            var radios = document.querySelectorAll('input[type="radio"]');
-            radios.forEach(function(radio){
-                radio.disabled=false;
+            // document.getElementById("nameInput").removeAttribute("disabled");
+            const inputItems = document.querySelectorAll('input');
+            inputItems.forEach(function(inputItem){
+                inputItem.disabled=false;
             })
 
-            document.getElementById("editButton").style.display = "none";
+            const deleteButtons=document.querySelectorAll('[id*="deleteTrain-"]')
+            deleteButtons.forEach(deleteButton=>{
+                deleteButton.style.display='block';
+            })
+
+            const selects1 = document.querySelectorAll('[id*="itemSelectRadio-"]');
+            selects1.forEach(function(select){
+                select.style.display='block';
+            })
+
+            const selects2 = document.querySelectorAll('[id*="oxyGroup-"]');
+            selects2.forEach(function(select){
+                select.disabled=false;
+            })
+
+            const selects3 = document.querySelectorAll('[id*="nonOxyGroup-"]');
+            selects3.forEach(function(select){
+                select.disabled=false;
+            })
+
+            document.getElementById('buyType').disabled=false;
+            document.getElementById('clsLong').disabled=false;
+
             document.getElementById("saveButton").style.display = "inline";
+            document.getElementById("editButton").style.display = "none";
         }
+        
 
 
         function submit(){
@@ -607,25 +650,32 @@
         }
 
         function copyTrain(){
-    
+            copyCount+=1;
+            blockOrder=blockOrder+1;
             const originalDiv=document.getElementById('trainItemDetail-0');
             const copiedDiv=originalDiv.cloneNode(true);
 
             // 递归函数实现id及name以及label的for标签的改名    
-            traverseElementsRename(copiedDiv,copyCount);
+            traverseElementsRename(copiedDiv,(blockOrder-1));
             // copiedDiv本身的id改名
-            copiedDiv.id='trainItemDetail-'+copyCount;
+            copiedDiv.id='trainItemDetail-'+(blockOrder-1);
 
 
-            copiedDiv.querySelector('#trainRecCount-'+copyCount).innerText='训练记录 第'+(copyCount+1-deleteCount+1)+'条';
+            copiedDiv.querySelector('#trainRecCount-'+(blockOrder-1)).innerText='训练记录 第'+(blockOrder)+'条';
          
             // 增加删除按钮
             const deleteTrain=document.createElement('button');
-            deleteTrain.setAttribute('id','deleteTrain'); 
+            deleteTrain.setAttribute('id','deleteTrain-'+(blockOrder-1)); 
             deleteTrain.innerText='删除';
             deleteTrain.addEventListener('click',function(){
-                deleteTrainBlock(this);
+                deleteTrainBlock(this,parent='y');
             })
+
+            // 从第3条开始，删除上一个输入块的删除按钮
+            if(blockOrder>=3){
+                const deleteTrainPrevious=document.getElementById('deleteTrain-'+(blockOrder-2));
+                deleteTrainPrevious.remove();
+            }
 
             // 调整原来的分隔线到删除按钮下
             const hrElement=copiedDiv.querySelector('hr');
@@ -638,18 +688,44 @@
             originalDiv.parentNode.appendChild(copiedDiv);
 
             // 将值初始化
-            document.getElementById('selectTrainForm'+'-'+copyCount).selectedIndex=0;
-            document.getElementById('radioContainer'+'-'+copyCount).value='有氧训练';
-            document.getElementById('nonOxyName'+'-'+copyCount).value='';
-            document.getElementById('oxyName'+'-'+copyCount).value='';
-            copyCount+=1;
-
+            document.getElementById('selectTrainForm'+'-'+(blockOrder-1)).selectedIndex=0;
+            document.getElementById('radioContainer'+'-'+(blockOrder-1)).value='有氧训练';
+            document.getElementById('nonOxyName'+'-'+(blockOrder-1)).value='';
+            document.getElementById('oxyName'+'-'+(blockOrder-1)).value='';
         }
 
-        function deleteTrainBlock(blk){
-            const buttonDeleteTrain=blk.parentNode;
+        function deleteTrainBlock(blk,parent){
+            let deleteBlock;
             deleteCount+=1;
-            buttonDeleteTrain.remove();
+            blockOrder=blockOrder-1;
+            if(parent==='y'){
+                deleteBlock=blk.parentNode;
+            }else{
+                deleteBlock=blk;
+            }
+            
+            // const previousTrainBlock=buttonDeleteTrain.previousElementSibling;
+            const previousTrainBlock=document.getElementById('trainItemDetail-'+(parseInt(blk.id.slice(-1))-1))
+            
+
+            if(blockOrder>=2){
+                
+                const deleteTrain=document.createElement('button');
+                deleteTrain.setAttribute('id','deleteTrain-'+(blockOrder-1)); 
+                deleteTrain.innerText='删除';
+                deleteTrain.addEventListener('click',function(){
+                    deleteTrainBlock(previousTrainBlock,parent='n');
+                })
+                const hrElement=previousTrainBlock.querySelector('hr');
+                hrElement.remove();
+                previousTrainBlock.appendChild(deleteTrain);
+                const hr=document.createElement('hr');
+                previousTrainBlock.appendChild(hr);
+            }
+
+            deleteBlock.remove();
+            
+            
         }
 
         function generateTrainFormRadio(selectElement){
