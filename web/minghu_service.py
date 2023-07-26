@@ -3,6 +3,7 @@ import sys
 sys.path.extend([os.path.join(os.path.dirname(os.path.dirname(__file__)),'data_analysis'),os.path.join(os.path.dirname(os.path.dirname(__file__)),'modules')])
 import readconfig
 import cus_data
+import get_data
 import re
 import xlwings as xw
 import pandas as pd
@@ -497,11 +498,17 @@ class MinghuService(Flask):
     def welcome(self):
         return '关于我们页面'
 
+class Vividict(dict):
+    def __missing__(self, key):
+        value = self[key] = type(self)()
+        return value
+
 if __name__ == '__main__':
     app = MinghuService(__name__)
-    app.run(debug=True)
+    # app.run(debug=True)
     # app.run(debug=True,host='192.168.158.71',port=5000)
     # app.run(debug=True,host='192.168.10.2',port=5000)
     # app.run(debug=True,host='192.168.1.41',port=5000)
+    app.run(debug=True,host='192.168.1.149',port=5000)
     # res=wecom_dir()
     # print(res)

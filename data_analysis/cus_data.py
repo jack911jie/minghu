@@ -3,6 +3,8 @@ import sys
 sys.path.extend([os.path.join(os.path.dirname(os.path.dirname(__file__)),'WeCom'),os.path.join(os.path.dirname(os.path.dirname(__file__)),'modules')])
 import readconfig
 import agenda
+import get_data
+from dateutil.relativedelta import relativedelta
 import re
 from datetime import datetime
 from tqdm import tqdm
@@ -93,10 +95,11 @@ class CusData:
 
     # def cus_lmt_cls_rec(self,fn='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH120肖婕.xlsm'):
     def cus_cls_rec(self,fn='E:\\temp\\minghu\\MH017李俊娴.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'],not_lmt_types=['常规私教课','常规团课']):
-
+        df_basic=pd.read_excel(fn,sheet_name='基本情况')
         df_tkn=pd.read_excel(fn,sheet_name='上课记录')
         df_buy=pd.read_excel(fn,sheet_name='购课表')
         df_ltm_prd=pd.read_excel(fn,sheet_name='限时课程记录')
+        df_body_msr=pd.read_excel(fn,sheet_name='身体数据')
         #排序
         # df_tkn.sort_values(by=['日期'],ascending=[True],inplace=True)
         # df_buy.sort_values(by=['收款日期'],ascending=[True],inplace=True)
@@ -189,18 +192,95 @@ class CusData:
             avg_pay=0
             ctn_buy_num=0
 
+        #围度测量数据
+        body_msr=Vividict()
+        body_msr['lst_msr_date']=df_body_msr['日期'].max().strftime('%Y-%m-%d')
+        body_msr['msr_num']=df_body_msr['日期'].count()
+        #将体测的日期拼接成文本
+        body_msr['msr_dates']='\n'.join([x.strftime('%Y-%m-%d') for x in df_body_msr['日期'].tolist()])
+
+
+        sex=df_basic['性别'].tolist()[0]
+        latest_body_data=df_body_msr[df_body_msr['日期']==df_body_msr['日期'].max()]
+        birthday=df_basic['出生年月'].tolist()[0]
+        lst_ht=latest_body_data['身高（cm）'].tolist()[0]
+        lst_wt=latest_body_data['体重（Kg）'].tolist()[0]
+        lst_waist=latest_body_data['腰围'].tolist()[0]
+
+        
+        bfr_test=get_data.cals()
+        if birthday:
+            try:
+                if re.match(r'\d{4}',str(birthday)) and 1900<int(birthday)<2999:
+                    birthday=datetime.strptime(str(birthday)+'0101','%Y%m%d')
+                    age=relativedelta(datetime.now(),birthday).years
+                    bfr=bfr_test.bfr(age=age,sex=sex,ht=lst_ht,wt=lst_wt,waist=lst_waist,adj_bfr='no',adj_src='prg',formula=1)
+                elif re.match(r'\d{6}',str(birthday)) and datetime.strptime(str(birthday)+'01','%Y%m%d'):
+                    birthday=datetime.strptime(str(birthday)+'01','%Y%m%d')
+                    age=relativedelta(datetime.now(),birthday).years
+                    bfr=bfr_test.bfr(age=age,sex=sex,ht=lst_ht,wt=lst_wt,waist=lst_waist,adj_bfr='no',adj_src='prg',formula=1)
+                elif re.match(r'\d{8}',str(birthday)) and datetime.strptime(birthday,'%Y%m%d'):
+                    birthday=datetime.strptime(str(birthday)+str('01'),'%Y%m%d')
+                    age=relativedelta(datetime.now(),birthday).years
+                    bfr=bfr_test.bfr(age=age,sex=sex,ht=lst_ht,wt=lst_wt,waist=lst_waist,adj_bfr='no',adj_src='prg',formula=1)
+            except Exception as e:
+                print('err cal bfr:',e)
+        # 体脂率计算def bfr(self,age,sex,ht,wt,waist,adj_bfr='yes',adj_src='prg',gui='',formula=1):
+        # body_msr['lst_msr']
+        body_msr['bfr']=bfr
+        body_msr['age']=age
+        body_msr['ht']=lst_ht
+        body_msr['wt']=lst_wt
+        body_msr['waist']=lst_waist
+        body_msr['chest']=lst_waist=latest_body_data['胸围'].tolist()[0]
+        body_msr['l_arm']=lst_waist=latest_body_data['左臂围'].tolist()[0]
+        body_msr['r_arm']=lst_waist=latest_body_data['右臂围'].tolist()[0]
+        body_msr['hip']=lst_waist=latest_body_data['臀围'].tolist()[0]
+        body_msr['l_leg']=lst_waist=latest_body_data['左腿围'].tolist()[0]
+        body_msr['r_leg']=lst_waist=latest_body_data['右腿围'].tolist()[0]
+        body_msr['l_calf']=lst_waist=latest_body_data['左小腿围'].tolist()[0]
+        body_msr['r_calf']=lst_waist=latest_body_data['右小腿围'].tolist()[0]
+        body_msr['heart']=lst_waist=latest_body_data['心肺'].tolist()[0]
+        body_msr['balance']=lst_waist=latest_body_data['平衡'].tolist()[0]
+        body_msr['power']=lst_waist=latest_body_data['力量'].tolist()[0]
+        body_msr['flex']=lst_waist=latest_body_data['柔韧性'].tolist()[0]
+        body_msr['core']=lst_waist=latest_body_data['核心'].tolist()[0]
+
+        df_msr=pd.DataFrame(data=body_msr,index=[0])
   
         try:
             df_out=pd.DataFrame(data={'会员编码及姓名':cus_name,'限时课程到期日':end_date,'总消费金额':total_pay,'平均每单消费金额':avg_pay,'最后一次购课日期':latest_buy_date,
                                 '开始上课日期':df_tkn['日期'].min(),'最后一次上课日期':df_tkn['日期'].max(),'上课总天数':interval,'上课总次数':tkn_num,
                                 '上课频率':tkn_frqc},index=[0])
-            df_out=pd.concat([df_out,df_tkn_nums,df_buy_nums,buy_pays],axis=1)
+            df_out=pd.concat([df_out,df_tkn_nums,df_buy_nums,buy_pays,df_msr],axis=1)
         except Exception as err:
             df_out=pd.DataFrame()
             print(cus_name,'：',err)
+ 
 
 
         return df_out
+
+    def cal_bfr(self,birthday,sex,ht,wt,waist):
+        bfr_test=get_data.cals()
+        try:
+            if re.match(r'\d{4}',birthday) and 1900<int(birthday)<2999:
+                birthday=datetime.strptime(str(birthday)+'0101','%Y%m%d')
+                age=relativedelta(datetime.now(),birthday).years
+                bfr=bfr_test.bfr(age=age,sex=sex,ht=ht,wt=wt,waist=waist,adj_bfr='no',adj_src='prg',formula=1)
+            elif re.match(r'\d{6}',birthday) and datetime.strptime(str(birthday)+'01','%Y%m%d'):
+                birthday=datetime.strptime(str(birthday)+'01','%Y%m%d')
+                age=relativedelta(datetime.now(),birthday).years
+                bfr=bfr_test.bfr(age=age,sex=sex,ht=ht,wt=wt,waist=waist,adj_bfr='no',adj_src='prg',formula=1)
+            elif re.match(r'\d{8}',birthday) and datetime.strptime(birthday,'%Y%m%d'):
+                birthday=datetime.strptime(str(birthday)+str('01'),'%Y%m%d')
+                age=relativedelta(datetime.now(),birthday).years
+                bfr=bfr_test.bfr(age=age,sex=sex,ht=ht,wt=wt,waist=waist,adj_bfr='no',adj_src='prg',formula=1)
+            return bfr
+        except Exception as e:
+            print('err cal bfr:',e)
+            return 'err cal bfr:'+e
+
 
     def cus_cls_rec_toweb(self,fn='E:\\temp\\minghu\\MH017李俊娴.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'],not_lmt_types=['常规私教课','常规团课']):
         df_web=self.cus_cls_rec(fn=fn,cls_types=cls_types,not_lmt_types=not_lmt_types)
@@ -302,7 +382,10 @@ class CusData:
         else:
             print('输入的表格或dataframe为空')
             return
-
+class Vividict(dict):
+    def __missing__(self, key):
+        value = self[key] = type(self)()
+        return value
 
 if __name__=='__main__':
     p=CusData()
@@ -319,9 +402,9 @@ if __name__=='__main__':
     #input_data_type参数：可以为xlsx或dataframe，如果为dataframe，则df_data参数需输入一个dataframe，如为xlsx，则xlsx参数需输入一个xlsx表格。
 
     # p.batch_fomral_cls_taken(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',out_fn='E:\\temp\\minghu\\教练上课记录合并.xlsx')
-    # res=p.cus_cls_rec(fn='E:\\temp\\minghu\\MH017李俊娴.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
-    res=p.cus_cls_rec_toweb(fn='E:\\temp\\minghu\\MH216罗苑升.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
-    res=res.fillna('-')
+    # res=p.cus_cls_rec(fn='E:\\temp\\minghu\\铭湖健身工作室\\01-会员管理\\会员资料\\MH041陈智翀.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
+    res=p.cus_cls_rec_toweb(fn='E:\\temp\\minghu\\铭湖健身工作室\\01-会员管理\\会员资料\\MH041陈智翀.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
+    # res=res.fillna('-')
     print(res)
     # res=p.all_cus_cls_rec(dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
     

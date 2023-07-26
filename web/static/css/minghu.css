@@ -25,9 +25,9 @@
   /* position:relative; */
 }
 .train-list3{
-  display: inline-block;
+  line-height: 35px;
   font-size: 16px;
-  color:rgb(139, 39, 78);
+  color:rgb(124, 96, 3);
   /* position:relative;
   top:50px;
   left:5px; */
@@ -57,6 +57,17 @@
     top:50px;
     left:225px;
     background-color: rgb(245, 249, 254);
+    z-index: 1;
+  }
+  .cus-list-cls-input {
+    font-size: 13px;
+    line-height: 25px;
+    position: absolute;
+    color:rgb(124, 14, 66);
+    padding-right: 40px;
+    top:130px;
+    left:215px;
+    background-color: rgb(255, 233, 246);
     z-index: 1;
   }
 .buy-list {
