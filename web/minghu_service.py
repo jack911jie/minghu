@@ -1,6 +1,7 @@
 import os
 import sys
-sys.path.extend([os.path.join(os.path.dirname(os.path.dirname(__file__)),'data_analysis'),os.path.join(os.path.dirname(os.path.dirname(__file__)),'modules')])
+sys.path.extend([os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),'data_analysis'),os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),'modules')])
+# print(sys.path)
 import readconfig
 import cus_data
 import get_data
@@ -255,7 +256,7 @@ class MinghuService(Flask):
 
     def cus_list(self):
         dic_li=[]
-        for fn in os.listdir('D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料'):
+        for fn in os.listdir(os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料')):
             if re.match(r'^MH\d{3}.*.xlsm$',fn):
                 dic_li.append(fn.split('.')[0])
         return dic_li
