@@ -1,4 +1,37 @@
 /* 通过类选择器应用样式 */
+body{
+  background-color:#fffefa;
+  color:#616060;
+}
+h1{
+  color:#dd91ca;
+}
+h2{
+  color:#c0a36c;
+}
+h3{
+  color:#685a3f;
+}
+.nonOxy{
+  background-color: #fdf1f1;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left:40px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.oxy{
+  background-color: #f4fdf1;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  padding-left:40px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.ico{
+  width:16px;
+  height:auto;
+}
 .inline{
     display: inline-block;
     font-size: 16px;
@@ -11,6 +44,10 @@
   }
 .train-reccount{
   display: inline-block;
+  background-color: #3f3521;
+  color:#f2f2f2;
+  padding-left: 15px;
+  padding-right: 15px;
 }
 .train-list{
   display: inline-block;

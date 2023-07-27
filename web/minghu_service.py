@@ -18,6 +18,7 @@ class MinghuService(Flask):
         self.config_mh=readconfig.exp_json2(config_fn)
 
         #路由
+        self.add_url_rule('/',view_func=self.index)
         self.add_url_rule('/cus_infos',view_func=self.cus_infos)
         self.add_url_rule('/welcome',view_func=self.welcome)
         self.add_url_rule('/cus_cls_input',view_func=self.cus_cls_input)
@@ -36,6 +37,8 @@ class MinghuService(Flask):
         self.add_url_rule('/get_train_list', view_func=self.get_train_list,methods=['GET','POST'])
         self.add_url_rule('/deal_cls', view_func=self.deal_cls,methods=['GET','POST'])
         
+    def index(self):
+        return render_template('index.html')
 
     def deal_cls(self):
         cls_data=request.json

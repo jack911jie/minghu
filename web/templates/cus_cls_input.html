@@ -6,18 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <h1>铭湖健身上课录入</h1>
+    <h2>铭湖健身工作室会员训练日志</h2>
 
     
-    <div id="BasicInfo">
-        <h3>客户编码及姓名</h3>
+    <div id="BasicInfo" >
+        
+        <h3><image src="../static/ico/客户.svg" class="ico"></image> 客户编码及姓名</h3>
             <input type="text" id="nameInput" placeholder="请输入客户姓名" oninput="handleInput()">
         <div id="cusNameList" class="cus-list-cls-input"></div>
         <div id="cusClsTkn"></div>   
         <hr>   
         <h2>上课基本信息</h2>  
         <div>        
-            <h3>客户性别</h3>
+            <h3><image src="../static/ico/性别.svg" class="ico"></image> 客户性别</h3>
             <label>
                 <input type="radio" id="gender" name='gender' value='男'>
                 男
@@ -83,7 +84,7 @@
             </div>
 
 
-            <div id="nonOxy-0" style="display: none;">
+            <div id="nonOxy-0" style="display: none;" class="nonOxy">
                 <h4>力量训练名称</h4>
                 <input id="nonOxyName-0" oninput="handleNonOxyNameInput(this)" onclick="handleNonOxyNameInput(this)">
                 <div id="nonOxyTrainList-0" class="train-list3"></div>
@@ -163,7 +164,7 @@
                     组</h4>
                 </div>   
             
-            <div id="oxy-0" style="display: none;">
+            <div id="oxy-0" style="display: none;" class="oxy">
                 <h4>有氧项目名称</h4>
                 <input id="oxyName-0" oninput="handleOxyNameInput(this)" onclick="handleOxyNameInput(this)">
                 <div id="oxyTrainList-0" class="train-list3" ></div>
