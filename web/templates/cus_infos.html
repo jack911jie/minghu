@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>铭湖健身客户信息查询</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <h3>请输入客户编码及姓名：</h3>
+    
+    <input type="text" id="searchInput" style="width: 190px;" oninput="handleInput()">
+    <p></p>
+    <div><button  style="margin-right:5px;" onclick="get_cus_info()">查询客户信息</button><button onclick="open_cus_fn()">打开客户资料表</button></div>
+
+    <ul id="resultList"></ul>
+    <ul id="cus_info"></ul>
+    <div class="inline" id="show_info">
+        <div>会员编码及姓名  <div class='result' id="cus_name"></div></div>        
+        <div style="height: 5px;"></div>
+        <div>常规私教剩余节数  <div class='result' id="normal_remain"></div> 节</div>
+        <div>限时课程是否有效  <div class='result' id="lmt_yn"></div></div>
+        <div>限时课程到期日  <div class='result' id="lmt_due_date"></div></div>
+        <div style="height: 5px;"></div>
+        <div>上课总天数  <div class='result' id="total_cls_days"></div> 天</div>
+        <div>总消费金额  <div class='result' id="total_pay"></div> 元</div>    
+    </div>   
+    
+    <div  class="inline2" id="other_info" >
+        <p></p>
+        <p></p>
+        <div  id="open_cus_fn_res"></div>
+        <p></p>
+        <div id="err_no_result"></div>
+    </div>
+    <script> 
+        var cus_list
+        // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
+        document.addEventListener("DOMContentLoaded", function() {   
+            var cusInfoBlock=document.getElementById("show_info")
+            cusInfoBlock.style.display="none";
+            fetch('/get_cus_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+        //将data赋值给块变量cus_list，供后面的handleInput使用
+            cus_list=data
+        })
+            .catch(error => console.error('Error:', error));
+            // 这里可以通过 JavaScript 来遍历某个文件夹中的文件，生成名字列表
+            // var names = ["Alice", "Bob", "Charlie", "David"];            
+        });
+
+        function handleInput() {
+            // 获取输入框中的值
+            const searchTerm = document.getElementById("searchInput").value.trim();
+            const UpperSearchTerm=searchTerm.toUpperCase();
+            // 获取展示结果的列表元素
+            const resultList = document.getElementById("resultList");
+
+            // 清空列表
+            resultList.innerHTML = "";
+
+            if (UpperSearchTerm === "") {
+                resultList.style.display = "none";
+                return; // 输入框为空，不做处理
+            }else{
+                resultList.style.display = "block";
+            }
+
+            // 遍历给定的数组，进行模糊匹配
+            cus_list.forEach(function(name) {
+                if (name.includes(UpperSearchTerm)) {
+                    // 创建列表项元素，并设置其文本内容为匹配到的结果
+                    const listItem = document.createElement("li");
+                    listItem.innerText = name;
+
+                    // 添加点击事件监听器
+                    listItem.addEventListener("click", function() {
+                        // 点击后将完整的姓名设置为输入框的值
+                        document.getElementById("searchInput").value = name;
+                        // 清空结果列表
+                        resultList.innerHTML = "";
+                    });
+
+                    // 将列表项添加到结果列表中
+                    resultList.appendChild(listItem);
+                }
+            });
+        
+            resultList.classList.add("cus-list");
+        }
+    
+        function get_cus_info() {
+            var selectedName = document.getElementById("searchInput").value;
+            clear_other_div()
+            fetch('/get_cus_info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ selected_name: selectedName })
+            })
+            .then(response => response.json())
+            .then(data => {                
+                console.log(data)
+                show_cus_info(data)
+                document.getElementById("cus_name").innerText = data['会员编码及姓名'];
+                document.getElementById("total_cls_days").innerText = data['上课总天数'];
+                document.getElementById("total_pay").innerText = data['总消费金额'];
+                document.getElementById("normal_remain").innerText = data['剩余节数-常规私教课']
+                document.getElementById("lmt_yn").innerText = data['限时课程是否有效']
+                document.getElementById("lmt_due_date").innerText = data['限时课程到期日']
+
+                format_date();
+            })
+            .catch(error => {
+                console.error('Error:', error) 
+                document.getElementById("show_info").style.display='none';
+                document.getElementById("open_cus_fn_res").innerText='';
+                document.getElementById("err_no_result").innerText='无结果';
+            
+                });
+            
+
+        }
+
+        function format_date(){
+            var dateContent = document.getElementById("lmt_due_date").innerText;
+            if (dateContent!='-'){
+                var dateObject = new Date(dateContent);
+                // 将日期按照你想要的格式进行处理
+                var year = dateObject.getFullYear();
+                var month = ("0" + (dateObject.getMonth() + 1)).slice(-2);
+                var day = ("0" + dateObject.getDate()).slice(-2);
+
+                // 拼接日期字符串，例如：YYYY-MM-DD
+                var formattedDate = year + "-" + month + "-" + day;
+
+                // 将日期显示在页面上
+                document.getElementById("lmt_due_date").innerText = formattedDate;
+            }
+            
+        }
+        
+        function show_cus_info(d){
+            try{
+                // console.log(d['会员编码及姓名'])
+                var cusInfoBlock=document.getElementById("show_info");
+                var errBlock=document.getElementById("err_no_result");
+                clear_other_div()
+
+                if(d['会员编码及姓名']!==""){   
+                    cusInfoBlock.style.display='inline';
+                }else{
+                    cusInfoBlock.style.display='none';
+                    // OpenCusFn.style.display='none';
+
+                    errBlock.innerText='无结果';
+                }
+            }catch(error){
+                errBlock.innerText='program error. 无结果';
+            }
+        }
+    
+        function open_cus_fn(){
+            var cus_name=document.getElementById('searchInput').value;
+            if(cus_name){
+                clear_other_div()
+                fetch('/open_cus_fn',{
+                    method:'POST',
+                    headers:{
+                        'Content-Type':'text/plain'
+                    },
+                    body:document.getElementById('searchInput').value
+
+                })
+                .then(response=>response.text())
+                .then(data=>{
+                    console.log(data)                    
+                    document.getElementById('open_cus_fn_res').innerText=data
+                })
+                .catch(error=>{
+                    console.error('Error:',error)
+                    document.getElementById("show_info").style.display='none'
+                    document.getElementById('open_cus_fn_res').innerText=''
+                });
+
+            }else{
+                console.log('cus_name empty')
+                document.getElementById("show_info").style.display='none'
+                document.getElementById('open_cus_fn_res').innerText=''
+            }
+            
+        }
+    
+        function clear_other_div(){
+            var p_div=document.getElementById("other_info");
+            var childDivs=p_div.getElementsByTagName("Div");
+            for(i=0;i<childDivs.length;i++){
+                childDivs[i].innerText="";
+            }
+
+        }
+    </script>
+</body>
+</html>

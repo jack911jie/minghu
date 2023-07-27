@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>模糊匹配示例</title>
+</head>
+<body>
+    <h1>请输入姓名：</h1>
+    <input type="text" id="searchInput" oninput="handleInput()">
+    <ul id="resultList"></ul>
+
+    <script>
+        // 给定的数组
+        const names = ["MH000李", "MH001刘", "MH002张", "MH003张三"];
+
+        function handleInput() {
+            // 获取输入框中的值
+            const searchTerm = document.getElementById("searchInput").value.trim();
+
+            // 获取展示结果的列表元素
+            const resultList = document.getElementById("resultList");
+
+            // 清空列表
+            resultList.innerHTML = "";
+
+            if (searchTerm === "") {
+                return; // 输入框为空，不做处理
+            }
+
+            // 遍历给定的数组，进行模糊匹配
+            names.forEach(function(name) {
+                if (name.includes(searchTerm)) {
+                    // 创建列表项元素，并设置其文本内容为匹配到的结果
+                    const listItem = document.createElement("li");
+                    listItem.innerText = name;
+
+                    // 添加点击事件监听器
+                    listItem.addEventListener("click", function() {
+                        // 点击后将完整的姓名设置为输入框的值
+                        document.getElementById("searchInput").value = name;
+                        // 清空结果列表
+                        resultList.innerHTML = "";
+                    });
+
+                    // 将列表项添加到结果列表中
+                    resultList.appendChild(listItem);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

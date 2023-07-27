@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>铭湖健身工作室教练工作台</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="background-color:#fffbf6">
+    <p></p>
+    <div id="container" style="background-color:#fffbf6 ;text-align: center;">
+        <div id="date" style="color:rgb(199, 202, 204); font-size:30px; margin-bottom: 50px;"></div>
+        <p></p>
+        <div style="margin-bottom: 40px;">
+            <li style="color:rgb(212, 178, 154);font-size:40px;"><a href="./cus_cls_input" style="color:rgb(212, 178, 154);font-size:40px;text-decoration: none;">我要上课</a></li>
+        </div>
+        <div>
+            <li style="color:rgb(122, 165, 147);font-size:40px;"><a href="./input_buy" style="color:rgb(122, 165, 147);font-size:40px;text-decoration: none;">会员购课</a></li>
+        </div>
+ 
+        <div id="logo" style="margin-top:70px;">
+        <img src="{{ url_for('static', filename='pics/logo.png') }}" alt="minghulogo" style="width:300px;height:auto;opacity: 0.86;">
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded',function(){
+            const dateBlock=document.getElementById('date');
+            const today=new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            dateDisplay=`${year} 年 ${month} 月 ${day} 日`; 
+            dateBlock.innerText=dateDisplay;
+        })
+
+    </script>
+</body>
