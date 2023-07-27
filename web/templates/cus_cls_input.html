@@ -69,7 +69,8 @@
     <div id="trainItems">
         <div id="trainItemDetail-0" name="trainItemDetail">
             <h3 id="trainRecCount-0" class="train-reccount">训练记录  第1条</h3>
-            <h4>训练项目</h4>
+            <div></div>
+            <!-- <h4>训练项目</h4> -->
             <div id="itemSelectRadio-0" class="inline" >
                 <label for="selectTrainForm-0"></label>
                 <select id="selectTrainForm-0" onchange="generateTrainFormRadio(this)">        
@@ -85,12 +86,13 @@
 
 
             <div id="nonOxy-0" style="display: none;" class="nonOxy">
-                <h4>力量训练名称</h4>
+                <h4>力量训练</h4>
                 <input id="nonOxyName-0" oninput="handleNonOxyNameInput(this)" onclick="handleNonOxyNameInput(this)">
                 <div id="nonOxyTrainList-0" class="train-list3"></div>
                     <h4>重量
                     <label for="nonOxyWt-0"></label>
                     <select id="nonOxyWt-0">
+                        <option value=0>0</option>
                         <option value=0.5>0.5</option>
                         <option value=1>1</option>
                         <option value=1.5>1.5</option>
@@ -165,7 +167,7 @@
                 </div>   
             
             <div id="oxy-0" style="display: none;" class="oxy">
-                <h4>有氧项目名称</h4>
+                <h4>有氧训练</h4>
                 <input id="oxyName-0" oninput="handleOxyNameInput(this)" onclick="handleOxyNameInput(this)">
                 <div id="oxyTrainList-0" class="train-list3" ></div>
                     <h4>有氧时间 
@@ -201,9 +203,14 @@
         <div></div>
     </div>
     <hr>
+    <div id="processingModel" style="display: none;">
+        <!-- 这里是弹出框的内容 -->
+        <p style="color:rgb(40, 57, 78);font-size:30px;">正在处理中，请稍候...</p>
+    </div>
     <button id="tempSaveButton" onclick="tempSave()">暂存</button>
     <button id="editButton" onclick="enableEdit()">返回修改</button>
     <button id="submit" onclick="submit()">提交</button>
+    
     <!-- <button id="submit" onclick="getTrainItems()">获取训练数据</button> -->
     
     <script>
@@ -285,6 +292,8 @@
 
         function reportClassTaken(){
             const cusName=document.getElementById('nameInput').value;
+            const classTakenInfo=document.getElementById('cusClsTkn');
+            classTakenInfo.innerHTML=''
             console.log(cusName);
             fetch('/get_cus_info',{
                 method:'POST',
@@ -296,8 +305,22 @@
             .then(response=>response.json())
             .then(data=>{
                 console.log(data);
-                const classTakenInfo=document.getElementById('cusClsTkn');
+                // const classTakenInfo=document.getElementById('cusClsTkn');
                 dateFormat(new Date(data['最后一次上课日期']),'date')
+                let bfr
+                if(!data['msr_num']){
+                    data['msr_num']='-';
+                    data['lst_msr_date']='-';
+                    data['wt']='-';
+                    data['waist']='-';
+                    data['l_leg']='-';
+                    data['r_leg']='-';
+                    data['hip']='-';
+                    bfr='0'
+                    
+                }else{
+                    bfr=(parseFloat(data['bfr'])*100).toFixed(2)
+                }
                 classTakenInfo.innerHTML=`
                         <h2>客户既往上课情况</h2>
                         <div >
@@ -318,21 +341,21 @@
                         <p><span>围度测量次数 </span>${data['msr_num']}  </p>
                         <p><span>上次围度测量时间： </span>${data['lst_msr_date']}  </p>
                         <p><span>上次围度测量结果</span></p>
-                        <!-- <p style="margin-left: 25px;"><span>体重： </span>xxx Kg <span  style="margin-left: 15px;">估算体脂率： </span>xxx %</p>
-                        <p style="margin-left: 25px;"><span>腰围： </span>xxx cm <span  style="margin-left: 15px;">臀围： </span>xxx cm</p>
-                        <p style="margin-left: 25px;"><span>左大腿围： </span>xxx cm <span  style="margin-left: 15px;">右大腿围： </span>xxx cm</p> -->
+                        <!-- <p style="margin-left: 25px;"><span>体重： </span>xxx Kg <span  style="margin-left: 10px;">估算体脂率： </span>xxx %</p>
+                        <p style="margin-left: 25px;"><span>腰围： </span>xxx cm <span  style="margin-left: 10px;">臀围： </span>xxx cm</p>
+                        <p style="margin-left: 25px;"><span>左大腿围： </span>xxx cm <span  style="margin-left: 10px;">右大腿围： </span>xxx cm</p> -->
                         <table>
                             <tr>
                             <td ><span>体重： </span>${data['wt']}  </td>
-                            <td style="padding-left:15px;"><span>估算体脂率： </span>${(parseFloat(data['bfr'])*100).toFixed(2)}  %</td>
+                            <td style="padding-left:10px;"><span>估算体脂率： </span>${bfr} %</td>
                             </tr>
                             <tr>
                             <td><span>腰围： </span>${data['waist']}   cm</td>
-                            <td style="padding-left:15px;"><span>臀围： </span>${data['hip']}   cm</td>
+                            <td style="padding-left:10px;"><span>臀围： </span>${data['hip']}   cm</td>
                             </tr>
                             <tr>
                             <td><span>左大腿围： </span>${data['l_leg']}   cm</td>
-                            <td style="padding-left:15px;"><span>右大腿围： </span>${data['r_leg']}   cm</td>
+                            <td style="padding-left:10px;"><span>右大腿围： </span>${data['r_leg']}   cm</td>
                             </tr>
                         </table>
                         </div>
@@ -342,6 +365,7 @@
                 
             })
             .catch(error=>{
+                classTakenInfo.innerHTML='<div style="margin-top:10px;">客户有未完善的信息，请先完善。</div>'
                 console.error('Error:',error);
             });
          
@@ -420,7 +444,16 @@
                 "train_rec":allTrainItems
             }
 
-            localStorage.setItem("cls_recs", JSON.stringify(cls_recs));
+            console.log(cls_recs);
+
+            localStorage.setItem(document.getElementById('nameInput').value+'-cls_recs', JSON.stringify(cls_recs));
+            localStorage.setItem(document.getElementById('nameInput').value+'-html',document.documentElement.outerHTML);
+            localStorage.setItem(document.getElementById('nameInput').value+'-copyCount',copyCount);
+            localStorage.setItem(document.getElementById('nameInput').value+'-deleteCount',deleteCount);
+            localStorage.setItem(document.getElementById('nameInput').value+'-blockOrder',blockOrder);
+            // let copyCount=0;
+            // let deleteCount=0;
+            // let blockOrder=1;
 
             alert("客户信息已暂存");
 
@@ -497,11 +530,22 @@
         }
         
 
+        function hideProcessingModel() {
+            document.getElementById('processingModel').style.display = 'none';
+        }
+
+        function showProcessingModel() {
+            document.getElementById('processingModel').style.display = 'block';
+        }
 
         function submit(){
-            const storedClassInfo = localStorage.getItem("cls_recs");
+            const cusName=document.getElementById('nameInput').value;
+            const storedClassInfo = localStorage.getItem(cusName+"-cls_recs");
             if (storedClassInfo) {
-                dat = JSON.parse(storedClassInfo);                
+                dat = JSON.parse(storedClassInfo);   
+                showProcessingModel();
+                
+                             
                 // 清除本地暂存的信息
                 // localStorage.removeItem("customerInfo");
 
@@ -517,9 +561,15 @@
                     })
                   .then(response => response.text())
                   .then(data => {
-                      console.log(data);
+                      console.log(data);                      
+                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-html');
+                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-cls_recs');
+                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-copyCount');
+                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-deleteCount');
+                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-blockOrder');
+                      hideProcessingModel();
                       alert("客户信息提交成功");
-                      window.location.replace('./success');
+                    //   window.location.replace('./');
                   })
                   .catch(error => {
                       console.error('Error:', error);
@@ -961,6 +1011,15 @@
                         // nameInput.dispatchEvent(new Event('change'));
                         // 清空结果列表
                         reportClassTaken();
+                        const tempSavePage=localStorage.getItem(name+'-html');
+                        if(tempSavePage){
+                            const isConfirmed=confirm('该客户有一条暂存信息，是否需要读取？');
+                            if(isConfirmed){
+                                document.documentElement.innerHTML=tempSavePage;
+                                // console.log(localStorage.getItem(name+'-cls_recs'));
+                                reFillTempSave(localStorage.getItem(name+'-cls_recs'));
+                            }                            
+                        }
                         resultList.innerHTML = "";
                     });
 
@@ -970,6 +1029,82 @@
             });
         
             resultList.classList.add("cus-list");
+        }
+
+
+        function reFillTempSave(dataString){
+            const data=JSON.parse(dataString);
+            const cusName=document.getElementById('nameInput').value = data['cls_tkn']['cus_name'];
+            copyCount=parseInt(localStorage.getItem(cusName+'-copyCount'));
+            deleteCount=parseInt(localStorage.getItem(cusName+'-deleteCount'));
+            blockOrder=parseInt(localStorage.getItem(cusName+'-blockOrder'));
+           
+
+            const genderRadios = document.querySelectorAll('input[name="gender"]');
+            // 回写基本信息
+            for (const radio of genderRadios) {
+            if (radio.value === data['cls_tkn']['sex']) {
+                radio.checked = true;
+                break;
+            }
+            }
+
+            document.getElementById('datetime').value = data['cls_tkn']['cls_tkn_date'] + 'T' + data['cls_tkn']['cls_tkn_time'];
+
+            document.getElementById('clsLong').value = data['cls_tkn']['cls_long'];
+
+            const insRadios = document.querySelectorAll('input[name="insName"]');
+            for (const radio of insRadios) {
+                if (radio.value === data['cls_tkn']['ins_name']) {
+                    radio.checked = true;
+                    break;
+                }
+            }
+
+            document.getElementById('basic_cls_comment').value = data['cls_tkn']['basic_cls_comment'];
+
+            // 回写之前的训练选项
+            // train_list
+            document.getElementById('calories').value = data['train_rec']['calories'];
+            document.getElementById('trainComment').value = data['train_rec']['trainComment'];
+
+            
+            const trainRecs = data['train_rec']['train_recs'];
+
+            for (let i = 0; i < trainRecs.length; i++) {
+                const trainRec = trainRecs[i];
+                document.getElementById('nonOxyName-'+i).value=trainRec['nonOxyName'];
+                document.getElementById('nonOxyWt-'+i).value=trainRec['nonOxyWt'];
+                document.getElementById('nonOxyDis-'+i).value=trainRec['nonOxyDis'];
+                document.getElementById('nonOxyNum-'+i).value=trainRec['nonOxyNum'];
+                document.getElementById('nonOxyGroup-'+i).value=trainRec['nonOxyGroup'];
+                document.getElementById('oxyName-'+i).value=trainRec['oxyName'];
+                document.getElementById('oxyTime-'+i).value=trainRec['oxyTime'];
+                document.getElementById('oxyGroup-'+i).value=trainRec['oxyGroup'];
+
+                if (trainRec['nonOxyName']) {
+                    const trainItemRadios = document.querySelectorAll('input[name="trainItem-'+i+'"]'); 
+                    for (const radio of trainItemRadios) {
+                        console.log(radio.value);
+                        if (radio.value === train_list['by_action_name'][trainRec['nonOxyName']][1] || radio.value === train_list['by_action_name'][trainRec['nonOxyName']][2]) {
+                            radio.checked = true;
+                            break;
+                        }
+                    }
+                } else if (trainRec['oxyName']) {                    
+                    const trainItemRadios = document.querySelectorAll('input[name="trainItem-'+i+'"]'); 
+                    for (const radio of trainItemRadios) {
+                        console.log(radio.value);
+                        if (radio.value === train_list['by_action_name'][trainRec['oxyName']][1] || radio.value === train_list['by_action_name'][trainRec['oxyName']][2]) {
+                            radio.checked = true;
+                            break;
+                        }
+                    }
+                }
+
+            }
+        
+
         }
 
         function ins_radios(ins_list){

@@ -193,19 +193,29 @@ class CusData:
             ctn_buy_num=0
 
         #围度测量数据
-        body_msr=Vividict()
-        body_msr['lst_msr_date']=df_body_msr['日期'].max().strftime('%Y-%m-%d')
-        body_msr['msr_num']=df_body_msr['日期'].count()
-        #将体测的日期拼接成文本
-        body_msr['msr_dates']='\n'.join([x.strftime('%Y-%m-%d') for x in df_body_msr['日期'].tolist()])
+        try:
+            body_msr=Vividict()
+            body_msr['lst_msr_date']=df_body_msr['日期'].max().strftime('%Y-%m-%d')
+            body_msr['msr_num']=df_body_msr['日期'].count()
+            #将体测的日期拼接成文本
+            body_msr['msr_dates']='\n'.join([x.strftime('%Y-%m-%d') for x in df_body_msr['日期'].tolist()])
 
 
-        sex=df_basic['性别'].tolist()[0]
-        latest_body_data=df_body_msr[df_body_msr['日期']==df_body_msr['日期'].max()]
-        birthday=df_basic['出生年月'].tolist()[0]
-        lst_ht=latest_body_data['身高（cm）'].tolist()[0]
-        lst_wt=latest_body_data['体重（Kg）'].tolist()[0]
-        lst_waist=latest_body_data['腰围'].tolist()[0]
+            sex=df_basic['性别'].tolist()[0]
+            latest_body_data=df_body_msr[df_body_msr['日期']==df_body_msr['日期'].max()]
+            birthday=df_basic['出生年月'].tolist()[0]
+            lst_ht=latest_body_data['身高（cm）'].tolist()[0]
+            lst_wt=latest_body_data['体重（Kg）'].tolist()[0]
+            latest_body_data['腰围'].tolist()[0]
+        except Exception as e:
+            birthday=''
+            age=''
+            lst_ht=''
+            lst_wt=''
+            ''
+            bfr=0
+            latest_body_data=pd.DataFrame()
+            print('err:',e)
 
         
         bfr_test=get_data.cals()
@@ -225,26 +235,48 @@ class CusData:
                     bfr=bfr_test.bfr(age=age,sex=sex,ht=lst_ht,wt=lst_wt,waist=lst_waist,adj_bfr='no',adj_src='prg',formula=1)
             except Exception as e:
                 print('err cal bfr:',e)
+        else:
+            bfr=0
         # 体脂率计算def bfr(self,age,sex,ht,wt,waist,adj_bfr='yes',adj_src='prg',gui='',formula=1):
-        # body_msr['lst_msr']
-        body_msr['bfr']=bfr
-        body_msr['age']=age
-        body_msr['ht']=lst_ht
-        body_msr['wt']=lst_wt
-        body_msr['waist']=lst_waist
-        body_msr['chest']=lst_waist=latest_body_data['胸围'].tolist()[0]
-        body_msr['l_arm']=lst_waist=latest_body_data['左臂围'].tolist()[0]
-        body_msr['r_arm']=lst_waist=latest_body_data['右臂围'].tolist()[0]
-        body_msr['hip']=lst_waist=latest_body_data['臀围'].tolist()[0]
-        body_msr['l_leg']=lst_waist=latest_body_data['左腿围'].tolist()[0]
-        body_msr['r_leg']=lst_waist=latest_body_data['右腿围'].tolist()[0]
-        body_msr['l_calf']=lst_waist=latest_body_data['左小腿围'].tolist()[0]
-        body_msr['r_calf']=lst_waist=latest_body_data['右小腿围'].tolist()[0]
-        body_msr['heart']=lst_waist=latest_body_data['心肺'].tolist()[0]
-        body_msr['balance']=lst_waist=latest_body_data['平衡'].tolist()[0]
-        body_msr['power']=lst_waist=latest_body_data['力量'].tolist()[0]
-        body_msr['flex']=lst_waist=latest_body_data['柔韧性'].tolist()[0]
-        body_msr['core']=lst_waist=latest_body_data['核心'].tolist()[0]
+        # body_msr['lst_msr']replace
+        if not latest_body_data.empty:
+            body_msr['bfr']=bfr
+            body_msr['age']=age
+            body_msr['ht']=lst_ht
+            body_msr['wt']=lst_wt
+            body_msr['waist']=lst_waist
+            body_msr['chest']=latest_body_data['胸围'].tolist()[0]
+            body_msr['l_arm']=latest_body_data['左臂围'].tolist()[0]
+            body_msr['r_arm']=latest_body_data['右臂围'].tolist()[0]
+            body_msr['hip']=latest_body_data['臀围'].tolist()[0]
+            body_msr['l_leg']=latest_body_data['左腿围'].tolist()[0]
+            body_msr['r_leg']=latest_body_data['右腿围'].tolist()[0]
+            body_msr['l_calf']=latest_body_data['左小腿围'].tolist()[0]
+            body_msr['r_calf']=latest_body_data['右小腿围'].tolist()[0]
+            body_msr['heart']=latest_body_data['心肺'].tolist()[0]
+            body_msr['balance']=latest_body_data['平衡'].tolist()[0]
+            body_msr['power']=latest_body_data['力量'].tolist()[0]
+            body_msr['flex']=latest_body_data['柔韧性'].tolist()[0]
+            body_msr['core']=latest_body_data['核心'].tolist()[0]
+        else:
+            body_msr['bfr']=''
+            body_msr['age']=''
+            body_msr['ht']=''
+            body_msr['wt']=''
+            body_msr['waist']=''
+            body_msr['chest']=''
+            body_msr['l_arm']=''
+            body_msr['r_arm']=''
+            body_msr['hip']=''
+            body_msr['l_leg']=''
+            body_msr['r_leg']=''
+            body_msr['l_calf']=''
+            body_msr['r_calf']=''
+            body_msr['heart']=''
+            body_msr['balance']=''
+            body_msr['power']=''
+            body_msr['flex']=''
+            body_msr['core']=''
 
         df_msr=pd.DataFrame(data=body_msr,index=[0])
   

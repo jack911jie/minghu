@@ -63,6 +63,7 @@ class MinghuService(Flask):
             return ['','','']
 
     def write_cls_tkn(self,dic_tkn):
+        print(dic_tkn)
         try:
             fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',dic_tkn['cus_name']+'.xlsm')
             df_tkn=pd.DataFrame(dic_tkn,index=[0])
@@ -122,10 +123,9 @@ class MinghuService(Flask):
         df_copy_rows['train_comment']=dic['train_rec']['trainComment']
         df_copy_rows['search_name']=df_copy_rows['nonOxyName']+df_copy_rows['oxyName']
 
-        print(df_copy_rows)
+        # print(df_copy_rows)
 
         try:
-
             df_copy_rows['big_type']=df_copy_rows['search_name'].apply(lambda x: self.train_info(x,trainlist)[0])
             df_copy_rows['muscle']=df_copy_rows['search_name'].apply(lambda x: self.train_info(x,trainlist)[1]+'肌群')
         except Exception as e:
@@ -138,11 +138,13 @@ class MinghuService(Flask):
         to_float_list=['oxyTime','nonOxyWt','nonOxyDis','calories']
         for itm in to_int_list:
             try:
+                df_copy_rows[itm]=df_copy_rows[itm].fillna(0)
                 df_copy_rows[itm]=df_copy_rows[itm].astype(int)
             except Exception as e:
                 return 'err:'+e
         for itm in to_float_list:
             try:
+                df_copy_rows[itm]=df_copy_rows[itm].fillna(0)
                 df_copy_rows[itm]=df_copy_rows[itm].astype(float)
             except Exception as e:
                 return 'err:'+e
