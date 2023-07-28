@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>录入客户体测结果</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div >
+        <h1>录入客户体测结果</h1>
+        <hr>
+        <h4>客户姓名<span style="width:25px;"></span> <input id="cusName" style="width: 90px;" oninput="handleInput()"></h4>
+        <div id="cusList" class="cus-list-input-body" style="display: none;"></div>
+        <div id="bodyHistory" class="body-history-list"></div>
+        <hr>
+        <div><h2>录入本次体测数据</h2></div>
+        <h4 >体测日期<span style="width:25px;"></span> <input id='date' type='date'></h4>
+            <div id="body_msr_data" style="padding-left:10px;padding-right:10px;">
+                <h4>身高 <input id='ht' type="number" style="width:90px;"> cm</h4>
+                <h4>体重 <input id='wt' type="number" style="width:90px;"> Kg</h4>
+                <h4>胸围 <input id='chest' type="number" style="width:90px;"> cm</h4>
+                <h4>左臂围 <input id='l_arm' type="number" style="width:90px;"> cm</h4>
+                <h4>右臂围 <input id='r_arm' type="number" style="width:90px;"> cm</h4>
+                <h4>腰围 <input id='waist' type="number" style="width:90px;"> cm</h4>
+                <h4>臀围 <input id='hip' type="number" style="width:90px;"> cm</h4>
+                <h4>左腿围 <input id='l_leg' type="number" style="width:90px;"> cm</h4>
+                <h4>右腿围 <input id='r_leg' type="number" style="width:90px;"> cm</h4>
+                <h4>左小腿围 <input id='l_calf' type="number" style="width:90px;"> cm</h4>
+                <h4>右小腿围 <input id='r_calf' type="number" style="width:90px;"> cm</h4>
+            </div>  
+        <hr>
+            <div id="ins_evaluate" style="padding-left:10px;padding-right:10px;">
+                <h4>心肺 <input id='heart' type="number" style="width:90px;"> 分（满分10分）</h4>
+                <h4>平衡 <input id='balance' type="number" style="width:90px;"> 分（满分10分）</h4>
+                <h4>力量 <input id='power' type="number" style="width:90px;"> 分（满分10分）</h4>
+                <h4>柔韧性 <input id='flex' type="number" style="width:90px;"> 分（满分10分）</h4>
+                <h4>核心 <input id='core' type="number" style="width:90px;"> 分（满分10分）</h4>
+            </div>
+        <hr>
+        <div id="processingModel" style="display: none;">
+            <!-- 这里是弹出框的内容 -->
+            <p style="color:rgb(40, 57, 78);font-size:30px;">正在处理中，请稍候...</p>
+        </div>
+        <button id="submit" onclick="submit()">提交</button>
+    </div>
+
+    <script>
+        let cus_list;
+        let ins_list;
+        let train_list;
+
+        document.addEventListener("DOMContentLoaded",function(){
+            
+            selectToday();
+
+            fetch('/get_template_info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log(data);
+
+                  })
+                .catch(error => console.error('Error:', error));
+
+            fetch('/get_cus_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log(data);
+                cus_list=data;
+                  })
+                .catch(error => console.error('Error:', error));
+
+
+            fetch('/get_ins_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log(Object.keys(data));
+
+                 })
+                .catch(error => console.error('Error:', error));
+
+                fetch('/get_train_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log(data);
+                train_list=data;
+
+                 })
+                .catch(error => console.error('Error:', error));
+
+                const inputs=document.querySelectorAll('input');
+        })
+
+
+        function hideProcessingModel() {
+            document.getElementById('processingModel').style.display = 'none';
+        }
+
+        function showProcessingModel() {
+            document.getElementById('processingModel').style.display = 'block';
+        }
+
+        function submitCheck(){
+            const inputs=document.querySelectorAll('input');
+            console.log(inputs);
+            let isFormValid=true;
+            let blank=0;
+            inputs.forEach(input=>{
+                if(input.id!=='_w_simile' && input.value.trim()===''){                          
+                    console.log('数据检查：填写数据有空项');           
+                    blank+=1;
+                }
+            })
+
+            if(blank>0){
+                return false;
+            }else{
+                return true;
+            }
+            
+        }
+
+        function submit(){
+            if(submitCheck()){
+                console.log('数据完整');
+                const inputs=document.querySelectorAll('input');
+                let dicBody={};
+                inputs.forEach(input=>{
+                    if(input.id!=='_w_simile'){
+                        dicBody[input.id]=input.value;
+                    }
+                });
+                // 处理日期的格式
+                dicBody['date']=dateFormat(new Date(document.getElementById('date').value),'date');
+
+
+                console.log(dicBody);
+                showProcessingModel();
+                fetch('./write_body',{
+                    method:"POST",
+                    headers:{
+                        'Content-Type':'application/json'
+                    },
+                    body: JSON.stringify(dicBody)
+                })
+                .then(response=>response.text())
+                .then(data=>{
+                    hideProcessingModel();
+                    console.log(data);
+                    alert('已录入体测数据')
+                    window.location.replace('./');
+                })
+                .catch(error=>{
+                    console.error('写入身体测量表错误：',error)
+                });
+
+
+
+                
+            }else{
+                alert('有项目未填写，请完成。');   
+                console.log('填写数据有空项');
+            }
+            
+        }
+
+        function dateFormat(currentDate,fmt){
+            if(fmt==='date'){
+                var year = currentDate.getFullYear();
+                var month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
+                var day = ("0" + currentDate.getDate()).slice(-2);
+                var formattedDate = year + "-" + month + "-" + day;
+            }else if(fmt==='time'){
+                const hours = String(today.getHours()).padStart(2, '0');
+                const minutes = String(today.getMinutes()).padStart(2, '0');
+                const seconds = currentDate.getSeconds();
+                // const formattedDatetime = `${year}-${month}-${day}T${hours}:${minutes}`;
+                var formattedDate = `${hours}:${minutes}:${seconds}`;
+            }
+            
+            // 拼接日期字符串，例如：YYYY-MM-
+            if (formattedDate.includes('NaN')){
+                return '-';
+            }else{
+                return formattedDate;
+            }              
+        }
+
+
+        function showHistory(data){
+            console.log(data);
+            const bodyHistory=document.getElementById('bodyHistory');
+            bodyHistory.innerHTML='';
+            const bodyHistoryCountContent=document.createElement('div');
+            bodyHistoryCountContent.innerHTML=`<div id="bodyHistoryCount" style="padding:10px;font-size:16px;"><b> · 过去一共体测 ${Object.keys(data).length} 次</b></div>`
+            bodyHistory.appendChild(bodyHistoryCountContent);
+
+            for(i=0;i<Object.keys(data).length;i++){
+                const newDiv=document.createElement('div')
+                newDiv.innerHTML=`                    
+                    <div id="history-${i}" style="padding:10px;">
+                    <div style="vertical-align:bottom;background-color:#ffffff" ><b><span>· 体测日期</span><span style="width:25px;"></span> ${dateFormat(new Date(data[i]['日期']),'date')}</b></div>
+                    </div>
+                    <hr>
+                    <table>
+                        <tr>
+                        <td ><span>体重 </span>${data[i]['体重（Kg）']} Kg</td>
+                        <td style="padding-left:15px;"><span>估算体脂率 </span>${(parseFloat(data[i]['体脂率'])*100).toFixed(2)} %</td>
+                        </tr>
+                        <tr>
+                        <td><span>胸围 </span>${data[i]['胸围']} cm</td>
+                        <td style="padding-left:15px;"><span>腰围 </span>${data[i]['腰围']} cm</td>
+                        </tr>
+                        <tr>
+                        <td><span>臀围 </span>${data[i]['臀围']} cm</td>
+                        </tr>
+                        <tr>
+                        <td><span>左臂围 </span>${data[i]['左臂围']} cm</td>
+                        <td style="padding-left:15px;"><span>右臂围 </span>${data[i]['右臂围']} cm</td>
+                        </tr>
+                        <tr>
+                        <td><span>左大腿围 </span>${data[i]['左腿围']} cm</td>
+                        <td style="padding-left:15px;"><span>右大腿围： </span>${data[i]['右腿围']} cm</td>
+                        </tr>
+                        <tr>
+                        <td><span>左小腿围 </span>${data[i]['左小腿围']} cm</td>
+                        <td style="padding-left:15px;"><span>右小腿围 </span>${data[i]['右小腿围']} cm</td>
+                        </tr>
+
+                    </table>
+                    </div>
+                    `;
+                
+                bodyHistory.appendChild(newDiv);
+            }
+        }
+        
+        function getBodyHistory(){
+            const cusName=document.getElementById('cusName').value;
+            fetch('/get_body_history',{
+                method:"POST",
+                headers:{
+                    'Content-Type':"text/plain"
+                },
+                body:cusName
+            })
+            .then(response=>response.json())
+            .then(data=>{
+                // console.log(data);
+                showHistory(data);
+
+
+            })
+            .catch(error=>{
+                console.error('Error:',error)
+            });
+        }
+        
+        function selectToday(){
+            const today = new Date();
+            // 将日期格式化为 yyyy-mm-dd 的形式
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`;
+            // 将日期设置为输入框的默认值
+            document.getElementById('date').value = formattedDate;
+        }
+       
+        function handleInput() {
+            // 获取输入框中的值
+            const searchTerm = document.getElementById("cusName").value.trim();
+            const UpperSearchTerm=searchTerm.toUpperCase();
+            // 获取展示结果的列表元素
+            const resultList = document.getElementById("cusList");
+
+            // 清空列表
+            resultList.innerHTML = "";
+
+            if (UpperSearchTerm === "") {
+                resultList.style.display = "none";
+                return; // 输入框为空，不做处理
+            }else{
+                resultList.style.display = "block";
+
+            }
+
+            // 遍历给定的数组，进行模糊匹配
+            cus_list.forEach(function(name) {
+                if (name.includes(UpperSearchTerm)) {
+                    // 创建列表项元素，并设置其文本内容为匹配到的结果
+                    const listItem = document.createElement("li");
+                    listItem.innerText = name;
+
+                    // 添加点击事件监听器
+                    listItem.addEventListener("click", function() {
+                        // 点击后将完整的姓名设置为输入框的值
+                        document.getElementById("cusName").value = name;
+
+                        resultList.style.display = "none";
+                        getBodyHistory();
+                        // 手动触发change事件
+                        // nameInput.dispatchEvent(new Event('change'));
+                        // 清空结果列表
+
+                        resultList.innerHTML = "";
+                    });
+
+                    // 将列表项添加到结果列表中
+                    resultList.appendChild(listItem);
+                }
+            });
+        
+            // resultList.classList.add("cus-list");
+            
+        }
+    </script>
+</body>

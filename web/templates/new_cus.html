@@ -112,7 +112,9 @@
             .then(response=>response.text())
             .then(data=>{
                 console.log(data)
-                document.getElementById("new_cus_res").innerHTML='<p>生成文件名：</p><p>'+data+'</p>'
+                // document.getElementById("new_cus_res").innerHTML='<p>生成文件名：</p><p>'+data+'</p>'
+                alert(`新增客户 ${NumName} 成功`);
+                window.location.replace('./');
                 // alert(data)
             })
             .catch(error=>console.error('Error:',error))

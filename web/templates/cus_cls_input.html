@@ -10,7 +10,7 @@
         <h3><image src="../static/ico/客户.svg" class="ico"></image> 客户编码及姓名</h3>
             <input type="text" id="nameInput" placeholder="请输入客户姓名" oninput="handleInput()" style="margin-bottom: 8px;">
         <div id="cusNameList" class="cus-list-cls-input" style="display:none;"></div>
-        <div id="cusClsTkn" class="cusClsTkn" ></div>   
+        <div id="cusClsTkn" class="cusClsTkn" class="cusClsTkn" ></div>   
         <hr>   
     <div id="BasicInfo" style="padding:10px;">   
         <h2>上课基本信息</h2>  
@@ -651,7 +651,6 @@
             const hours = String(today.getHours()).padStart(2, '0');
             const minutes = String(today.getMinutes()).padStart(2, '0');
             const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
-
             // 将日期设置为输入框的默认值
             document.getElementById('datetime').value = formattedDate;
         }

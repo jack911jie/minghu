@@ -5,6 +5,8 @@ sys.path.extend([os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(_
 import readconfig
 import cus_data
 import get_data
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import re
 import xlwings as xw
 import pandas as pd
@@ -37,9 +39,104 @@ class MinghuService(Flask):
         self.add_url_rule('/get_cus_buy', view_func=self.get_cus_buy,methods=['GET','POST'])
         self.add_url_rule('/get_train_list', view_func=self.get_train_list,methods=['GET','POST'])
         self.add_url_rule('/deal_cls', view_func=self.deal_cls,methods=['GET','POST'])
+        self.add_url_rule('/input_body', view_func=self.input_body,methods=['GET','POST'])
+        self.add_url_rule('/get_body_history', view_func=self.get_body_history,methods=['GET','POST'])
+        self.add_url_rule('/write_body', view_func=self.write_body,methods=['GET','POST'])
+        
         
     def index(self):
         return render_template('index.html')
+
+    def write_body(self):
+        try:
+            data=request.json
+            # print('写入身体数据：',data)
+            fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',data['cusName']+'.xlsm')
+            df_old=pd.read_excel(os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',data['cusName']+'.xlsm'),sheet_name='身体数据')
+            df_new=pd.DataFrame(data,index=[0])
+            #第一列为姓名，去除
+            df_write=df_new.iloc[:,1:]
+
+            # print(df_write)
+
+            app=xw.App(visible=False)
+            wb=app.books.open(fn)
+            sht=wb.sheets['身体数据']
+            row = df_old.shape[0]+2
+            rng='A'+str(row)+':R'+str(row)
+            sht.range(rng).value=df_write.iloc[0].tolist()
+
+            wb.save(fn)
+            wb.close()
+            app.quit()
+
+            return '后端：写入身体数据表成功'
+        except Exception as e:
+            print('后端写入身体数据错误：',e)
+            return '后端写入身体数据错误：'+e
+
+
+    def bfr(self,sex,birthday,ht,wt,waist):
+        bfr_test=get_data.cals()
+        if birthday:
+            try:
+                if re.match(r'\d{4}',str(birthday)) and 1900<int(birthday)<2999:
+                    birthday=datetime.strptime(str(birthday)+'0101','%Y%m%d')
+                    age=relativedelta(datetime.now(),birthday).years
+                    bfr=bfr_test.bfr(age=age,sex=sex,ht=ht,wt=wt,waist=waist,adj_bfr='no',adj_src='prg',formula=1)
+                elif re.match(r'\d{6}',str(birthday)) and datetime.strptime(str(birthday)+'01','%Y%m%d'):
+                    birthday=datetime.strptime(str(birthday)+'01','%Y%m%d')
+                    age=relativedelta(datetime.now(),birthday).years
+                    bfr=bfr_test.bfr(age=age,sex=sex,ht=ht,wt=wt,waist=waist,adj_bfr='no',adj_src='prg',formula=1)
+                elif re.match(r'\d{8}',str(birthday)) and datetime.strptime(birthday,'%Y%m%d'):
+                    birthday=datetime.strptime(str(birthday)+str('01'),'%Y%m%d')
+                    age=relativedelta(datetime.now(),birthday).years
+                    bfr=bfr_test.bfr(age=age,sex=sex,ht=ht,wt=wt,waist=waist,adj_bfr='no',adj_src='prg',formula=1)
+            except Exception as e:
+                print('bfr计算错误:',e)
+        else:
+            bfr=0
+        return bfr
+
+    def get_body_history(self):
+        cus_name=request.data.decode('utf-8')
+        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name+'.xlsm')
+        df_body=pd.read_excel(fn,sheet_name='身体数据')
+        df_basic=pd.read_excel(fn,sheet_name='基本情况')
+
+        sex=df_basic['性别'].tolist()[0]
+        birthday=df_basic['出生年月'].tolist()[0]
+
+        # print(df_body)
+        if df_body.empty:
+            return jsonify({'获取既往体测数据错误':'获取既往体测数据错误'})
+        else:
+            df_body.fillna(0,inplace=True)
+            
+            dic_body=df_body.to_dict()
+
+            formatted_data = {}
+            # 遍历原始数据，并根据需要构建新的格式化数据
+            for i in range(len(dic_body['日期'])):
+                items={}
+                for key,value in dic_body.items():
+                    items[key]=dic_body[key][i]
+                    
+                formatted_data[str(i)]=items
+
+        # 计算bfr
+        for key,item in formatted_data.items():
+            item['体脂率']=self.bfr(sex,birthday,item['身高（cm）'],item['体重（Kg）'],item['腰围'])
+
+        print(formatted_data)
+        # print(dic_body)
+        return jsonify(formatted_data)
+
+
+
+    
+    def input_body(self):
+        return render_template('./input_body.html')
 
     def deal_cls(self):
         cls_data=request.json
@@ -214,7 +311,7 @@ class MinghuService(Flask):
             # return jsonify(j_data)
 
         except Exception as err:
-            return {'dat':'get_cus_buy error','error':err}      
+            return {'dat':'获取客户购课错误：','error':err}      
    
 
     def read_template(self):
@@ -498,8 +595,8 @@ class MinghuService(Flask):
             app.quit()
 
             # os.startfile(work_dir)
-            if dvc=='pc':
-                os.startfile(new_fn)
+            # if dvc=='pc':
+            #     os.startfile(new_fn)
 
             return new_fn
         except Exception as e:

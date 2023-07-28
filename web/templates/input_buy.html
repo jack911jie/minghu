@@ -10,7 +10,7 @@
         <h3>请输入客户编码及姓名（支持模糊查询）：</h3>
         
         <input type="text" id="cusNameInput" style="width: 190px;" oninput="handleInput()">
-        <ul id="resultList"></ul>
+        <ul id="cusNameResultList"></ul>
         <p></p>
 
         <h3>购课日期</h3>
@@ -78,7 +78,7 @@
 
         <div class="inline2" id="status"></div>
     </div>
-
+    <div id="showDealResult" style="display:none">正在处理……</div>
     <div><button  style="margin-right:5px;" onclick="submit()">提交</button></div>
 
     <script src="../static/js/moment.min.js"></script>
@@ -287,17 +287,14 @@
                     .then(response=>response.text())
                     .then(data=>{
                         console.log(data)
-                        alert(data)
-                        window.location.href='./success';
+                        alert('购课记录增加成功')
+                        window.location.href='./';
                     })
                     .catch(error=>{
                         console.error('Error:',error.message)
                     });
 
-
-
-
-                    console.log(data);
+                    
                 }else{
                     throw new Error(submitCheck());
                 }            
@@ -369,7 +366,7 @@
             const searchTerm = document.getElementById("cusNameInput").value.trim();
             const UpperSearchTerm=searchTerm.toUpperCase();
             // 获取展示结果的列表元素
-            const resultList = document.getElementById("resultList");
+            const resultList = document.getElementById("cusNameResultList");
 
             // 清空列表
             resultList.innerHTML = "";
