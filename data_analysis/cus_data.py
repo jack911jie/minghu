@@ -115,7 +115,8 @@ class CusData:
             for cls_type in cls_types:
                 tkn_nums['上课次数-'+cls_type]=df_tkn[df_tkn['课程类型']==cls_type]['日期'].count()
             df_tkn_nums=pd.DataFrame(data=tkn_nums,index=[0])
-        except:
+        except Exception as e:
+            print('上课次数错误',e)
             tkn_num=0
 
         try:
@@ -128,7 +129,8 @@ class CusData:
         try:
         #上课频率
             tkn_frqc=interval/tkn_num
-        except:
+        except Exception as e:
+            print('上课频率错误',e)
             tkn_frqc=0
         
 
@@ -140,7 +142,8 @@ class CusData:
                 end_date=latest_ltm['限时课程结束日']
             else:
                 end_date=latest_ltm['限时课程实际结束日']     
-        except:
+        except Exception as e:
+            print('限时课程到期日错误：',e)
             end_date=''
 
         try:
@@ -206,16 +209,16 @@ class CusData:
             birthday=df_basic['出生年月'].tolist()[0]
             lst_ht=latest_body_data['身高（cm）'].tolist()[0]
             lst_wt=latest_body_data['体重（Kg）'].tolist()[0]
+            lst_waist=latest_body_data['腰围'].tolist()[0]
             latest_body_data['腰围'].tolist()[0]
         except Exception as e:
             birthday=''
             age=''
             lst_ht=''
-            lst_wt=''
-            ''
+            lst_wt='' 
             bfr=0
             latest_body_data=pd.DataFrame()
-            print('err:',e)
+            print('围度测量数据错误:',e)
 
         
         bfr_test=get_data.cals()
@@ -234,7 +237,7 @@ class CusData:
                     age=relativedelta(datetime.now(),birthday).years
                     bfr=bfr_test.bfr(age=age,sex=sex,ht=lst_ht,wt=lst_wt,waist=lst_waist,adj_bfr='no',adj_src='prg',formula=1)
             except Exception as e:
-                print('err cal bfr:',e)
+                print('bfr计算错误:',e)
         else:
             bfr=0
         # 体脂率计算def bfr(self,age,sex,ht,wt,waist,adj_bfr='yes',adj_src='prg',gui='',formula=1):
@@ -287,7 +290,7 @@ class CusData:
             df_out=pd.concat([df_out,df_tkn_nums,df_buy_nums,buy_pays,df_msr],axis=1)
         except Exception as err:
             df_out=pd.DataFrame()
-            print(cus_name,'：',err)
+            print('生成既往课程及围度测量结果错误',cus_name,'：',err)
  
 
 
@@ -310,7 +313,7 @@ class CusData:
                 bfr=bfr_test.bfr(age=age,sex=sex,ht=ht,wt=wt,waist=waist,adj_bfr='no',adj_src='prg',formula=1)
             return bfr
         except Exception as e:
-            print('err cal bfr:',e)
+            print('bfr计算错误:',e)
             return 'err cal bfr:'+e
 
 
@@ -321,7 +324,8 @@ class CusData:
                 df_web['限时课程是否有效']='是'
             else:
                 df_web['限时课程是否有效']='否'
-        except:
+        except Exception as e:
+            print('计算限时课程错误在cus_cls_rec_toweb中：',e)
             df_web['限时课程是否有效']='否'
             df_web['限时课程到期日']='-'
 

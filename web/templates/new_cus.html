@@ -1,23 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>前端按钮功能示例</title>
+    <title>新客户生成</title>
     <link rel="stylesheet" href="../static/css/minghu.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
     <h3>生成新的客户</h3>
-
-    <p></p>
-    <h4>输入新客户的姓名</h4>
-    <input type="text" id="cusName" style="width: 190px;" >
-    <button onclick="CheckFile()">生成文件</button>
-    <p></p>
+    <hr>
+    <h4>· 输入新客户的姓名
+    <input type="text" id="cusName" style="width: 80px;" >   
+    </h4>
     <div class="inline2" id="new_cus_res"></div>
+
+    <div id="sex">
+        <h4>· 性别
+        <label>
+            <input type="radio"  name="gender" value="男">男
+        </label>
+        <label>
+            <input type="radio"  name="gender" value="女" checked>女
+        </label>
+        </h4>
+    </div>
+
+    <div>
+        <h4>· 出生年月  <input id="dateMonth" type="month" ></h4>       
+    </div>
+    <hr>
+    <button onclick="CheckFile()">生成客户资料</button>
+
     <script>
+        document.addEventListener('DOMContentLoaded',function(){
+            selectToday();
+        })
+
+
+        function selectToday(){
+            const today = new Date();
+            // 将日期格式化为 yyyy-mm-dd 的形式
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+
+            const formattedDate = `${year}-${month}`;
+            // console.log(formattedDate)
+
+            // 将日期设置为输入框的默认值
+            document.getElementById('dateMonth').value = formattedDate;
+        }
+
         function CheckFile() {            
             document.getElementById("new_cus_res").innerText=''
-            var cusName=document.getElementById("cusName").value.trim()
+            const cusName=document.getElementById("cusName").value.trim();
+            const gender=document.querySelector('input[name="gender"]:checked').value;
+
+
+            let birthMonth=document.getElementById("dateMonth").value
+            birthMonth=birthMonth.replace(/-/g,'');
+            // console.log(gender,birthMonth);
             if(cusName){
                 fetch('/check_new', {
                     method: 'POST',
@@ -32,7 +72,7 @@
                     console.log('new_code:',data)
                     var confirmRes=confirm("现在的序号是 MH"+data+cusName+' ，如需修改序号请按【取消】修改。')
                     if (confirmRes){
-                        generateFile(data+cusName);
+                        generateFile(data+cusName,gender,birthMonth);
                     }else{
                         var newNum = prompt("请输入序号（三位数字）：");
                         const ptn=/^\d{3}$/;
@@ -44,7 +84,7 @@
                                 newNum = prompt("输入的不是三位数字，请重新请输入。");   
                             }                        
                         }
-                        generateFile(newNum+cusName);  
+                        generateFile(newNum+cusName,gender,birthMonth);  
                         
                     }
                 
@@ -58,7 +98,7 @@
 
         }
 
-        function generateFile(NumName){
+        function generateFile(NumName,sex,birthMonth){
             const isMo=isMobile();
             dvc=isMo?"mobile":"pc";
             document.getElementById("new_cus_res").innerHTML='<p>正在生成新会员文件……</p>'
@@ -67,7 +107,7 @@
                 headers:{
                     'Content-Type':'text/plain'
                 },
-                body:NumName+"|"+dvc
+                body:NumName+"|"+sex+"|"+birthMonth+"|"+dvc
             })
             .then(response=>response.text())
             .then(data=>{

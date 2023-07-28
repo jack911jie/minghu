@@ -6,18 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <h2>铭湖健身工作室会员训练日志</h2>
-
-    
-    <div id="BasicInfo" >
-        
+    <h2>铭湖健身工作室会员训练日志</h2>        
         <h3><image src="../static/ico/客户.svg" class="ico"></image> 客户编码及姓名</h3>
-            <input type="text" id="nameInput" placeholder="请输入客户姓名" oninput="handleInput()">
-        <div id="cusNameList" class="cus-list-cls-input"></div>
-        <div id="cusClsTkn"></div>   
+            <input type="text" id="nameInput" placeholder="请输入客户姓名" oninput="handleInput()" style="margin-bottom: 8px;">
+        <div id="cusNameList" class="cus-list-cls-input" style="display:none;"></div>
+        <div id="cusClsTkn" class="cusClsTkn" ></div>   
         <hr>   
+    <div id="BasicInfo" style="padding:10px;">   
         <h2>上课基本信息</h2>  
-        <div>        
+        <!-- <div>        
             <h3><image src="../static/ico/性别.svg" class="ico"></image> 客户性别</h3>
             <label>
                 <input type="radio" id="gender" name='gender' value='男'>
@@ -27,7 +24,7 @@
             <input type="radio" id="gender" name='gender' value='女'checked>
                 女
             </label>
-        </div>
+        </div> -->
         <div id="insRadio">
             <h3>上课教练</h3>
             <div id="insNameRadio"></div>
@@ -61,155 +58,156 @@
     </div>
 
 
-
-    <div style="margin-bottom:10px;"></div>
-    <hr>
-    <h2>训练内容</h2>    
-
-    <div id="trainItems">
-        <div id="trainItemDetail-0" name="trainItemDetail">
-            <h3 id="trainRecCount-0" class="train-reccount">训练记录  第1条</h3>
-            <div></div>
-            <!-- <h4>训练项目</h4> -->
-            <div id="itemSelectRadio-0" class="inline" >
-                <label for="selectTrainForm-0"></label>
-                <select id="selectTrainForm-0" onchange="generateTrainFormRadio(this)">        
-                    <option value="部位" selected>按部位筛选</option>
-                    <option value="动作大类">按动作大类筛选</option>
-                </select>
-                <span style="width:5px;"></span>
-                <br>
-                <div id="radioContainer-0" class="dynamic-radio"></div>
-                <!-- <h4>动作名称</h4>
-                <input id="actionName-0" oninput="handleInputAction()">        -->
-            </div>
-
-
-            <div id="nonOxy-0" style="display: none;" class="nonOxy">
-                <h4>力量训练</h4>
-                <input id="nonOxyName-0" oninput="handleNonOxyNameInput(this)" onclick="handleNonOxyNameInput(this)">
-                <div id="nonOxyTrainList-0" class="train-list3"></div>
-                    <h4>重量
-                    <label for="nonOxyWt-0"></label>
-                    <select id="nonOxyWt-0">
-                        <option value=0>0</option>
-                        <option value=0.5>0.5</option>
-                        <option value=1>1</option>
-                        <option value=1.5>1.5</option>
-                        <option value=2>2</option>
-                        <option value=2.5>2.5</option>                    
-                        <option value=5>5</option>                    
-                        <option value=7.5>7.5</option>
-                        <option value=10>10</option>
-                        <option value=12.5>12.5</option>
-                        <option value=15>15</option>
-                        <option value=17.5>17.5</option>
-                        <option value=20>20</option>
-                        <option value=22.5>22.5</option>
-                        <option value=25>25</option>
-                        <option value=30>30</option>
-                    </select>
-                    Kg</h4>
-                    
-                    <h4>次数
-                    <label for="nonOxyNum-0"></label>
-                    <select id="nonOxyNum-0">
-                        <option value=1>1</option>
-                        <option value=2>2</option>
-                        <option value=3>3</option>
-                        <option value=4>4</option>
-                        <option value=5>5</option>                    
-                        <option value=6>6</option>                    
-                        <option value=7>7</option>
-                        <option value=8>8</option>
-                        <option value=9>9</option>
-                        <option value=10>10</option>
-                        <option value=11>11</option>
-                        <option value=12>12</option>
-                        <option value=13>13</option>
-                        <option value=14>14</option>
-                        <option value=15>15</option>
-                        <option value=16>16</option>
-                        <option value=17>17</option>
-                        <option value=18>18</option>
-                        <option value=19>19</option>
-                        <option value=20>20</option>
-                        <option value=21>21</option>
-                        <option value=22>22</option>
-                        <option value=23>23</option>
-                        <option value=24>24</option>
-                        <option value=25>25</option>
-                        <option value=26>26</option>
-                        <option value=27>27</option>
-                        <option value=28>28</option>
-                        <option value=29>29</option>
-                        <option value=30>30</option>
-                    </select>次
-                    </h4>
-
-                    <h4>距离
-                        <input id="nonOxyDis-0" style="width: 40px;" type="number">米</h4>
-
-                    <h4>组数
-                    <select id="nonOxyGroup-0">
-                        <option value=1>1</option>
-                        <option value=2>2</option>
-                        <option value=3>3</option>
-                        <option value=4>4</option>
-                        <option value=5>5</option>                    
-                        <option value=6>6</option>                    
-                        <option value=7>7</option>
-                        <option value=8>8</option>
-                        <option value=9>9</option>
-                        <option value=10>10</option>
-                    </select>
-                    组</h4>
-                </div>   
-            
-            <div id="oxy-0" style="display: none;" class="oxy">
-                <h4>有氧训练</h4>
-                <input id="oxyName-0" oninput="handleOxyNameInput(this)" onclick="handleOxyNameInput(this)">
-                <div id="oxyTrainList-0" class="train-list3" ></div>
-                    <h4>有氧时间 
-                    <input id="oxyTime-0" style="width: 50px;" type="number"> 分</h4>
-
-                <h4>组数<span style="width:10px;"></span>
-                <select id="oxyGroup-0">
-                    <option value=1>1</option>
-                    <option value=2>2</option>
-                    <option value=3>3</option>
-                    <option value=4>4</option>
-                    <option value=5>5</option>                    
-                    <option value=6>6</option>                    
-                    <option value=7>7</option>
-                    <option value=8>8</option>
-                    <option value=9>9</option>
-                    <option value=10>10</option>
-                </select>
-                <span style="width:20px;"></span>组
-                </h4>
-            </div>                
-            <hr>
-        </div>
-        
-    </div>
-
-    <button id="appendTrainButton" onclick="copyTrain()">添加一条训练记录</button>
     <div>
-        <h4>热量消耗</h4>
-        <input  type="number" id="calories">
-        <h4>上课点评</h4>
-        <input type="text" id="trainComment">
-        <div></div>
+        <div style="margin-bottom:10px;"></div>
+        <hr>
+        <h2>训练内容</h2>    
+
+        <div id="trainItems">
+            <div id="trainItemDetail-0" name="trainItemDetail">
+                <h3 id="trainRecCount-0" class="train-reccount">训练记录  第1条</h3>
+                <div></div>
+                <!-- <h4>训练项目</h4> -->
+                <div id="itemSelectRadio-0" class="inline" >
+                    <label for="selectTrainForm-0"></label>
+                    <select id="selectTrainForm-0" onchange="generateTrainFormRadio(this)" style="margin-bottom:5px;">        
+                        <option value="部位" selected>按部位筛选</option>
+                        <option value="动作大类">按动作大类筛选</option>
+                    </select>
+                    <span style="width:5px;"></span>
+                    <br>
+                    <div id="radioContainer-0" class="dynamic-radio"></div>
+                    <!-- <h4>动作名称</h4>
+                    <input id="actionName-0" oninput="handleInputAction()">        -->
+                </div>
+
+
+                <div id="nonOxy-0" style="display: none;" class="nonOxy">
+                    <h4>力量训练</h4>
+                    <input id="nonOxyName-0" oninput="handleNonOxyNameInput(this)" onclick="handleNonOxyNameInput(this)">
+                    <div id="nonOxyTrainList-0" class="train-list3"></div>
+                        <h4>重量
+                        <label for="nonOxyWt-0"></label>
+                        <select id="nonOxyWt-0">
+                            <option value=0>0</option>
+                            <option value=0.5>0.5</option>
+                            <option value=1>1</option>
+                            <option value=1.5>1.5</option>
+                            <option value=2>2</option>
+                            <option value=2.5>2.5</option>                    
+                            <option value=5>5</option>                    
+                            <option value=7.5>7.5</option>
+                            <option value=10>10</option>
+                            <option value=12.5>12.5</option>
+                            <option value=15>15</option>
+                            <option value=17.5>17.5</option>
+                            <option value=20>20</option>
+                            <option value=22.5>22.5</option>
+                            <option value=25>25</option>
+                            <option value=30>30</option>
+                        </select>
+                        Kg</h4>
+                        
+                        <h4>次数
+                        <label for="nonOxyNum-0"></label>
+                        <select id="nonOxyNum-0">
+                            <option value=1>1</option>
+                            <option value=2>2</option>
+                            <option value=3>3</option>
+                            <option value=4>4</option>
+                            <option value=5>5</option>                    
+                            <option value=6>6</option>                    
+                            <option value=7>7</option>
+                            <option value=8>8</option>
+                            <option value=9>9</option>
+                            <option value=10>10</option>
+                            <option value=11>11</option>
+                            <option value=12>12</option>
+                            <option value=13>13</option>
+                            <option value=14>14</option>
+                            <option value=15>15</option>
+                            <option value=16>16</option>
+                            <option value=17>17</option>
+                            <option value=18>18</option>
+                            <option value=19>19</option>
+                            <option value=20>20</option>
+                            <option value=21>21</option>
+                            <option value=22>22</option>
+                            <option value=23>23</option>
+                            <option value=24>24</option>
+                            <option value=25>25</option>
+                            <option value=26>26</option>
+                            <option value=27>27</option>
+                            <option value=28>28</option>
+                            <option value=29>29</option>
+                            <option value=30>30</option>
+                        </select>次
+                        </h4>
+
+                        <h4>距离
+                            <input id="nonOxyDis-0" style="width: 40px;" type="number">米</h4>
+
+                        <h4>组数
+                        <select id="nonOxyGroup-0">
+                            <option value=1>1</option>
+                            <option value=2>2</option>
+                            <option value=3>3</option>
+                            <option value=4>4</option>
+                            <option value=5>5</option>                    
+                            <option value=6>6</option>                    
+                            <option value=7>7</option>
+                            <option value=8>8</option>
+                            <option value=9>9</option>
+                            <option value=10>10</option>
+                        </select>
+                        组</h4>
+                    </div>   
+                
+                <div id="oxy-0" style="display: none;" class="oxy">
+                    <h4>有氧训练</h4>
+                    <input id="oxyName-0" oninput="handleOxyNameInput(this)" onclick="handleOxyNameInput(this)">
+                    <div id="oxyTrainList-0" class="train-list3" ></div>
+                        <h4>有氧时间 
+                        <input id="oxyTime-0" style="width: 50px;" type="number"> 分</h4>
+
+                    <h4>组数<span style="width:10px;"></span>
+                    <select id="oxyGroup-0">
+                        <option value=1>1</option>
+                        <option value=2>2</option>
+                        <option value=3>3</option>
+                        <option value=4>4</option>
+                        <option value=5>5</option>                    
+                        <option value=6>6</option>                    
+                        <option value=7>7</option>
+                        <option value=8>8</option>
+                        <option value=9>9</option>
+                        <option value=10>10</option>
+                    </select>
+                    <span style="width:20px;"></span>组
+                    </h4>
+                </div>                
+                <hr>
+            </div>
+            
+        </div>
+
+        <button id="appendTrainButton" onclick="copyTrain()">添加一条训练记录</button>
+        <div>
+            <h4>热量消耗</h4>
+            <input  type="number" id="calories">
+            <h4>上课点评</h4>
+            <input type="text" id="trainComment">
+            <div></div>
+        </div>
+        <hr>
+        <div id="processingModel" style="display: none;">
+            <!-- 这里是弹出框的内容 -->
+            <p style="color:rgb(40, 57, 78);font-size:30px;">正在处理中，请稍候...</p>
+        </div>
+        <button id="tempSaveButton" onclick="tempSave()">暂存</button>
+        <button id="editButton" onclick="enableEdit()">返回修改</button>
+        <button id="submit" onclick="submit()">提交</button>
     </div>
-    <hr>
-    <div id="processingModel" style="display: none;">
-        <!-- 这里是弹出框的内容 -->
-        <p style="color:rgb(40, 57, 78);font-size:30px;">正在处理中，请稍候...</p>
-    </div>
-    <button id="tempSaveButton" onclick="tempSave()">暂存</button>
-    <button id="editButton" onclick="enableEdit()">返回修改</button>
-    <button id="submit" onclick="submit()">提交</button>
     
     <!-- <button id="submit" onclick="getTrainItems()">获取训练数据</button> -->
     
@@ -322,50 +320,50 @@
                     bfr=(parseFloat(data['bfr'])*100).toFixed(2)
                 }
                 classTakenInfo.innerHTML=`
-                        <h2>客户既往上课情况</h2>
+                        <h2 style="color:#fafafa;">以往上课及体测情况</h2>
                         <div >
-                        <p><span>上次上课日期：</span>${dateFormat(new Date(data['最后一次上课日期']),'date')}</p>
-                        <p><span>最近一次限时课程到期日：</span>${dateFormat(new Date(data['限时课程到期日']),'date')?dateFormat(new Date(data['限时课程到期日']),'date'):'-'}</p>
+                        <p><span>· 上次上课日期：</span>${dateFormat(new Date(data['最后一次上课日期']),'date')}</p>
+                        <p><span>· 最近一次限时课程到期日：</span>${dateFormat(new Date(data['限时课程到期日']),'date')?dateFormat(new Date(data['限时课程到期日']),'date'):'-'}</p>
                         </div>
                         <div >
-                        <p><span style="display: inline;">常规私教课剩余节数：</span>${data['剩余节数-常规私教课']} </p>
-                        </div>
-                        <hr>
-                        <div >
-                        <p><span>上课总节数： </span>${data['上课总次数']}  节</p>
-                        <p style="margin-left: 25px;"><span>常规私教课： </span>${data['上课次数-常规私教课']}  节</p>
-                        <p style="margin-left: 25px;"><span>限时私教课： </span>${data['上课次数-限时私教课']}  节</p>
+                        <p><span style="display: inline;">· 常规私教课剩余节数：</span>${data['剩余节数-常规私教课']} </p>
                         </div>
                         <hr>
                         <div >
-                        <p><span>围度测量次数 </span>${data['msr_num']}  </p>
-                        <p><span>上次围度测量时间： </span>${data['lst_msr_date']}  </p>
-                        <p><span>上次围度测量结果</span></p>
+                        <p><span>· 上课总节数： </span>${data['上课总次数']}  节</p>
+                        <p style="margin-left: 25px; font-size:12px;"><span>- 常规私教课： </span>${data['上课次数-常规私教课']}  节</p>
+                        <p style="margin-left: 25px;font-size:12px;"><span>- 限时私教课： </span>${data['上课次数-限时私教课']}  节</p>
+                        </div>
+                        <hr>
+                        <div >
+                        <p><span>· 围度测量次数 </span>${data['msr_num']}  </p>
+                        <p><span>· 上次围度测量时间： </span>${data['lst_msr_date']}  </p>
+                        <p><span>· 上次围度测量结果</span></p>
                         <!-- <p style="margin-left: 25px;"><span>体重： </span>xxx Kg <span  style="margin-left: 10px;">估算体脂率： </span>xxx %</p>
                         <p style="margin-left: 25px;"><span>腰围： </span>xxx cm <span  style="margin-left: 10px;">臀围： </span>xxx cm</p>
                         <p style="margin-left: 25px;"><span>左大腿围： </span>xxx cm <span  style="margin-left: 10px;">右大腿围： </span>xxx cm</p> -->
-                        <table>
+                        <table style="font-size:12px;">
                             <tr>
-                            <td ><span>体重： </span>${data['wt']}  </td>
-                            <td style="padding-left:10px;"><span>估算体脂率： </span>${bfr} %</td>
+                            <td width="5px"><span>体重： </span>${data['wt']}  Kg</td>
+                            <td ><span>估算体脂率： </span>${bfr} %</td>
                             </tr>
                             <tr>
-                            <td><span>腰围： </span>${data['waist']}   cm</td>
-                            <td style="padding-left:10px;"><span>臀围： </span>${data['hip']}   cm</td>
+                            <td width="5px"><span>腰围： </span>${data['waist']}   cm</td>
+                            <td ><span>臀围： </span>${data['hip']}   cm</td>
                             </tr>
                             <tr>
-                            <td><span>左大腿围： </span>${data['l_leg']}   cm</td>
-                            <td style="padding-left:10px;"><span>右大腿围： </span>${data['r_leg']}   cm</td>
+                            <td width="5px"><span>左大腿围： </span>${data['l_leg']}   cm</td>
+                            <td ><span>右大腿围： </span>${data['r_leg']}   cm</td>
                             </tr>
                         </table>
                         </div>
                         `
-
+                classTakenInfo.style.padding="20px";
                 
                 
             })
             .catch(error=>{
-                classTakenInfo.innerHTML='<div style="margin-top:10px;">客户有未完善的信息，请先完善。</div>'
+                classTakenInfo.innerHTML='<div style="margin-top:10px;">客户有未完善的信息或没有以往上课及体测信息。</div>'
                 console.error('Error:',error);
             });
          
@@ -427,7 +425,7 @@
             // 将客户信息保存到本地
             cls_tkn = {
                 'cus_name':document.getElementById('nameInput').value,
-                'sex':document.querySelector('input[name="gender"]:checked').value,
+                // 'sex':document.querySelector('input[name="gender"]:checked').value,
                 'cls_tkn_date':document.getElementById('datetime').value.split("T")[0],
                 'cls_tkn_time':document.getElementById('datetime').value.split("T")[1]+':00',
                 'cls_long':document.getElementById('clsLong').value,
@@ -486,6 +484,23 @@
                 select.disabled=true;
             })
 
+            const selects4 = document.querySelectorAll('[id*="nonOxyWt-"]');
+            selects4.forEach(function(select){
+                select.disabled=true;
+            })
+
+            const selects5 = document.querySelectorAll('[id*="nonOxyNum-"]');
+            selects5.forEach(function(select){
+                select.disabled=true;
+            })
+
+            const deleteTrainButtons=document.querySelectorAll('[id*="deleteTrain-"]');
+            deleteButtons.forEach(deleteButton=>{
+                deleteButton.disabled=true;
+            })
+
+            document.getElementById('appendTrainButton').disabled=true;
+
             document.getElementById('buyType').disabled=true;
             document.getElementById('clsLong').disabled=true;
 
@@ -522,6 +537,25 @@
                 select.disabled=false;
             })
 
+            const selects4 = document.querySelectorAll('[id*="nonOxyWt-"]');
+            selects4.forEach(function(select){
+                select.disabled=false;
+            })
+
+            const selects5 = document.querySelectorAll('[id*="nonOxyNum-"]');
+            selects5.forEach(function(select){
+                select.disabled=false;
+            })
+
+
+            const deleteTrainButtons=document.querySelectorAll('[id*="deleteTrain-"]');
+            deleteButtons.forEach(deleteButton=>{
+                deleteButton.disabled=false;
+            })
+
+            document.getElementById('appendTrainButton').disabled=false;
+
+
             document.getElementById('buyType').disabled=false;
             document.getElementById('clsLong').disabled=false;
 
@@ -541,6 +575,7 @@
         function submit(){
             const cusName=document.getElementById('nameInput').value;
             const storedClassInfo = localStorage.getItem(cusName+"-cls_recs");
+            console.log(storedClassInfo);
             if (storedClassInfo) {
                 dat = JSON.parse(storedClassInfo);   
                 showProcessingModel();
@@ -569,7 +604,7 @@
                       localStorage.removeItem(dat['cls_tkn']['cus_name']+'-blockOrder');
                       hideProcessingModel();
                       alert("客户信息提交成功");
-                    //   window.location.replace('./');
+                      window.location.replace('./');
                   })
                   .catch(error => {
                       console.error('Error:', error);
@@ -994,6 +1029,7 @@
                 return; // 输入框为空，不做处理
             }else{
                 resultList.style.display = "block";
+
             }
 
             // 遍历给定的数组，进行模糊匹配
@@ -1007,6 +1043,7 @@
                     listItem.addEventListener("click", function() {
                         // 点击后将完整的姓名设置为输入框的值
                         document.getElementById("nameInput").value = name;
+                        resultList.style.display = "none";
                         // 手动触发change事件
                         // nameInput.dispatchEvent(new Event('change'));
                         // 清空结果列表
@@ -1018,6 +1055,7 @@
                                 document.documentElement.innerHTML=tempSavePage;
                                 // console.log(localStorage.getItem(name+'-cls_recs'));
                                 reFillTempSave(localStorage.getItem(name+'-cls_recs'));
+                                tempSave();
                             }                            
                         }
                         resultList.innerHTML = "";
@@ -1028,7 +1066,8 @@
                 }
             });
         
-            resultList.classList.add("cus-list");
+            // resultList.classList.add("cus-list");
+            
         }
 
 
@@ -1040,14 +1079,14 @@
             blockOrder=parseInt(localStorage.getItem(cusName+'-blockOrder'));
            
 
-            const genderRadios = document.querySelectorAll('input[name="gender"]');
-            // 回写基本信息
-            for (const radio of genderRadios) {
-            if (radio.value === data['cls_tkn']['sex']) {
-                radio.checked = true;
-                break;
-            }
-            }
+            // const genderRadios = document.querySelectorAll('input[name="gender"]');
+            // // 回写基本信息
+            // for (const radio of genderRadios) {
+            // if (radio.value === data['cls_tkn']['sex']) {
+            //     radio.checked = true;
+            //     break;
+            // }
+            // }
 
             document.getElementById('datetime').value = data['cls_tkn']['cls_tkn_date'] + 'T' + data['cls_tkn']['cls_tkn_time'];
 

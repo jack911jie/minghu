@@ -90,6 +90,7 @@ class MinghuService(Flask):
         trainlist=self.get_train_dic()
         # print(trainlist)
         basic_cls_info=dic['cls_tkn']
+        print(dic['train_rec']['train_recs'])
         cus_name,ins_name=basic_cls_info['cus_name'],basic_cls_info['ins_name']
         # print(dic)
         fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name+'.xlsm')
@@ -110,10 +111,12 @@ class MinghuService(Flask):
         try:
             df_copy_rows_nonOxy= df_train_rec.loc[df_train_rec.index.repeat(df_train_rec['nonOxyGroup'].astype(int))]
         except Exception as e:
+            print(f'\n写入训练记录表错误：{e}')
             return f'\n写入训练记录表错误：{e}'
         try:
             df_copy_rows= df_copy_rows_nonOxy.loc[df_train_rec.index.repeat(df_train_rec['oxyGroup'].astype(int))]
         except Exception as e:
+            print(f'\n写入训练记录表错误：{e}')
             return f'\n写入训练记录表错误：{e}'
         
         df_copy_rows.reset_index(drop=True, inplace=True)
@@ -129,8 +132,8 @@ class MinghuService(Flask):
             df_copy_rows['big_type']=df_copy_rows['search_name'].apply(lambda x: self.train_info(x,trainlist)[0])
             df_copy_rows['muscle']=df_copy_rows['search_name'].apply(lambda x: self.train_info(x,trainlist)[1]+'肌群')
         except Exception as e:
-            print('err',e)
-            return 'err:'+e
+            print('从动作名称获取动作大类及肌肉部位错误：',e)
+            return '从动作名称获取动作大类及肌肉部位错误：:'+e
         df_copy_rows.loc[df_copy_rows['big_type'] == '有氧训练', 'muscle'] = ''
         # print(df_copy_rows)
 
@@ -473,7 +476,7 @@ class MinghuService(Flask):
         try:
             fn_in=request.data
             fn='MH'+fn_in.decode('utf-8')
-            fn,dvc=fn.split('|')
+            fn,sex,birthMonth,dvc=fn.split('|')
             work_dir=self.wecom_dir()
             tplt_dir=os.path.dirname(work_dir)
             new_fn=os.path.join(work_dir,fn+'.xlsm')
@@ -483,6 +486,8 @@ class MinghuService(Flask):
             sht=wb.sheets['基本情况']
             sht['A2'].value=fn[0:5]
             sht['B2'].value=fn[5:]
+            sht['D2'].value=sex
+            sht['E2'].value=birthMonth
             if len(fn[5:])>1:
                 sht['C2'].value=fn[5:][1:]
             else:
