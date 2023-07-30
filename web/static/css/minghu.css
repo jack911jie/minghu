@@ -144,6 +144,20 @@ h3{
     background-color: rgb(252, 255, 249);
     z-index: 1;
   }
+.cus-list-input-start-limit-class {
+    border:1px solid #515539;
+    border-radius:3px;
+    font-size: 13px;
+    line-height: 30px;
+    position: absolute;
+    color:rgb(71, 82, 63);
+    padding-left: 20px;
+    padding-right: 40px;
+    top:22px;
+    left:280px;
+    background-color: rgb(252, 255, 249);
+    z-index: 1;
+  }
 .buy-list {
     font-size: 6px;
     line-height: 25px;

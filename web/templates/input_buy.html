@@ -82,6 +82,7 @@
     <div><button  style="margin-right:5px;" onclick="submit()">提交</button></div>
 
     <script src="../static/js/moment.min.js"></script>
+    <script src="../static/js/common.js"></script>
     <script> 
         let cus_list
         let selectedName
@@ -90,7 +91,7 @@
         // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
         document.addEventListener("DOMContentLoaded", function() {   
 
-            selectToday('dateInput')
+            selectToday(id='dateInput',format='date');
 
             fetch('/get_template_info', {
                 method: 'POST',
@@ -109,18 +110,6 @@
                   })
                 .catch(error => console.error('Error:', error));
 
-            fetch('/get_cus_list', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-            //将data赋值给块变量cus_list，供后面的handleInput使用
-                cus_list=data
-                  })
-                .catch(error => console.error('Error:', error));
 
             fetch('/get_cus_list', {
                 method: 'GET',
@@ -345,20 +334,6 @@
             } else {
                 // input3.style.display = "none";
             }
-        }
-
-        function selectToday(id){
-            const today = new Date();
-            // 将日期格式化为 yyyy-mm-dd 的形式
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            // const hours = String(today.getHours()).padStart(2, '0');
-            // const minutes = String(today.getMinutes()).padStart(2, '0');
-            const formattedDate = `${year}-${month}-${day}`
-
-            // 将日期设置为输入框的默认值
-            document.getElementById(id).value = formattedDate;
         }
 
         function handleInput() {

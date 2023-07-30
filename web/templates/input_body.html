@@ -44,6 +44,8 @@
         <button id="submit" onclick="submit()">提交</button>
     </div>
 
+
+    <script src="../static/js/common.js"></script>
     <script>
         let cus_list;
         let ins_list;
@@ -51,7 +53,7 @@
 
         document.addEventListener("DOMContentLoaded",function(){
             
-            selectToday();
+            selectToday(id='date',format='date');
 
             fetch('/get_template_info', {
                 method: 'POST',
@@ -187,27 +189,7 @@
             
         }
 
-        function dateFormat(currentDate,fmt){
-            if(fmt==='date'){
-                var year = currentDate.getFullYear();
-                var month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
-                var day = ("0" + currentDate.getDate()).slice(-2);
-                var formattedDate = year + "-" + month + "-" + day;
-            }else if(fmt==='time'){
-                const hours = String(today.getHours()).padStart(2, '0');
-                const minutes = String(today.getMinutes()).padStart(2, '0');
-                const seconds = currentDate.getSeconds();
-                // const formattedDatetime = `${year}-${month}-${day}T${hours}:${minutes}`;
-                var formattedDate = `${hours}:${minutes}:${seconds}`;
-            }
-            
-            // 拼接日期字符串，例如：YYYY-MM-
-            if (formattedDate.includes('NaN')){
-                return '-';
-            }else{
-                return formattedDate;
-            }              
-        }
+        
 
 
         function showHistory(data){
@@ -279,16 +261,6 @@
             });
         }
         
-        function selectToday(){
-            const today = new Date();
-            // 将日期格式化为 yyyy-mm-dd 的形式
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            const formattedDate = `${year}-${month}-${day}`;
-            // 将日期设置为输入框的默认值
-            document.getElementById('date').value = formattedDate;
-        }
        
         function handleInput() {
             // 获取输入框中的值

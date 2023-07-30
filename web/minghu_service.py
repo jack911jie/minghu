@@ -21,31 +21,113 @@ class MinghuService(Flask):
         self.config_mh=readconfig.exp_json2(config_fn)
 
         #路由
+        #渲染页面
+        #首页
         self.add_url_rule('/',view_func=self.index)
+        #获取客户信息页面
         self.add_url_rule('/cus_infos',view_func=self.cus_infos)
+        #欢迎页面
         self.add_url_rule('/welcome',view_func=self.welcome)
+        #上课记录页面
         self.add_url_rule('/cus_cls_input',view_func=self.cus_cls_input)
-        self.add_url_rule('/get_cus_list', view_func=self.get_cus_list,methods=['GET','POST'])
-        self.add_url_rule('/get_ins_list', view_func=self.get_ins_list,methods=['GET','POST'])
-        self.add_url_rule('/get_cus_info', view_func=self.get_cus_info,methods=['GET','POST'])
-        self.add_url_rule('/open_cus_fn', view_func=self.open_cus_fn,methods=['GET','POST'])
-        self.add_url_rule('/check_new', view_func=self.check_new,methods=['GET','POST'])
-        self.add_url_rule('/generate_new', view_func=self.generate_new,methods=['GET','POST'])
+        #新生成客户页面
         self.add_url_rule('/new_cus', view_func=self.new_cus,methods=['GET','POST'])
-        self.add_url_rule('/get_template_info', view_func=self.get_template_info,methods=['GET','POST'])
+        #购课页面
         self.add_url_rule('/input_buy', view_func=self.input_buy,methods=['GET','POST'])
-        self.add_url_rule('/write_buy', view_func=self.write_buy,methods=['GET','POST'])
+        #成功页面
         self.add_url_rule('/success', view_func=self.success,methods=['GET','POST'])
-        self.add_url_rule('/get_cus_buy', view_func=self.get_cus_buy,methods=['GET','POST'])
-        self.add_url_rule('/get_train_list', view_func=self.get_train_list,methods=['GET','POST'])
-        self.add_url_rule('/deal_cls', view_func=self.deal_cls,methods=['GET','POST'])
+        #围度测量页面
         self.add_url_rule('/input_body', view_func=self.input_body,methods=['GET','POST'])
+        #限时课开课页面
+        self.add_url_rule('/start_limit_class', view_func=self.start_limit_class,methods=['GET','POST'])
+
+        #功能
+        #从模板.xlsm获取基本信息，如教练姓名、课程种类等
+        self.add_url_rule('/get_template_info', view_func=self.get_template_info,methods=['GET','POST'])
+        #遍历会员资料文件夹获取所有 客户列表
+        self.add_url_rule('/get_cus_list', view_func=self.get_cus_list,methods=['GET','POST'])
+        #从,'03-教练管理','教练资料','教练信息.xlsx'中获取教练列表
+        self.add_url_rule('/get_ins_list', view_func=self.get_ins_list,methods=['GET','POST'])
+        #获取客户信息，包括既往购课、上课信息，剩余课时信息，限时课程信息，围度测量信息
+        self.add_url_rule('/get_cus_info', view_func=self.get_cus_info,methods=['GET','POST'])
+        #打开客户的xlsm文件
+        self.add_url_rule('/open_cus_fn', view_func=self.open_cus_fn,methods=['GET','POST'])
+        #遍历会员资料文件夹，生成新的客户ID号
+        self.add_url_rule('/check_new', view_func=self.check_new,methods=['GET','POST'])
+        #通过copy模板.xlsm生成新会员的文件 
+        self.add_url_rule('/generate_new', view_func=self.generate_new,methods=['GET','POST'])
+        #写入购课记录
+        self.add_url_rule('/write_buy', view_func=self.write_buy,methods=['GET','POST'])
+        #获取客户既往购课记录,并整理合并
+        self.add_url_rule('/get_cus_buy', view_func=self.get_cus_buy,methods=['GET','POST'])
+        #获取客户既往购课记录表，不整理
+        self.add_url_rule('/get_cus_buy_list', view_func=self.get_cus_buy_list,methods=['GET','POST'])
+        #获取客户未开课的购课编码
+        self.add_url_rule('/deal_start_limit_page', view_func=self.deal_start_limit_page,methods=['GET','POST'])
+        #通过'05-专业资料','训练项目.xlsx'获取训练项目的名称及分类
+        self.add_url_rule('/get_train_list', view_func=self.get_train_list,methods=['GET','POST'])        
+        #执行写入上课记录、写入训练记录
+        self.add_url_rule('/deal_cls', view_func=self.deal_cls,methods=['GET','POST'])
+        #获取既往体测记录
         self.add_url_rule('/get_body_history', view_func=self.get_body_history,methods=['GET','POST'])
+        #写入体测记录
         self.add_url_rule('/write_body', view_func=self.write_body,methods=['GET','POST'])
+        #写入体测记录
+        self.add_url_rule('/deal_start_class_page', view_func=self.deal_start_class_page,methods=['GET','POST'])
+
+         
         
+    def deal_start_class_page(self):
+        data=request.json
+        try:
+            self.add_rec_to_start_class_table(dic=data)
+            self.delete_rec_in_aux_table(dic=data)
+            return jsonify({'result':'写入限时课程表及辅助表成功'})
+        except Exception as e:
+            print('写入限时课程表或辅助表错误：',e)
+            return jsonify({'result':'写入限时课程表及辅助表成功错误'+e})
+
+    def add_rec_to_start_class_table(self,dic):
+        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',dic['cusName'].strip()+'.xlsm')
+
+        df=pd.DataFrame(dic,index=[0])
+        df=df[['buyCode','startDate','endDate']]
+        df_old=pd.read_excel(fn,sheet_name='限时课程记录')
+
+        app=xw.App(visible=False)
+        wb=app.books.open(fn)
+        sht=wb.sheets['限时课程记录']
+        row = df_old.shape[0]+2
+        rng='A'+str(row)+':C'+str(row)
+        sht.range(rng).value=df.iloc[0].tolist()
+
+        wb.save(fn)
+        wb.close()
+        app.quit()
+
+    def delete_rec_in_aux_table(self,dic):
+        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',dic['cusName'].strip()+'.xlsm')
+
+        app=xw.App(visible=False)
+        wb=app.books.open(fn)
+        sht=wb.sheets['辅助表']
+        column = sht.range('I2:I20')
+        value_to_delete=dic['buyCode']
+    
+        # 在列中查找指定值并删除它
+        for cell in column:
+            if cell.value == value_to_delete:
+                cell.delete('up')
+
+        wb.save(fn)
+        wb.close()
+        app.quit()
         
     def index(self):
         return render_template('index.html')
+
+    def start_limit_class(self):
+        return render_template('./start_limit_class.html')
 
     def write_body(self):
         try:
@@ -98,6 +180,19 @@ class MinghuService(Flask):
             bfr=0
         return bfr
 
+
+    #将dic的数据整理为按0，1，2的形式以输出给前端
+    def dic_format(self,dic,order_name):
+        formatted_data = {}
+        # 遍历原始数据，并根据需要构建新的格式化数据
+
+        for i in range(len(dic[order_name])):
+            items={}
+            for key,value in dic.items():
+                items[key]=dic[key][i]                
+            formatted_data[str(i)]=items
+        return formatted_data
+
     def get_body_history(self):
         cus_name=request.data.decode('utf-8')
         fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name+'.xlsm')
@@ -115,14 +210,7 @@ class MinghuService(Flask):
             
             dic_body=df_body.to_dict()
 
-            formatted_data = {}
-            # 遍历原始数据，并根据需要构建新的格式化数据
-            for i in range(len(dic_body['日期'])):
-                items={}
-                for key,value in dic_body.items():
-                    items[key]=dic_body[key][i]
-                    
-                formatted_data[str(i)]=items
+            formatted_data=self.dic_format(dic=dic_body,order_name='日期')
 
         # 计算bfr
         for key,item in formatted_data.items():
@@ -131,10 +219,7 @@ class MinghuService(Flask):
         print(formatted_data)
         # print(dic_body)
         return jsonify(formatted_data)
-
-
-
-    
+   
     def input_body(self):
         return render_template('./input_body.html')
 
@@ -313,6 +398,81 @@ class MinghuService(Flask):
         except Exception as err:
             return {'dat':'获取客户购课错误：','error':err}      
    
+    def get_cus_buy_list(self,cus_name):
+        # cus_name=request.data.decode('utf-8')
+        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
+        df=pd.read_excel(fn,sheet_name='购课表')
+        # dic_buy=df.to_dict()
+        # dic_res=self.dic_format(dic=dic_buy,order_name='收款日期')
+        # return jsonify(dic_res)
+        return df
+
+    def  get_limit_class_records(self,cus_name):
+        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
+        df=pd.read_excel(fn,sheet_name='限时课程记录')
+        return df
+
+    def get_not_start_lmt_list(self,cus_name):
+        # cus_name=request.data.decode('utf-8')
+        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
+        df=pd.read_excel(fn,sheet_name='辅助表')
+        df_not_start=df['未开课的购课编码']
+        df_not_start.dropna(inplace=True)
+        df_not_start=df_not_start.to_frame()
+        # dic_not_start=df_not_start.to_dict()
+        # print(df_not_start,dic_not_start)
+        # return jsonify(dic_not_start)
+        return df_not_start
+
+    def deal_start_limit_page(self):
+        cus_name_input=request.data.decode('utf-8')
+        print(cus_name_input)
+        # 获取购课表
+        df_buy=self.get_cus_buy_list(cus_name=cus_name_input)
+        print(df_buy)
+        if df_buy.empty:
+            dic_buy=''
+        else:
+            df_buy.fillna('',inplace=True)
+            dic_buy=df_buy.to_dict()
+            dic_buy=self.dic_format(dic=dic_buy,order_name='收款日期')
+        
+
+        # 获取限时课程记录、目前生效的限时课程记录
+        df_limit_cls_recs=self.get_limit_class_records(cus_name=cus_name_input)
+        # print("df_limit_cls_recs",df_limit_cls_recs)
+        if df_limit_cls_recs.empty:
+            dic_limit_cls_recs=''
+        else:
+            df_limit_cls_recs.fillna('',inplace=True)
+            df_limit_maxdate_rec=df_limit_cls_recs[df_limit_cls_recs['限时课程结束日']==df_limit_cls_recs['限时课程结束日'].max()]
+            df_limit_maxdate_rec.reset_index(inplace=True)
+            # print('df_limit_maxdate_rec:',df_limit_maxdate_rec)
+
+            dic_limit_cls_recs=df_limit_cls_recs.to_dict()
+            dic_limit_cls_recs=self.dic_format(dic=dic_limit_cls_recs,order_name='购课编码')
+
+
+            dic_limit_maxdate_rec=df_limit_maxdate_rec.to_dict()
+            dic_limit_maxdate_rec=self.dic_format(dic=dic_limit_maxdate_rec,order_name='购课编码')
+
+        # 获取并计算未开课的限时课程表，包括限时私教和团课
+        df_buy_limit = df_buy[df_buy['购课类型'].isin(['限时私教课', '限时团课'])]
+        df_not_start=self.get_not_start_lmt_list(cus_name=cus_name_input)
+        # print(type(df_not_start),df_not_start)
+        df_not_start.rename(columns={'未开课的购课编码':'购课编码'},inplace=True)
+        df_merge=pd.merge(df_buy_limit,df_not_start,on='购课编码',how='inner')  
+
+        if df_merge.empty:
+            dic_not_start=''
+        else:      
+            df_merge.sort_values(by='收款日期',ascending=True,inplace=True)
+            dic_not_start=df_merge.to_dict()
+            dic_not_start=self.dic_format(dic=dic_not_start,order_name='收款日期')
+
+        
+        return jsonify({'not_start_list':dic_not_start,'buy_list':dic_buy,'limit_cls_recs':dic_limit_cls_recs,'valid_limit_class_rec':dic_limit_maxdate_rec})
+
 
     def read_template(self):
         df=pd.read_excel(os.path.join(self.config_mh['work_dir'],'01-会员管理','模板.xlsm'),sheet_name='辅助表')
