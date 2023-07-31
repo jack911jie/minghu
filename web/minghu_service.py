@@ -443,6 +443,7 @@ class MinghuService(Flask):
         # print("df_limit_cls_recs",df_limit_cls_recs)
         if df_limit_cls_recs.empty:
             dic_limit_cls_recs=''
+            dic_limit_maxdate_rec={'购课编码':'','限时课程起始日':'','限时课程结束日':'','限时课程实际结束日':''}
         else:
             df_limit_cls_recs.fillna('',inplace=True)
             df_limit_maxdate_rec=df_limit_cls_recs[df_limit_cls_recs['限时课程结束日']==df_limit_cls_recs['限时课程结束日'].max()]
@@ -459,19 +460,30 @@ class MinghuService(Flask):
         # 获取并计算未开课的限时课程表，包括限时私教和团课
         df_buy_limit = df_buy[df_buy['购课类型'].isin(['限时私教课', '限时团课'])]
         df_not_start=self.get_not_start_lmt_list(cus_name=cus_name_input)
+        df_not_start.fillna('',inplace=True)
         # print(type(df_not_start),df_not_start)
         df_not_start.rename(columns={'未开课的购课编码':'购课编码'},inplace=True)
-        df_merge=pd.merge(df_buy_limit,df_not_start,on='购课编码',how='inner')  
+        if df_not_start.empty:            
+            df_merge=pd.DataFrame(data={'收款日期':'','购课编码':'','购课类型':'','购课节数':'','购课时长（天）':'',
+                                        '应收金额':'','实收金额':'','收款人':'','收入类别':'','备注':''},index=[0])
+            # df_merge=df_buy_limit                      
+        else:
+            df_merge=pd.merge(df_buy_limit,df_not_start,on='购课编码',how='inner')  
+   
+        print('\n471 line',df_merge)
+        df_merge.reset_index(inplace=True)
 
         if df_merge.empty:
             dic_not_start=''
         else:      
+            
             df_merge.sort_values(by='收款日期',ascending=True,inplace=True)
             dic_not_start=df_merge.to_dict()
+            print('\n479 line dic_not_start',dic_not_start)
             dic_not_start=self.dic_format(dic=dic_not_start,order_name='收款日期')
 
         
-        return jsonify({'not_start_list':dic_not_start,'buy_list':dic_buy,'limit_cls_recs':dic_limit_cls_recs,'valid_limit_class_rec':dic_limit_maxdate_rec})
+        return jsonify({'not_start_list':dic_not_start,'buy_list':dic_buy,'limit_cls_recs':dic_limit_cls_recs,'maxdate_limit_class_rec':dic_limit_maxdate_rec})
 
 
     def read_template(self):
