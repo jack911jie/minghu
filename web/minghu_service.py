@@ -6,6 +6,7 @@ import readconfig
 import cus_data
 import get_data
 from datetime import datetime
+import time
 from dateutil.relativedelta import relativedelta
 import re
 import xlwings as xw
@@ -15,6 +16,17 @@ pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
 from flask import Flask, request, jsonify,render_template
 
 class MinghuService(Flask):
+
+    def log_time_and_function_name(func):
+        def wrapper(*args, **kwargs):
+            dt=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            func
+            print(f"在 {dt} 执行 '{func.__name__}()' ")
+            return 
+        return wrapper
+
+
+
     def __init__(self,*args,**kwargs):
         super(MinghuService, self).__init__(*args, **kwargs)
         config_fn=os.path.join(os.path.join(os.path.dirname(__file__),'config','minghu_service.config'))
@@ -76,9 +88,10 @@ class MinghuService(Flask):
         self.add_url_rule('/deal_start_class_page', view_func=self.deal_start_class_page,methods=['GET','POST'])
 
          
-        
+    
     def deal_start_class_page(self):
         data=request.json
+        
         try:
             self.add_rec_to_start_class_table(dic=data)
             self.delete_rec_in_aux_table(dic=data)
@@ -87,6 +100,7 @@ class MinghuService(Flask):
             print('写入限时课程表或辅助表错误：',e)
             return jsonify({'result':'写入限时课程表及辅助表成功错误'+e})
 
+    
     def add_rec_to_start_class_table(self,dic):
         fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',dic['cusName'].strip()+'.xlsm')
 
@@ -105,9 +119,27 @@ class MinghuService(Flask):
         wb.close()
         app.quit()
 
+    
+    def add_rec_in_aux_table(self,buy_code):
+        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',buy_code[:-8].strip()+'.xlsm')
+        df_old=pd.read_excel(fn,sheet_name='辅助表')
+        df_old=df_old[['未开课的购课编码']]
+        df_old.dropna(how='any',inplace=True)
+
+        app=xw.App(visible=False)
+        wb=app.books.open(fn)
+        sht=wb.sheets['辅助表']
+        row = df_old.shape[0]+2
+        sht.range('I'+str(row)).value=buy_code
+
+        wb.save(fn)
+        wb.close()
+        app.quit()
+        print('写入辅助表成功')
+        return '限时课程写入辅助表成功'
+
     def delete_rec_in_aux_table(self,dic):
         fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',dic['cusName'].strip()+'.xlsm')
-
         app=xw.App(visible=False)
         wb=app.books.open(fn)
         sht=wb.sheets['辅助表']
@@ -122,6 +154,7 @@ class MinghuService(Flask):
         wb.save(fn)
         wb.close()
         app.quit()
+    
         
     def index(self):
         return render_template('index.html')
@@ -129,6 +162,7 @@ class MinghuService(Flask):
     def start_limit_class(self):
         return render_template('./start_limit_class.html')
 
+    
     def write_body(self):
         try:
             data=request.json
@@ -193,8 +227,10 @@ class MinghuService(Flask):
             formatted_data[str(i)]=items
         return formatted_data
 
+    
     def get_body_history(self):
         cus_name=request.data.decode('utf-8')
+        print(f'\n{cus_name}')
         fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name+'.xlsm')
         df_body=pd.read_excel(fn,sheet_name='身体数据')
         df_basic=pd.read_excel(fn,sheet_name='基本情况')
@@ -219,7 +255,7 @@ class MinghuService(Flask):
         print(formatted_data)
         # print(dic_body)
         return jsonify(formatted_data)
-   
+    
     def input_body(self):
         return render_template('./input_body.html')
 
@@ -244,8 +280,9 @@ class MinghuService(Flask):
         else:
             return ['','','']
 
+    
     def write_cls_tkn(self,dic_tkn):
-        print(dic_tkn)
+        # print(dic_tkn)
         try:
             fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',dic_tkn['cus_name']+'.xlsm')
             df_tkn=pd.DataFrame(dic_tkn,index=[0])
@@ -266,6 +303,7 @@ class MinghuService(Flask):
             return '\n写入上课表成功'
         except Exception as e:
             return  f'写入上课表错误： {e}'
+    
         
     def write_train_rec(self,dic):
         # dic=request.json
@@ -500,6 +538,7 @@ class MinghuService(Flask):
         data={'cls_types':cls_types,'cashiers':cashier,'income_types':income_types}
         return data
 
+    
     def write_buy(self,):
         wk_dir=self.config_mh['work_dir']
         dat=request.json
@@ -525,7 +564,10 @@ class MinghuService(Flask):
         wb.close()
         app.quit()
 
-        return f'写入成功, 行号：{row}'
+        if dat['购课类型'].strip() in ['限时私教课','限时团课']:
+            aux_res=self.add_rec_in_aux_table(dat['客户购课编号'])
+
+        return f'写入成功, 行号：{row}, {aux_res}'
 
 
     def cus_list(self):
@@ -604,6 +646,7 @@ class MinghuService(Flask):
         train_data['by_muscle']=train_data_by_muscle
         train_data['by_category']=train_data_by_category
         return train_data
+
 
     def  get_train_list(self):
         fn=os.path.join(self.config_mh['work_dir'],'05-专业资料','训练项目.xlsx')
@@ -740,7 +783,7 @@ class MinghuService(Flask):
         # new_name=os.path.join(wecom_dir,new_name)
         return txt_num
 
-
+    
     def generate_new(self):
         try:
             fn_in=request.data

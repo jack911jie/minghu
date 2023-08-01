@@ -31,15 +31,16 @@
         </div>        
 
         <h3>上课的课程类型</h3>
-        <select id="buyType">
+        <select id="buyType" onchange="getValidClass()">
         </select>
+        <div id="validClassEndTime"></div>
         <div id="errBuyType" class="inline2"></div>
 
         <div id="date">
             <h3> 上课日期和时间</h3>
                 <form>
                     <label for="datetime"></label>
-                    <input type="datetime-local" id="datetime" name="datetime">
+                    <input type="datetime-local" id="datetime" name="datetime" onchange="getValidClass()">
                     <br>
                 </form>
         </div>    
@@ -58,7 +59,7 @@
     </div>
 
 
-    <div>
+    <div id="allTrainContents" style="display:none;">
         <div style="margin-bottom:10px;"></div>
         <hr>
         <h2>训练内容</h2>    
@@ -215,6 +216,7 @@
         let cus_list;
         let ins_list;
         let train_list;
+        let valid_class;
         let copyCount=0;
         let deleteCount=0;
         let blockOrder=1;
@@ -287,6 +289,50 @@
            
 
         })
+
+        function getValidClass(cusName){
+            const allTrainContents=document.getElementById('allTrainContents');
+            allTrainContents.style.display='none';
+            if(!cusName || cusName===''){
+                cusName=document.getElementById('nameInput').value;
+            }
+            const validClassEndTime=document.getElementById('validClassEndTime');
+            validClassEndTime.innerText='';
+            fetch('/deal_start_limit_page', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                    },
+                body:cusName
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data)
+                    maxdate_limit_class_rec=data['maxdate_limit_class_rec'];
+                    const clsType=document.getElementById('buyType').value;
+                    
+                    if (clsType==='限时私教课' || clsType==='限时团课'){
+                        if(maxdate_limit_class_rec){
+                            if(maxdate_limit_class_rec[0]['限时课程结束日']!==''){
+                                const classDate=document.getElementById('datetime').value;
+                                const compareDate=new Date(classDate)-new Date(maxdate_limit_class_rec[0]['限时课程结束日']);
+                                validClassEndTime.innerText=`目前限时课程结束日：${dateToString(maxdate_limit_class_rec[0]['限时课程结束日'],'date')}`
+                                console.log('对比选择日及最后生效课程结束日：',compareDate);
+                                allTrainContents.style.display='block';
+                                if(compareDate>0){
+                                    allTrainContents.style.display='none';
+                                    alert('无有效的限时私教课')
+                                }
+                            }
+                        }
+                    }else{
+                        allTrainContents.style.display='block';
+                    }
+                })
+                .catch(error=>{
+                    console.error('获取目前有效限时课程错误：',error)
+                });
+        }
 
         function reportClassTaken(){
             const cusName=document.getElementById('nameInput').value;
@@ -1006,9 +1052,10 @@
                         // 点击后将完整的姓名设置为输入框的值
                         document.getElementById("nameInput").value = name;
                         resultList.style.display = "none";
-                        // 手动触发change事件
-                        // nameInput.dispatchEvent(new Event('change'));
-                        // 清空结果列表
+
+                        //获取目前有效的限时课程
+                        getValidClass(name);
+                        //显示上课信息
                         reportClassTaken();
                         const tempSavePage=localStorage.getItem(name+'-html');
                         if(tempSavePage){
