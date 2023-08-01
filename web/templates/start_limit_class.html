@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>铭湖健身客户信息查询</title>
+    <title>限时课程开课</title>
     <link rel="stylesheet" href="../static/css/minghu.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
     <div>
+        <h2>限时课程开课</h2>
+        <hr>
         <h4>客户姓名<span style="margin-left:10px;"></span><input id='cusNameInput' oninput="handleCusNameInput()"></h4>
         <div id="cusList" class="cus-list-input-start-limit-class" style="display:none;"></div>
         <div id="currentClass"></div>
@@ -41,7 +43,7 @@
             <div id="showDealResult" style="display:none">正在处理……</div>
             <div id="prompt"></div>
             <hr>
-            <button id="submit" onclick="submit()">开课</button>
+            <button id="submit" onclick="submit()" style="display:none">开课</button>
         </div>
     </div>
 
@@ -108,6 +110,7 @@
 
         function showCurrentClass(){
             const  currentClass=document.getElementById('currentClass');
+            currentClass.style.display="none";
             currentClass.innerHTML='';
 
             const validLimitClassRec=Object.keys(valid_limit_class_rec).map(key => ({                
@@ -116,39 +119,45 @@
 
             console.log('validLimitClassRec:',validLimitClassRec);
             if(validLimitClassRec.length>0){
-                const currentBuyCode=validLimitClassRec[0]['validLimitClassRec']['购课编码'];
-                const currentStartDate=validLimitClassRec[0]['validLimitClassRec']['限时课程起始日'];
-                const currentEndDate=validLimitClassRec[0]['validLimitClassRec']['限时课程结束日'];
+                if(validLimitClassRec[0]['validLimitClassRec']!==''){
+                    currentClass.style.display="block";
+                    const currentBuyCode=validLimitClassRec[0]['validLimitClassRec']['购课编码'];
+                    const currentStartDate=validLimitClassRec[0]['validLimitClassRec']['限时课程起始日'];
+                    const currentEndDate=validLimitClassRec[0]['validLimitClassRec']['限时课程结束日'];
 
-                const buyList=Object.keys(buy_list).map(key => (                
-                    buy_list[key]
-                    ));
-                console.log(buyList)
-                let currentClsLong;
-                buyList.forEach(buyRecord=>{
-                    if(buyRecord['购课编码']===currentBuyCode){
-                        currentClsLong=buyRecord['购课时长（天）']
+                    const buyList=Object.keys(buy_list).map(key => (                
+                        buy_list[key]
+                        ));
+                    console.log(buyList)
+                    let currentClsLong;
+                    buyList.forEach(buyRecord=>{
+                        if(buyRecord['购课编码']===currentBuyCode){
+                            currentClsLong=buyRecord['购课时长（天）']
+                        }
+                    });
+                    const compareDate=new Date(currentEndDate)-new Date();
+                    let h4Title;
+                    if(compareDate<=0){
+                        h4Title='最近一次失效的限时课程';
+                    }else{
+                        h4Title='目前有效的限时课程';
                     }
-                });
-                const compareDate=new Date(currentEndDate)-new Date();
-                let h4Title;
-                if(compareDate<=0){
-                    h4Title='最近一次失效的限时课程';
+                    currentClass.innerHTML=`
+                    <div class="body-history-list" style="padding:8px;">
+                    <h4>${h4Title}</h4>
+                    <hr>
+                    <div><h5>购课编码: ${currentBuyCode}</h5></div>
+                    <div><h5>购课时长: ${currentClsLong}</h5></div>
+                    <div><h5>生效日期: ${dateToString(currentStartDate,'date')}</h5></div>
+                    <div><h5>结束日期: ${dateToString(currentEndDate,'date')}</h5></div>
+                    </div>
+                    `
                 }else{
-                    h4Title='目前有效的限时课程';
+                    currentClass.style.display="none";
                 }
-                currentClass.innerHTML=`
-                <div class="body-history-list" style="padding:8px;">
-                <h4>${h4Title}</h4>
-                <hr>
-                <div><h5>购课编码: ${currentBuyCode}</h5></div>
-                <div><h5>购课时长: ${currentClsLong}</h5></div>
-                <div><h5>生效日期: ${dateToString(currentStartDate,'date')}</h5></div>
-                <div><h5>结束日期: ${dateToString(currentEndDate,'date')}</h5></div>
-                </div>
-                `
+                
             }else{
-               
+                currentClass.style.display="block";               
                 const currentBuyCode=latest_limit_class_rec[0]['购课编码'];
                 const currentStartDate=latest_limit_class_rec[0]['限时课程起始日'];
                 const currentEndDate=latest_limit_class_rec[0]['限时课程结束日'];
@@ -236,6 +245,8 @@
             
             const startType=document.querySelector('input[name="startTypeRadio"]:checked').value;
             // }
+            const submitButton=document.getElementById('submit');
+            submitButton.style.display='none';
             const currentClassResult=document.getElementById('currentClass')
             currentClassResult.style.display='none';
             selectBuyCodeContainer.style.display='none';
@@ -299,6 +310,7 @@
                         startDateBlock.style.display='block';
                         endDateBlock.style.display='block';
                         currentClassResult.style.display='block';
+                        submitButton.style.display='block';
 
                         // buyHistoryPrompt.style.display='block';
                         // buyHistoryPrompt.innerText='选择相应的购课编码';
@@ -312,12 +324,13 @@
                     
 
                 }else if(startType==='延长'){
-                    if(valid_limit_class_rec){
+                    if(valid_limit_class_rec && valid_limit_class_rec['购课编码']!==''){
                         // if(!valid_limit_class_rec['购课编码']===''){
                             selectBuyCodeContainer.style.display='block';
                             startDateBlock.style.display='block';
                             endDateBlock.style.display='block';
                             currentClassResult.style.display='block';
+                            submitButton.style.display='block';
                             
                             // buyHistoryPrompt.style.display='block';
                             // buyHistoryPrompt.innerText='没有待开课的限时课程'
@@ -487,27 +500,30 @@
         }
 
         function generateSelectList(optionsArray,mode='newClass'){
-            const buyCodes=Object.keys(optionsArray).map(key => ({                
-                'code':optionsArray[key]['购课编码']
-            }));
+            if(optionsArray){
+                const buyCodes=Object.keys(optionsArray).map(key => ({                
+                    'code':optionsArray[key]['购课编码']
+                }));
 
-            console.log(buyCodes)
-            const selectElement=document.getElementById('selectBuyCodeContainer');
-            
-            if(mode==='newClass'){
-                buyCodes.forEach((buyCode, index) => {
-                const optionElement = document.createElement("option");
-                optionElement.value = buyCode.code; // 可选，设置选项的值
-                optionElement.text = buyCode.code; // 设置选项的文本
-                selectElement.appendChild(optionElement);
-            });
-            }else if(mode==='onlyLongerClass'){
-                const optionElement = document.createElement("option");
-                optionElement.value = latest_limit_class_rec[0]['购课编码']; // 可选，设置选项的值
-                optionElement.text = latest_limit_class_rec[0]['购课编码']; // 设置选项的文本
-                selectElement.remove(0);
-                selectElement.appendChild(optionElement);
+                console.log(buyCodes)
+                const selectElement=document.getElementById('selectBuyCodeContainer');
+                
+                if(mode==='newClass'){
+                    buyCodes.forEach((buyCode, index) => {
+                    const optionElement = document.createElement("option");
+                    optionElement.value = buyCode.code; // 可选，设置选项的值
+                    optionElement.text = buyCode.code; // 设置选项的文本
+                    selectElement.appendChild(optionElement);
+                });
+                }else if(mode==='onlyLongerClass'){
+                    const optionElement = document.createElement("option");
+                    optionElement.value = latest_limit_class_rec[0]['购课编码']; // 可选，设置选项的值
+                    optionElement.text = latest_limit_class_rec[0]['购课编码']; // 设置选项的文本
+                    selectElement.remove(0);
+                    selectElement.appendChild(optionElement);
+                }
             }
+            
 
 
         }
@@ -519,7 +535,10 @@
             const UpperSearchTerm=searchTerm.toUpperCase();
             // 获取展示结果的列表元素
             const resultList = document.getElementById("cusList");
+            const submitButton=document.getElementById('submit');
             document.getElementById("cusNameBelowDivs").style.display="none";
+            document.getElementById("currentClass").style.display="none";
+            submitButton.style.display="none";
 
 
             // 清空列表

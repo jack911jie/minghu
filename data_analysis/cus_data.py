@@ -237,49 +237,54 @@ class CusData:
                     age=relativedelta(datetime.now(),birthday).years
                     bfr=bfr_test.bfr(age=age,sex=sex,ht=lst_ht,wt=lst_wt,waist=lst_waist,adj_bfr='no',adj_src='prg',formula=1)
             except Exception as e:
+                bfr=0
+                age=''
                 print('bfr计算错误:',e)
         else:
             bfr=0
         # 体脂率计算def bfr(self,age,sex,ht,wt,waist,adj_bfr='yes',adj_src='prg',gui='',formula=1):
         # body_msr['lst_msr']replace
-        if not latest_body_data.empty:
-            body_msr['bfr']=bfr
-            body_msr['age']=age
-            body_msr['ht']=lst_ht
-            body_msr['wt']=lst_wt
-            body_msr['waist']=lst_waist
-            body_msr['chest']=latest_body_data['胸围'].tolist()[0]
-            body_msr['l_arm']=latest_body_data['左臂围'].tolist()[0]
-            body_msr['r_arm']=latest_body_data['右臂围'].tolist()[0]
-            body_msr['hip']=latest_body_data['臀围'].tolist()[0]
-            body_msr['l_leg']=latest_body_data['左腿围'].tolist()[0]
-            body_msr['r_leg']=latest_body_data['右腿围'].tolist()[0]
-            body_msr['l_calf']=latest_body_data['左小腿围'].tolist()[0]
-            body_msr['r_calf']=latest_body_data['右小腿围'].tolist()[0]
-            body_msr['heart']=latest_body_data['心肺'].tolist()[0]
-            body_msr['balance']=latest_body_data['平衡'].tolist()[0]
-            body_msr['power']=latest_body_data['力量'].tolist()[0]
-            body_msr['flex']=latest_body_data['柔韧性'].tolist()[0]
-            body_msr['core']=latest_body_data['核心'].tolist()[0]
-        else:
-            body_msr['bfr']=''
-            body_msr['age']=''
-            body_msr['ht']=''
-            body_msr['wt']=''
-            body_msr['waist']=''
-            body_msr['chest']=''
-            body_msr['l_arm']=''
-            body_msr['r_arm']=''
-            body_msr['hip']=''
-            body_msr['l_leg']=''
-            body_msr['r_leg']=''
-            body_msr['l_calf']=''
-            body_msr['r_calf']=''
-            body_msr['heart']=''
-            body_msr['balance']=''
-            body_msr['power']=''
-            body_msr['flex']=''
-            body_msr['core']=''
+        try:
+            if not latest_body_data.empty:
+                body_msr['bfr']=bfr
+                body_msr['age']=age
+                body_msr['ht']=lst_ht
+                body_msr['wt']=lst_wt
+                body_msr['waist']=lst_waist
+                body_msr['chest']=latest_body_data['胸围'].tolist()[0]
+                body_msr['l_arm']=latest_body_data['左臂围'].tolist()[0]
+                body_msr['r_arm']=latest_body_data['右臂围'].tolist()[0]
+                body_msr['hip']=latest_body_data['臀围'].tolist()[0]
+                body_msr['l_leg']=latest_body_data['左腿围'].tolist()[0]
+                body_msr['r_leg']=latest_body_data['右腿围'].tolist()[0]
+                body_msr['l_calf']=latest_body_data['左小腿围'].tolist()[0]
+                body_msr['r_calf']=latest_body_data['右小腿围'].tolist()[0]
+                body_msr['heart']=latest_body_data['心肺'].tolist()[0]
+                body_msr['balance']=latest_body_data['平衡'].tolist()[0]
+                body_msr['power']=latest_body_data['力量'].tolist()[0]
+                body_msr['flex']=latest_body_data['柔韧性'].tolist()[0]
+                body_msr['core']=latest_body_data['核心'].tolist()[0]
+            else:
+                body_msr['bfr']=''
+                body_msr['age']=''
+                body_msr['ht']=''
+                body_msr['wt']=''
+                body_msr['waist']=''
+                body_msr['chest']=''
+                body_msr['l_arm']=''
+                body_msr['r_arm']=''
+                body_msr['hip']=''
+                body_msr['l_leg']=''
+                body_msr['r_leg']=''
+                body_msr['l_calf']=''
+                body_msr['r_calf']=''
+                body_msr['heart']=''
+                body_msr['balance']=''
+                body_msr['power']=''
+                body_msr['flex']=''
+                body_msr['core']=''
+        except Exception as e:
+            print('写入身体数据错误')
 
         df_msr=pd.DataFrame(data=body_msr,index=[0])
   
@@ -371,7 +376,7 @@ class CusData:
             return
 
     def send_agenda_due_cus(self,df_data,month,userids=['AXiao'],input_data_type='xlsx',xlsx='e:\\temp\\minghu\\客户上课及购课信息.xlsx'):
-        df_by_date=self.due_cus(df_data=df_data,month=month,userids=userids,input_data_type=input_data_type,xlsx=xlsx)
+        df_by_date=self.due_cus(df_data=df_data,month=month,input_data_type=input_data_type,xlsx=xlsx)
                 # print(df_by_date)
         if not df_by_date.empty:
             date_and_txts=df_by_date['写入日程日期及文本'].tolist()
