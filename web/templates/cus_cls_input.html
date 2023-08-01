@@ -85,8 +85,8 @@
 
                 <div id="nonOxy-0" style="display: none;" class="nonOxy">
                     <h4>力量训练</h4>
-                    <input id="nonOxyName-0" oninput="handleNonOxyNameInput(this)" onclick="handleNonOxyNameInput(this)">
-                    <div id="nonOxyTrainList-0" class="train-list3"></div>
+                    <input id="nonOxyName-0" oninput="handleNonOxyNameInput(this)" onclick="handleNonOxyNameInput(this)" style="font-size:18px;color:brown;">
+                    <div id="nonOxyTrainList-0" class="train-list3" style="display:none"></div>
                         <h4>重量
                         <label for="nonOxyWt-0"></label>
                         <select id="nonOxyWt-0">
@@ -166,8 +166,8 @@
                 
                 <div id="oxy-0" style="display: none;" class="oxy">
                     <h4>有氧训练</h4>
-                    <input id="oxyName-0" oninput="handleOxyNameInput(this)" onclick="handleOxyNameInput(this)">
-                    <div id="oxyTrainList-0" class="train-list3" ></div>
+                    <input id="oxyName-0" oninput="handleOxyNameInput(this)" onclick="handleOxyNameInput(this)" style="font-size:18px;color:rgb(26, 122, 58);">
+                    <div id="oxyTrainList-0" class="train-list4" style="display:none"></div>
                         <h4>有氧时间 
                         <input id="oxyTime-0" style="width: 50px;" type="number"> 分</h4>
 
@@ -709,6 +709,14 @@
             // console.log(d.id);
             // const resultList=d.parentNode.querySelectorAll('.train-list3')[0];
             // resultList.innerHTML='';
+            // 点击抗阻时，清除有氧的内容，避免同一块下有氧和无氧项目名称的拼接
+            const order=d.id.split('-')[1];
+            document.getElementById('oxyName-'+order).value='';
+            document.getElementById('oxyTime-'+order).value='';
+            document.getElementById('oxyGroup-'+order).value=1;
+
+
+
             const filterType=d.parentNode.previousElementSibling;
             const selectValue=filterType.querySelectorAll('[id*="selectTrainForm-"]')[0].value;
             // console.log(selectValue);
@@ -741,6 +749,13 @@
         }
             
         function handleOxyNameInput(d){
+             // 点击有氧时，重置抗阻训练的内容，避免同一块下有氧和无氧项目名称的拼接
+            const order=d.id.split('-')[1];
+            document.getElementById('nonOxyName-'+order).value='';
+            document.getElementById('nonOxyWt-'+order).value=0;
+            document.getElementById('nonOxyNum-'+order).value=1;
+            document.getElementById('nonOxyDis-'+order).value='';
+            document.getElementById('nonOxyGroup-'+order).value=1;
             // console.log(d.id);
             // const resultList=d.parentNode.querySelectorAll('.train-list3')[0];
             // resultList.innerHTML='';
@@ -774,55 +789,6 @@
             console.log(showBox.id);
             generateTrainList(nonOxyTrainList,d.id,showBox.id);
         }
-
-        function generateTrainList(arr,input_id,show_id){
-            console.log(input_id,show_id);
-            const searchTerm = document.getElementById(input_id).value.trim();
-            const UpperSearchTerm=searchTerm.toUpperCase();
-            // 获取展示结果的列表元素
-            const resultList = document.getElementById(show_id);
-            // 清空列表
-            resultList.innerHTML = "";
-            
-            if(UpperSearchTerm===""){
-                resultList.innerHTML = "";  
-                arr.forEach(function(name) {                
-                // 创建列表项元素，并设置其文本内容为匹配到的结果
-                const listItem = document.createElement("li");
-                listItem.innerText = name[2]; 
-                // 添加点击事件监听器
-                listItem.addEventListener("click", function() {
-                    // 点击后将完整的姓名设置为输入框的值         
-                    document.getElementById(input_id).value = name[2];
-                    // 清空结果列表
-                    resultList.innerHTML = "";  
-                });
-
-                // 将列表项添加到结果列表中
-                resultList.appendChild(listItem);
-            
-                });
-            }else{
-                arr.forEach(function(name) {
-                if (name[2].includes(UpperSearchTerm)) {
-                    // 创建列表项元素，并设置其文本内容为匹配到的结果
-                    const listItem = document.createElement("li");
-                    listItem.innerText = name[2];
-
-                    // 添加点击事件监听器
-                    listItem.addEventListener("click", function() {
-                        // 点击后将完整的姓名设置为输入框的值
-                        document.getElementById(input_id).value = name[2];
-                        // 填写进购课编号
-                        resultList.innerHTML = "";  
-                    });
-
-                    // 将列表项添加到结果列表中
-                    resultList.appendChild(listItem);
-                }
-                });
-            }
-        }        
 
         function handleInputAction(){
             console.log('input action');
@@ -949,6 +915,7 @@
             });
         }
 
+        //点选部位radio时的动作
         function generateTrainItem(dd){
             const radioValue=dd.value;
             // console.log(radioValue)
@@ -962,12 +929,29 @@
             
         }
 
+        function clearTrainItemHistory(input_id,conserve_train_name){
+            const trainItemBlock=document.getElementById(input_id);
+            const trainItemParent=document.getElementById(input_id).parentNode;
+            const trainItemInputs=trainItemParent.querySelectorAll('input');
+            const trainItemSelects=trainItemParent.querySelectorAll('select');
+            //避免在同一个项目中切换有氧及无氧时，会发生名称拼接的情况，导致反查肌肉或动作大类错误！！
+            if(input_id.split('-')[0]==='oxyName'){
+                document.getElementById('nonOxyName-'+input_id.split('-')[1]).value='';
+            }else if(input_id.split('-')[0]==='nonOxyName'){
+                document.getElementById('oxyName-'+input_id.split('-')[1]).value='';
+            }
+            // trainItemSelects.forEach(selectItem=>{
+            //     selectItem.value='';
+            // });         
+        }
+
         function generateTrainList(arr,input_id,show_id){
             console.log(input_id,show_id);
             const searchTerm = document.getElementById(input_id).value.trim();
             const UpperSearchTerm=searchTerm.toUpperCase();
             // 获取展示结果的列表元素
             const resultList = document.getElementById(show_id);
+            resultList.style.display='block';
             // 清空列表
             resultList.innerHTML = "";
             
@@ -981,8 +965,13 @@
                 listItem.addEventListener("click", function() {
                     // 点击后将完整的姓名设置为输入框的值         
                     document.getElementById(input_id).value = name[2];
+                    //清除之前的选项，避免先选有氧又再选无氧时训练名称的拼接！！！！
+                    // clearTrainItemHistory(input_id,document.getElementById(input_id).value);
+
+                    resultList.style.display='none';
                     // 清空结果列表
                     resultList.innerHTML = "";  
+                    
                 });
 
                 // 将列表项添加到结果列表中
@@ -998,6 +987,7 @@
 
                     // 添加点击事件监听器
                     listItem.addEventListener("click", function() {
+                        resultList.style.display='block';
                         // 点击后将完整的姓名设置为输入框的值
                         document.getElementById(input_id).value = name[2];
                         // 填写进购课编号

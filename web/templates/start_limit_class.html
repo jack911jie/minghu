@@ -434,7 +434,7 @@
 
             // 计算并选择结束日
             if(startDateFromSelect.includes('NaN')||startDateFromSelect==='--'){
-                clsLong=''     
+                clsLong=0;   
                 selectToday(id='startDate',format='date');
                 selectToday(id='endDate',format='date');
                 showClsLongBlock(clsLong);
@@ -452,7 +452,18 @@
                 });           
 
                 console.log(limit_cls_recs);
-                const compareDate=new Date(startDateFromSelect)-new Date(valid_limit_class_rec[0]['限时课程结束日'])
+                const startType=document.querySelector('input[name="startTypeRadio"]:checked').value;
+                let compareDate;
+                let noLimitClassHistory='no';
+                if(valid_limit_class_rec  && valid_limit_class_rec['限时课程结束日']!==''){
+                    compareDate=new Date(startDateFromSelect)-new Date(valid_limit_class_rec[0]['限时课程结束日']);
+                    noLimitClassHistory='no';
+                }else{
+                    compareDate=1;
+                    noLimitClassHistory='yes';
+                    
+                
+                }
                 console.log(compareDate);
                 //开课日期与目前的限时课程结束日比较
                 // 开课日期在当期课程结束日的关系，在submit时按不同的方式写入数据
@@ -460,7 +471,12 @@
                 //新开课（不附加在原来的课程日期上）
                 if(compareDate>0){
                     deal_method=2;
-                    prompt.innerText='课程开始日不在目前限时课程的有效期内'
+                    if(noLimitClassHistory==='yes'){
+                        prompt.innerText='';
+                    }else{
+                        prompt.innerText='课程开始日不在目前限时课程的有效期内';
+                    }
+                    
                     console.log('写入的购课编号',selectBuyCode.value);
                     // selectToday(id='startDate',format='date');
 
