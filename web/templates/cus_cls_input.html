@@ -292,6 +292,8 @@
 
         function getValidClass(cusName){
             const allTrainContents=document.getElementById('allTrainContents');
+            const errBuyType=document.getElementById('errBuyType');
+            errBuyType.innerText='';
             allTrainContents.style.display='none';
             if(!cusName || cusName===''){
                 cusName=document.getElementById('nameInput').value;
@@ -321,15 +323,19 @@
                                 allTrainContents.style.display='block';
                                 if(compareDate>0){
                                     allTrainContents.style.display='none';
+                                    errBuyType.innerText='';
                                     alert('无有效的限时私教课')
                                 }
                             }
                         }
                     }else{
+                        errBuyType.innerText='';
                         allTrainContents.style.display='block';
                     }
                 })
                 .catch(error=>{
+                    
+                    errBuyType.innerText='客户无有效的限时课程';
                     console.error('获取目前有效限时课程错误：',error)
                 });
         }
@@ -467,7 +473,7 @@
         }
 
          // 保存数据
-         function tempSave() {   
+         function tempSave(show='yes') {   
             // 将客户信息保存到本地
             cls_tkn = {
                 'cus_name':document.getElementById('nameInput').value,
@@ -498,9 +504,10 @@
             // let copyCount=0;
             // let deleteCount=0;
             // let blockOrder=1;
-
-            alert("客户信息已暂存");
-
+            if(show==='yes'){
+                alert("客户信息已暂存");
+            }
+            
             // 保存完成后，禁用输入框，并显示返回修改按钮
             document.getElementById("nameInput").setAttribute("disabled", true);
             document.getElementById("submit").removeAttribute("disabled");
@@ -1037,7 +1044,7 @@
                     const listItem = document.createElement("li");
                     listItem.innerText = name;
 
-                    // 添加点击事件监听器
+                    // 添加点击事件监听器,点击名字时执行。
                     listItem.addEventListener("click", function() {
                         // 点击后将完整的姓名设置为输入框的值
                         document.getElementById("nameInput").value = name;
@@ -1054,7 +1061,7 @@
                                 document.documentElement.innerHTML=tempSavePage;
                                 // console.log(localStorage.getItem(name+'-cls_recs'));
                                 reFillTempSave(localStorage.getItem(name+'-cls_recs'));
-                                tempSave();
+                                tempSave(show='no');
                             }                            
                         }
                         resultList.innerHTML = "";

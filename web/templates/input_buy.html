@@ -22,7 +22,7 @@
             </form>
         </div>
         <h3>客户购课编号</h3>
-        <input type="text" id="buyCode" style="width: 190px;" oninput="isValidDate()" onclick="get_cus_buy()" onblur="hide_cus_buy()">
+        <input type="text" id="buyCode" style="width: 190px;" oninput="isValidDate()" onclick="get_cus_buy()" >
         <div id="buyHistory" class="buy-list"></div>
         <div id="buyCodeErr" class="inline2"></div>
         <p></p>    
@@ -78,18 +78,35 @@
 
         <div class="inline2" id="status"></div>
     </div>
-    <div id="showDealResult" style="display:none">正在处理……</div>
+    <p></p>
+    <div id="showDealResult" style="display:none">正在购课，请稍等。</div>
     <div><button  style="margin-right:5px;" onclick="submit()">提交</button></div>
 
     <script src="../static/js/moment.min.js"></script>
     <script src="../static/js/common.js"></script>
     <script> 
-        let cus_list
-        let selectedName
-        let tmplt_info
+        let cus_list;
+        let selectedName;
+        let tmplt_info;
+        let buy_list;
         const allError={'dateError':0,'buyNumError':0};
         // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
         document.addEventListener("DOMContentLoaded", function() {   
+            const buyCodeBox=document.getElementById('buyCode');
+            const historyDiv=document.getElementById('buyHistory');
+
+            //页面加载时，在页面上绑定点击时隐藏购课编码div的动作
+            document.addEventListener("click",function(){
+                historyDiv.style.display='none';
+            });
+            
+            buyCodeBox.addEventListener('click', function (event) {
+            // 阻止事件冒泡，使得点击 input 不会触发 document 的点击事件
+                event.stopPropagation();
+            // 显示 history 框
+                historyDiv.style.display = 'block';
+            });
+
 
             selectToday(id='dateInput',format='date');
 
@@ -128,9 +145,135 @@
 
             
         });
-
+        
         function hide_cus_buy(){
-            document.getElementById('buyHistory').innerHTML='';
+            document.getElementById('buyHistory').style.display='none';
+        }
+
+        function get_cus_buy(){
+            document.getElementById('buyHistory').style.display='block';
+            const buyDays=document.getElementById('buyDays');
+            const buyNum=document.getElementById('buyNum');
+            const buyType=document.getElementById('buyType');
+            const buyPay=document.getElementById('pay');   
+            const errBuyType=document.getElementById('errBuyType');
+            const realPay=document.getElementById('realPay');
+            
+            buyDays.disabled=false;
+            buyNum.disabled=false;
+            buyType.disabled=false;
+            buyPay.disabled=false;
+
+            realPay.value='';
+            buyPay.value='';
+            buyNum.value='';
+
+
+            fetch('/get_cus_buy',{
+            method:"POST",
+            headers:{
+                "Content-Type":"text/plain"
+            },
+            body: document.getElementById('cusNameInput').value
+            })
+            .then(response=>response.json())
+            .then(jsonData=>{
+                console.log(jsonData)
+                const tableContainer = document.getElementById('buyHistory');
+                tableContainer.innerHTML=''
+
+                // 创建表格元素
+                const table = document.createElement('table');
+
+                // 创建表头行
+                const headerRow = table.insertRow();
+                headerRow.classList.add('header-row');
+                for (const header of ['购课编码','课程类型','应收金额','实收金额','未收金额','收款次数','收款日期']) {
+                const cell = headerRow.insertCell();
+                cell.textContent = header;
+                }
+
+                // 创建表格内容
+                for (let i = 0; i < Object.keys(jsonData).length; i++) {
+                const row = table.insertRow();
+                    for (let j=0;j<jsonData[0].length;j++) {
+                        const cell = row.insertCell();
+                        cell.textContent = jsonData[i][j];                    
+                    }
+                    
+                    // row.addEventListener('click', function(){
+                    //     // 在点击时获取购课编码并打印
+                    //     const buyCode = jsonData[i][0]; // 假设购课编码在第一列
+                    //     console.log('购课编码:', buyCode);
+                    // // 在这里可以执行其他操作，如传递购课编码给其他函数等等
+                    // });
+
+                    //点击选择时执行以下操作：禁用一些项目的录入
+                    (function(index) {
+                        row.addEventListener('click', function(event) {
+                        // 阻止事件冒泡，使得点击 history 不会触发 document 的点击事件
+                            event.stopPropagation();
+                            realPay.value='';
+                            buyNum.value='';
+                            buyDays.value='';
+                            buyPay.value='';
+                            if(document.getElementById('buyType').value==='常规私教课'||document.getElementById('buyType').value==='常规团课'){
+                                document.getElementById('buyDays').disabled=true;
+                             }else if(document.getElementById('buyType').value ==='限时私教课' ||document.getElementById('buyType').value ==='限时团课'){
+                                document.getElementById('buyDays').disabled=false;}
+                            
+                        //隐藏buyhistory框
+                            const historyDiv=document.getElementById('buyHistory');
+                            historyDiv.style.display='none';
+
+                            const buyCode = jsonData[index][0]; // 课编码在第一列
+                            const notPayAmount=jsonData[index][4]; //未收金额
+                            console.log('购课编码:', buyCode);
+                            document.getElementById('buyCode').value=buyCode;
+
+                            
+                            const buyRecords=Object.keys(buy_list).map(key => (buy_list[key]));
+                            console.log(buyRecords);
+                            buyRecords.forEach(buyRec=> {
+                                if(buyRec['购课编码']===buyCode){
+                                    document.getElementById('buyType').value=buyRec['购课类型'];
+                                    document.getElementById('buyNum').value=buyRec['购课节数'];
+                                    document.getElementById('buyDays').value=buyRec['购课时长（天）'];
+                                    document.getElementById('pay').value=buyRec['应收金额'];
+                                    if(parseFloat(notPayAmount)>0){
+                                        realPay.value=notPayAmount;
+                                    }
+
+                                }
+                            });
+
+                            buyDays.disabled=true;
+                            buyNum.disabled=true;
+                            buyType.disabled=true;
+                            buyPay.disabled=true;
+                            errBuyType.innerText=''
+
+
+                            // if(document.getElementById('buyType').value==='常规私教课'||document.getElementById('buyType').value==='常规团课'){
+                            //     document.getElementById('buyDays').disabled=true;
+                            //     document.getElementById('buyType').disabled=true;
+                            //     document.getElementById('buyNum').disabled=true;
+                            // }else if(document.getElementById('buyType').value ==='限时私教课' ||document.getElementById('buyType').value ==='限时团课'){
+                            //     document.getElementById('buyDays').disabled=false;
+                            //     document.getElementById('buyType').disabled=false;
+                            //     document.getElementById('buyNum').disabled=false;
+                            // }
+                        });
+                    })(i);
+                
+
+                // 将表格添加到div中
+                tableContainer.appendChild(table);
+                }
+            })
+            .catch(error=>{
+                console.log(error)
+            });
         }
 
         function onInputBuyNumDaysCheck(id){
@@ -365,11 +508,29 @@
                     listItem.addEventListener("click", function() {
                         // 点击后将完整的姓名设置为输入框的值
                         selectedName=name;
-                        document.getElementById("cusNameInput").value = name;
+                        document.getElementById("cusNameInput").value = name;        
+
                         // 填写进购课编号
                         fillBuyCode()
                         // 清空结果列表
                         resultList.innerHTML = "";  
+
+                        //点击姓名时读取购课记录
+                        fetch('/deal_start_limit_page', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'text/plain'
+                                },
+                            body:name
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                        //将data赋值给块变量cus_list，供后面的handleInput使用
+                            console.log(data);
+                            buy_list=data['buy_list'];})
+                            .catch(error=>{
+                                console.error('读取购课记录错误：',error)
+                            });
                     });
 
                     // 将列表项添加到结果列表中
@@ -377,7 +538,7 @@
                 }
             });
         
-            resultList.classList.add("cus-list");
+            resultList.classList.add("cus-list-input-buy");
         }
     
         function get_cus_info() {
@@ -432,49 +593,7 @@
             
         }
   
-        function get_cus_buy(){
-            
-            fetch('/get_cus_buy',{
-            method:"POST",
-            headers:{
-                "Content-Type":"text/plain"
-            },
-            body: document.getElementById('cusNameInput').value
-            })
-            .then(response=>response.json())
-            .then(jsonData=>{
-                console.log(jsonData)
-                const tableContainer = document.getElementById('buyHistory');
-                tableContainer.innerHTML=''
-
-                // 创建表格元素
-                const table = document.createElement('table');
-
-                // 创建表头行
-                const headerRow = table.insertRow();
-                headerRow.classList.add('header-row');
-                for (const header of ['购课编码','课程类型','应收金额','实收金额','未收金额','收款次数','收款日期']) {
-                const cell = headerRow.insertCell();
-                cell.textContent = header;
-                }
-
-                // 创建表格内容
-                for (let i = 0; i < Object.keys(jsonData).length; i++) {
-                const row = table.insertRow();
-                for (let j=0;j<jsonData[0].length;j++) {
-                    const cell = row.insertCell();
-                    cell.textContent = jsonData[i][j];
-                }
-                }
-
-                // 将表格添加到div中
-                tableContainer.appendChild(table);
-            })
-            .catch(error=>{
-                console.log(error)
-            });
-        }
-
+  
         function isValidDate(){
             let buyCodeErrBox=document.getElementById('buyCodeErr');
             let buyCode=document.getElementById('buyCode').value;

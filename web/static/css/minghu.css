@@ -136,6 +136,17 @@ h3{
     background-color: rgb(245, 249, 254);
     z-index: 1;
   }
+  .cus-list-input-buy{
+    font-size: 13px;
+    line-height: 32px;
+    position: absolute;
+    color:rgb(47, 54, 100);
+    padding-right: 40px;
+    top:50px;
+    left:225px;
+    background-color: rgb(245, 249, 254);
+    z-index: 1;
+  }
   .cus-list-cls-input {
     border:1px solid #515539;
     border-radius:3px;
