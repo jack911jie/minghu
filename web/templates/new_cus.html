@@ -38,7 +38,7 @@
 
     </div>
     <div>
-        <h4>· 关联的体验课客户  <input id='TrialCusNameInput' style="width:100px;" oninput="handleTrialCusNameInput()" onclick="handleTrialCusNameInput()"></h4>            
+        <h4 style="color:brown;">· 关联的体验课客户  <input id='TrialCusNameInput' style="width:100px;" oninput="handleTrialCusNameInput()" onclick="handleTrialCusNameInput()"></h4>            
         <h4>· 体验客户有效期
             <input type="radio" name="trailPeriod" value="all">全部
             <input type="radio" name="trailPeriod" value="latest2" checked>近2个月
@@ -64,13 +64,29 @@
             .catch(error=>{
                 console.log('获取体验课列表错误：',error)
             });
+
+            hideTrialResultList();
         })
 
+        function hideTrialResultList(){
+            document.addEventListener('click',function(){
+                const trialResultList=document.getElementById('trialResultList');
+                trialResultList.style.display='none';
+            });           
+        }
+
         function handleTrialCusNameInput() {
+            
+            
             // 获取输入框中的值
+            const TrialCusNameInput=document.getElementById("TrialCusNameInput");
             const searchTerm = document.getElementById("TrialCusNameInput").value.trim();
             const UpperSearchTerm=searchTerm.toUpperCase();
             const resultList=document.getElementById('trialResultList')
+
+            TrialCusNameInput.addEventListener("click", function(event) {
+                event.stopPropagation();
+            });
 
             // 清空列表
             resultList.style.display = "block";
@@ -99,7 +115,8 @@
                     listItem.innerText = item['体验客户姓名'];
 
                     // 添加点击事件监听器
-                    listItem.addEventListener("click", function() {
+                    listItem.addEventListener("click", function(event) {
+                        event.stopPropagation();
                         // 点击后将完整的姓名设置为输入框的值
                         document.getElementById("TrialCusNameInput").value = item['体验客户姓名'];
                         document.getElementById("cusName").value = item['体验客户姓名'];  
