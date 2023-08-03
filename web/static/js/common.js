@@ -40,6 +40,10 @@ function dateToString(dateInput,format){
         // const hours = String(today.getHours()).padStart(2, '0');
         // const minutes = String(today.getMinutes()).padStart(2, '0');
         formattedDate = `${year}-${month}-${day}`
+    }else if(format==='time'){
+        const hours = String(today.getHours()).padStart(2, '0');
+        const minutes = String(today.getMinutes()).padStart(2, '0');
+        formattedDate = `${hours}:${minutes}`;
     }
     return formattedDate;
 }

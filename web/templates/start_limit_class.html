@@ -4,6 +4,7 @@
     <title>限时课程开课</title>
     <link rel="stylesheet" href="../static/css/minghu.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
     <div>
@@ -210,7 +211,7 @@
                     }
             }
             
-            const compareDate=new Date(endDate)-new Date(latestValidEndDate);
+            // const compareDate=new Date(endDate)-new Date(latestValidEndDate);
             if(buyCode===''||startDate===''||endDate===''){
                 return '有未选择项目';
             }
@@ -222,6 +223,7 @@
         function submit(){
             const cusName=document.getElementById('cusNameInput').value;
             const checkValidResult=checkSubmit();
+
             if(checkValidResult==='OK'){
                 document.getElementById('showDealResult').style.display='block';
                 data={
@@ -279,6 +281,8 @@
             const buyHistoryPrompt=document.getElementById('buyHistoryPrompt');
             const startDateBlock=document.getElementById('startDateBlock');
             const endDateBlock=document.getElementById('endDateBlock');
+            const clsLongBlock=document.getElementById('clsLongBlock');
+            
             const prompt = document.getElementById('prompt');
             prompt.innerText='';
             // if (startType===''){
@@ -349,6 +353,7 @@
                         //写入默认的结束日
                         isInValidEndDate();
                     }else{
+                        clsLongBlock.innerText='';
                         prompt.innerText='没有待开课的限时课程'
                     
                         console.log('没有待开课的限时课程')
@@ -381,6 +386,7 @@
 
                         
                     }else{
+                        clsLongBlock.innerText='';
                         prompt.innerText='没有待延长的限时课程'
                         
                         console.log('没有待延长的限时课程')
@@ -577,7 +583,7 @@
             }
 
             // 遍历给定的数组，进行模糊匹配
-            cus_list.forEach(function(name) {
+            cus_list.reverse().forEach(function(name) {
                 if (name.includes(UpperSearchTerm)) {
                     // 创建列表项元素，并设置其文本内容为匹配到的结果
                     const listItem = document.createElement("li");

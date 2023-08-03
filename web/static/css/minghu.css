@@ -190,6 +190,21 @@ h3{
     background-color: rgb(252, 255, 249);
     z-index: 1;
   }
+.cus-list-trial{
+    border:1px solid #515539;
+    width: 120px;
+    border-radius:3px;
+    font-size: 13px;
+    line-height: 30px;
+    position: absolute;
+    color:rgb(71, 82, 63);
+    padding-left: 20px;
+    padding-right: 40px;
+    top:305px;
+    left:268px;
+    background-color: rgb(252, 255, 249);
+    z-index: 1;
+  }
 .buy-list {
     font-size: 6px;
     line-height: 25px;

@@ -4,6 +4,7 @@
     <title>客户训练内容录入</title>
     <link rel="stylesheet" href="../static/css/minghu.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
     <h2>铭湖健身工作室会员训练日志</h2>        
@@ -1038,7 +1039,7 @@
             }
 
             // 遍历给定的数组，进行模糊匹配
-            cus_list.forEach(function(name) {
+            cus_list.reverse().forEach(function(name) {
                 if (name.includes(UpperSearchTerm)) {
                     // 创建列表项元素，并设置其文本内容为匹配到的结果
                     const listItem = document.createElement("li");

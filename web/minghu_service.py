@@ -5,7 +5,7 @@ sys.path.extend([os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(_
 import readconfig
 import cus_data
 import get_data
-from datetime import datetime
+from datetime import datetime,date
 import time
 from dateutil.relativedelta import relativedelta
 import re
@@ -52,6 +52,10 @@ class MinghuService(Flask):
         self.add_url_rule('/input_body', view_func=self.input_body,methods=['GET','POST'])
         #限时课开课页面
         self.add_url_rule('/start_limit_class', view_func=self.start_limit_class,methods=['GET','POST'])
+        # 体验课上课页面
+        self.add_url_rule('/trial_class', view_func=self.trial_class,methods=['GET','POST'])
+        
+               
 
         #功能
         #从模板.xlsm获取基本信息，如教练姓名、课程种类等
@@ -86,9 +90,77 @@ class MinghuService(Flask):
         self.add_url_rule('/write_body', view_func=self.write_body,methods=['GET','POST'])
         #写入体测记录
         self.add_url_rule('/deal_start_class_page', view_func=self.deal_start_class_page,methods=['GET','POST'])
+        # 获取体验课记录
+        self.add_url_rule('/get_trial_list', view_func=self.get_trial_list,methods=['GET','POST'])
+        # 写入体验课上课记录
+        self.add_url_rule('/write_trial_rec', view_func=self.write_trial_rec,methods=['GET','POST'])
 
+
+    def write_trial_rec(self):
+        try:
+            data=request.json
+            fn=os.path.join(self.config_mh['work_dir'],'03-教练管理','体验课上课记录表.xlsx')
+            df_old=pd.read_excel(fn,sheet_name='体验课上课记录表')
+            df_old.dropna(subset=['体验客户姓名'],inplace=True)
+
+            app=xw.App(visible=False)
+            wb=app.books.open(fn)
+            sht=wb.sheets['体验课上课记录表']
+            row = df_old.shape[0]+2
+            sht.range(f'B{row}').value=data['dateString']
+            sht.range(f'C{row}').value=data['timeString']
+            sht.range(f'D{row}').value=1
+            sht.range(f'E{row}').value=data['cusNameInput']
+            sht.range(f'F{row}').value=data['mobilePhone']
+            sht.range(f'G{row}').value=data['ins']
+            sht.range(f'H{row}').value='是'
+            sht.range(f'I{row}').value=data['cusSource']
+            sht.range(f'J{row}').value=data['comment']
+
+            wb.save(fn)
+            wb.close()
+            app.quit()
+        except Exception as e:
+            print('写入体验课表错误：',e)
+            return '写入体验课表成功'+e
+
+        return '写入体验课表成功'
+        
+
+
+    def trial_class(self):
+        return render_template('./trial_class.html')
          
-    
+    def date_to_string(self,obj,format='date'):
+        try:
+            if format=='date':
+                return obj.strftime('%Y-%m-%d')
+            elif format=='time':
+                return obj.strftime('%H:%M')+':00'
+        except:
+            return None
+
+        raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
+
+    def get_trial_list(self,):
+        
+        df_trial=pd.read_excel(os.path.join(self.config_mh['work_dir'],'03-教练管理','体验课上课记录表.xlsx'),sheet_name='体验课上课记录表')
+        df_trial.dropna(subset=['体验客户姓名'],inplace=True)
+        df_trial.fillna('',inplace=True)
+        df_trial['体验课日期']=df_trial['体验课日期'].apply(lambda x:self.date_to_string(x,'date'))
+        df_trial['体验课时间']=df_trial['体验课时间'].apply(lambda x:self.date_to_string(x,'time'))
+        df_trial['出单日期']=df_trial['出单日期'].apply(lambda x:self.date_to_string(x,'date'))
+
+        dic_trial=df_trial.to_dict()
+        num_keys=len(dic_trial[list(dic_trial.keys())[0]])
+        result={}
+        for i in range(num_keys):
+            result[i] = {key: dic_trial[key][i] for key in dic_trial}
+        # print(result)
+        
+        return jsonify({'all_trial':result})
+
+
     def deal_start_class_page(self):
         data=request.json
         
@@ -538,6 +610,29 @@ class MinghuService(Flask):
         data={'cls_types':cls_types,'cashiers':cashier,'income_types':income_types}
         return data
 
+    def write_buy_date_to_trial_table(self,formal_cus_name,first_buy_date):
+        print('写入体验表：',formal_cus_name,first_buy_date)
+        try:
+            fn=os.path.join(self.config_mh['work_dir'],'03-教练管理','体验课上课记录表.xlsx')
+            app=xw.App(visible=False)
+            wb=app.books.open(fn)
+            sht=wb.sheets['体验课上课记录表']
+            m_column_data=sht.range('M:M').value
+            # 从M列找到 出单后正式会员编码及姓名
+            for row_index, value in enumerate(m_column_data, start=1):
+                if value == formal_cus_name:
+                    print(value,first_buy_date)
+                    # 根据条件设置 M 列的值为 'AA'
+                    if sht.range(f'L{row_index}').value is None:
+                        sht.range(f'L{row_index}').value = first_buy_date
+                        sht.range(f'K{row_index}').value = '是'
+
+            wb.save(fn)
+            wb.close()
+            app.quit()
+        except Exception as e:
+            print('写入体验课表错误：',e)
+            return '写入体验课表错误：'+e
     
     def write_buy(self,):
         wk_dir=self.config_mh['work_dir']
@@ -563,9 +658,17 @@ class MinghuService(Flask):
         wb.save(fn)
         wb.close()
         app.quit()
+        
 
         if dat['购课类型'].strip() in ['限时私教课','限时团课']:
             aux_res=self.add_rec_in_aux_table(dat['客户购课编号'])
+        else:
+            aux_res='非限时课程'
+
+
+        # 写入体检课表的出单日期
+        print(df['客户购课编号'].tolist()[0][:-8],df['收款日期'].tolist()[0])
+        self.write_buy_date_to_trial_table(formal_cus_name=df['客户购课编号'].tolist()[0][:-8],first_buy_date=df['收款日期'].tolist()[0])
 
         return f'写入成功, 行号：{row}, {aux_res}'
 
@@ -781,6 +884,7 @@ class MinghuService(Flask):
         txt_num=str(new_num).zfill(3)
         # new_name='MH'+new_num.zfill(3)+cus_name+'.xlsm'
         # new_name=os.path.join(wecom_dir,new_name)
+        print('新客户自动编号：',txt_num)
         return txt_num
 
     
@@ -788,7 +892,8 @@ class MinghuService(Flask):
         try:
             fn_in=request.data
             fn='MH'+fn_in.decode('utf-8')
-            fn,sex,birthMonth,dvc=fn.split('|')
+            print(fn)
+            fn,trial_cus_name,sex,birthMonth,cusSource,dvc=fn.split('|')
             work_dir=self.wecom_dir()
             tplt_dir=os.path.dirname(work_dir)
             new_fn=os.path.join(work_dir,fn+'.xlsm')
@@ -800,6 +905,7 @@ class MinghuService(Flask):
             sht['B2'].value=fn[5:]
             sht['D2'].value=sex
             sht['E2'].value=birthMonth
+            sht['F2'].value=cusSource
             if len(fn[5:])>1:
                 sht['C2'].value=fn[5:][1:]
             else:
@@ -809,6 +915,9 @@ class MinghuService(Flask):
             wb.close()
             app.quit()
 
+            if trial_cus_name:
+                self.write_deal_cus_name_to_trial_table(formal_cus_name=fn,trial_cus_name=trial_cus_name)
+
             # os.startfile(work_dir)
             # if dvc=='pc':
             #     os.startfile(new_fn)
@@ -816,6 +925,27 @@ class MinghuService(Flask):
             return new_fn
         except Exception as e:
             return e
+    
+    def write_deal_cus_name_to_trial_table(self,formal_cus_name,trial_cus_name):
+        try:
+            fn=os.path.join(self.config_mh['work_dir'],'03-教练管理','体验课上课记录表.xlsx')
+            app=xw.App(visible=False)
+            wb=app.books.open(fn)
+            sht=wb.sheets['体验课上课记录表']
+            e_column_data=sht.range('e1').expand('down').value
+
+            for row_index, value in enumerate(e_column_data, start=1):
+                if value == trial_cus_name:
+                    # 根据条件设置 M 列的值为 'AA'
+                    sht.range(f'M{row_index}').value = formal_cus_name
+
+            wb.save(fn)
+            wb.close()
+            app.quit()
+        except Exception as e:
+            print('写入体验课表错误：',e)
+            return '写入体验课表错误：'+e
+
 
 
     def welcome(self):

@@ -11,43 +11,65 @@ from tqdm import tqdm
 from flask import jsonify
 import pandas as pd
 pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
-pd.set_option('display.max_columns', None) #显示所有列
+# pd.set_option('display.max_columns', None) #显示所有列
 
 
 class CusData:
     def __init__(self):
         pass
 
-    def get_cus_buy(self,fn='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH207杨薇.xlsm'):
+    def get_cus_buy(self,fn='E:\\temp\\minghu\\铭湖健身工作室\\01-会员管理\\会员资料\\MH207杨薇.xlsm',month=''):
         df_cus_buy=pd.read_excel(fn,sheet_name='购课表')
+        if month:
+            try:
+                df_cus_buy=df_cus_buy[df_cus_buy['收款日期'].dt.month==int(month)]
+            except Exception as e:
+                print(fn.split('\\')[-1],'  错误：',e)
+        # if df_cus_buy.empty:
+        #     df_cus_buy=pd.DataFrame(data={'收款日期':'','购课编码':'','购课类型':'','购课节数':'','购课时长（天）':'',
+        #                             '应收金额':'','实收金额':'','收款人':'','收入类别':'','备注':''})
         return df_cus_buy
+        
 
-    def batch_get_cus_buy(self,dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料'):
+    def batch_get_cus_buy(self,dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',month=''):
         dfs=[]    
         pbar=tqdm(os.listdir(dir))    
         for fn in pbar:
             pbar.set_description("正在读取客户购课信息")
             if re.match(r'^MH\d{3}.*.xlsm$',fn):
                 realfn=os.path.join(dir,fn) 
-                df=self.get_cus_buy(realfn)
+                df=self.get_cus_buy(realfn,month)
                 dfs.append(df)
         
         all_df_buy=pd.concat(dfs)
         
         return all_df_buy
 
-    def exp_all_cus_buy(self,input_dir,output_dir):
+    def exp_all_cus_buy(self,input_dir,output_dir,month,out_put_format='xlsx'):
         # print('\n正在抽取购课数据……',end='')
-        all_df_buy=self.batch_get_cus_buy(dir=input_dir)
+        all_df_buy=self.batch_get_cus_buy(dir=input_dir,month=month)
         # print('完成')
         if all_df_buy.shape[0]>0:
             print('\n正在提取及合并数据……',end='')
             fn=os.path.join(output_dir,datetime.now().strftime('%Y%m%d%H%M')+'-购课数据.xlsx')
             all_df_buy.dropna(how='any',subset=['购课编码'],inplace=True)
-            all_df_buy.to_excel(fn,sheet_name='购课表',index=False)
-            print('完成')
+            if out_put_format=='xlsx':
+                all_df_buy.to_excel(fn,sheet_name='购课表',index=False)
 
+        print('完成')
         return all_df_buy
+
+    def merge_old_this_month_cus_buy(self,month,input_dir,output_dir,old_xlsx='E:\\temp\\minghu\\客户业务流水数据.xlsx'):
+        df_old=pd.read_excel(old_xlsx,sheet_name='购课财务流水')
+        df_this_month=self.exp_all_cus_buy(input_dir=input_dir,output_dir=output_dir,month=month,out_put_format='xlsx')
+        df_this_month=df_this_month[['购课编码','购课类型','应收金额','实收金额','收款日期','收款人','收入类别','备注']]
+        df_this_month.rename(columns={'购课编码':'编码','收入类别':'购课类别'},inplace=True)
+        
+        df_out=pd.concat([df_old,df_this_month])
+        df_out.to_excel(os.path.join(output_dir,'客户业务流水数据-'+str(month)+'月.xlsx'),index=False)
+       
+        print('完成')
+        return df_out
 
     def formal_cls_taken(self,fn='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH120肖婕.xlsm'):
         df_formal_tk=pd.read_excel(fn,sheet_name='上课记录')
@@ -444,20 +466,22 @@ if __name__=='__main__':
 
     # p.batch_fomral_cls_taken(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',out_fn='E:\\temp\\minghu\\教练上课记录合并.xlsx')
     # res=p.cus_cls_rec(fn='E:\\temp\\minghu\\铭湖健身工作室\\01-会员管理\\会员资料\\MH041陈智翀.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
-    res=p.cus_cls_rec_toweb(fn='E:\\temp\\minghu\\铭湖健身工作室\\01-会员管理\\会员资料\\MH041陈智翀.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
+    # res=p.cus_cls_rec_toweb(fn='E:\\temp\\minghu\\铭湖健身工作室\\01-会员管理\\会员资料\\MH041陈智翀.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
     # res=res.fillna('-')
-    print(res)
+    # print(res)
     # res=p.all_cus_cls_rec(dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
     
     # 客户上课及购课信息
     # res=p.all_cus_cls_rec(dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课'])
     # res.to_excel('e:\\temp\\minghu\\客户上课及购课信息.xlsx',sheet_name='客户上课及购课信息表',index=False)
 
-    # res=p.get_cus_buy()
+    # res=p.get_cus_buy(month='8')
+    res=p.merge_old_this_month_cus_buy(month=7,input_dir='E:\\temp\\minghu\\铭湖健身工作室\\01-会员管理\\会员资料',output_dir='E:\\temp\\minghu',old_xlsx='E:\\temp\\minghu\\客户业务流水数据.xlsx')
     # res=p.batch_get_cus_buy()
     # p.exp_all_cus_buy(input_dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',output_dir='e:\\temp\\minghu')
     # p.formal_cls_taken()
     # res=p.all_trial_cls()
-    # print(res)
+    print(res)
     # res.to_excel('E:\\temp\\minghu\\所有体验课合并.xlsx',sheet_name='所有体验课数据',index=False)
+
   

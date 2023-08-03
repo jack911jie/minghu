@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>铭湖健身体验课记录</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body>
+    <div>
+        <h2>铭湖健身体验课记录</h2>
+        <h4>体验课上课时间 <input type="datetime-local" id="dateInput" style="width:150px;" ></h4>
+        <h4>客户姓名/昵称 <input type="text" id="cusNameInput" style="width:100px;" ></h4>
+        <div>
+            <h4>客户手机号 <input type="text" id="mobilePhone" style="width:120px;" oninput="checkMobileValid()"></h4>
+            <span id="mobileValidResult" style="display:inline; color:rgb(221, 126, 123)"></span>
+        </div>
+        <h4>上课教练 <select id="insSelect"></select></h4>
+        <h4>客户来源 <select id="cusSource">
+            <option value="小红书">小红书</option>
+            <option value="转介绍">转介绍</option>
+            <option value="自行到店">自行到店</option>
+            <option value="其他媒体">其他媒体</option>
+        </select></h4>
+        <h4>备注 <input type='text' id='comment' style="height:30px;"></h4>   
+        
+    </div>
+    <hr>
+    <div id="dealProcessing" style="display:none;">正在处理，请稍候。</div>
+    <button id="submit" onclick="submit()">提交</button>
+
+    <script src="../static/js/moment.min.js"></script>
+    <script src="../static/js/common.js"></script>
+    <script> 
+        let cus_list
+        let selectedName
+        let tmplt_info
+        const allError={'dateError':0,'buyNumError':0};
+        // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
+        document.addEventListener("DOMContentLoaded", function() {   
+
+            selectToday(id='dateInput',format='dateTime');
+
+            fetch('/get_template_info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                tmplt_info=data;         
+                  })
+                .catch(error => console.error('Error:', error));
+
+            fetch('/get_cus_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                cus_list=data
+                  })
+                .catch(error => console.error('Error:', error));
+
+            fetch('/get_ins_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                })
+                .then(response => response.json())
+                .then(insData => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log(insData);
+                generateInsList(insData)
+                 })
+                .catch(error => console.error('Error:', error));
+
+            
+        });
+
+        function submit(){
+            if(submitCheck()){
+                const dateInput=document.getElementById('dateInput').value;
+                const dateString=dateToString(dateInput,'date');
+                const timeString=dateToString(dateInput,'time');
+                const cusNameInput=document.getElementById('cusNameInput').value;
+                const mobilePhone=document.getElementById('mobilePhone').value;
+                const ins=document.getElementById('insSelect').value;
+                const cusSource=document.getElementById('cusSource').value;
+                const comment=document.getElementById('comment').value;
+                const dealProcessing=document.getElementById('dealProcessing')
+                dealProcessing.style.display='block';
+
+                
+                data={
+                    'dateString':dateString,
+                    'timeString':timeString,
+                    'cusNameInput':cusNameInput,
+                    'mobilePhone':mobilePhone,
+                    'ins':ins,
+                    'cusSource':cusSource,
+                    'comment':comment
+                }
+                fetch('/write_trial_rec',{
+                    method:'POST',
+                    headers:{
+                        'Content-Type':'application/json'
+                    },
+                    body:JSON.stringify(data)                        
+                })
+                .then(response=>response.text())
+                .then(writeResult=>{
+                    console.log(writeResult);
+                    alert(writeResult);
+                    window.location.replace('./');
+                })
+                .catch(error=>{
+                    console.error('写入体验课错误：',e);
+                });
+            }
+        }
+
+        function submitCheck(){
+            const cusNameInput=document.getElementById("cusNameInput").value;
+            if(!cusNameInput || cusNameInput===''){
+               return false; 
+            }
+            return true;
+        }
+
+        function generateInsList(insData){
+            const insSelect=document.getElementById('insSelect');
+            insData.forEach(ins=>{
+                const option=document.createElement('option')
+                option.value=ins;
+                option.text=ins;
+                insSelect.appendChild(option);                    
+                });
+            }
+
+        function checkMobileValid(){
+            const mobilePattern = /^1[3-9]\d{9}$/;
+            const mobile=document.getElementById('mobilePhone').value;
+            const mobileValidResult=document.getElementById('mobileValidResult');
+            mobileValidResult.innerText='';
+            if(mobile && mobile!==''){
+                if(!mobilePattern.test(mobile)){
+                    mobileValidResult.innerText='无效的手机号码'
+                }
+
+            }
+        }
+
+
+    </script>
+</body>
+</html>
