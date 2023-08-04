@@ -312,8 +312,13 @@ class MinghuService(Flask):
 
         # print(df_body)
         if df_body.empty:
-            return jsonify({'获取既往体测数据错误':'获取既往体测数据错误'})
+            empty_body={'0': {'日期': '', '身高（cm）': '', '体重（Kg）': '', '体脂率': '', 
+                        '胸围': '', '左臂围': '', '右臂围': '', '腰围': '', '臀围': '', '左腿围': '', 
+                        '右腿围': '', '左小腿围': '', '右小腿围': '', '心肺': '', '平衡': '', 
+                        '力量': '', '柔韧性': '', '核心': ''}}
+            return jsonify(empty_body)
         else:
+            df_body.dropna(subset=['日期'],inplace=True)
             df_body.fillna(0,inplace=True)
             
             dic_body=df_body.to_dict()
@@ -321,8 +326,12 @@ class MinghuService(Flask):
             formatted_data=self.dic_format(dic=dic_body,order_name='日期')
 
         # 计算bfr
-        for key,item in formatted_data.items():
-            item['体脂率']=self.bfr(sex,birthday,item['身高（cm）'],item['体重（Kg）'],item['腰围'])
+        try:
+            for key,item in formatted_data.items():
+                item['体脂率']=self.bfr(sex,birthday,item['身高（cm）'],item['体重（Kg）'],item['腰围'])
+        except Exception as e:
+            print('bfr计算错误',e)
+            item['体脂率']='-'
 
         print(formatted_data)
         # print(dic_body)

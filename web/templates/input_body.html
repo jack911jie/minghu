@@ -194,50 +194,54 @@
 
 
         function showHistory(data){
-            console.log(data);
+            console.log('body msr history:',data);
             const bodyHistory=document.getElementById('bodyHistory');
             bodyHistory.innerHTML='';
             const bodyHistoryCountContent=document.createElement('div');
-            bodyHistoryCountContent.innerHTML=`<div id="bodyHistoryCount" style="padding:10px;font-size:16px;"><b> · 过去一共体测 ${Object.keys(data).length} 次</b></div>`
-            bodyHistory.appendChild(bodyHistoryCountContent);
+            if(data[0]['日期']===''){
+                bodyHistoryCountContent.innerHTML=`<div id="bodyHistoryCount" style="padding:10px;font-size:16px;"><b> · 没有过去体测的数据</b></div>`;
+                bodyHistory.appendChild(bodyHistoryCountContent);
+            }else{
+                bodyHistoryCountContent.innerHTML=`<div id="bodyHistoryCount" style="padding:10px;font-size:16px;"><b> · 过去一共体测 ${Object.keys(data).length} 次</b></div>`;    
+                bodyHistory.appendChild(bodyHistoryCountContent);
+                for(i=0;i<Object.keys(data).length;i++){
+                    const newDiv=document.createElement('div')
+                    newDiv.innerHTML=`                    
+                        <div id="history-${i}" style="padding:10px;">
+                        <div style="vertical-align:bottom;background-color:#ffffff" ><b><span>· 体测日期</span><span style="width:25px;"></span> ${dateFormat(new Date(data[i]['日期']),'date')}</b></div>
+                        </div>
+                        <hr>
+                        <table>
+                            <tr>
+                            <td ><span>体重 </span>${data[i]['体重（Kg）']} Kg</td>
+                            <td style="padding-left:15px;"><span>估算体脂率 </span>${(parseFloat(data[i]['体脂率'])*100).toFixed(2)} %</td>
+                            </tr>
+                            <tr>
+                            <td><span>胸围 </span>${data[i]['胸围']} cm</td>
+                            <td style="padding-left:15px;"><span>腰围 </span>${data[i]['腰围']} cm</td>
+                            </tr>
+                            <tr>
+                            <td><span>臀围 </span>${data[i]['臀围']} cm</td>
+                            </tr>
+                            <tr>
+                            <td><span>左臂围 </span>${data[i]['左臂围']} cm</td>
+                            <td style="padding-left:15px;"><span>右臂围 </span>${data[i]['右臂围']} cm</td>
+                            </tr>
+                            <tr>
+                            <td><span>左大腿围 </span>${data[i]['左腿围']} cm</td>
+                            <td style="padding-left:15px;"><span>右大腿围： </span>${data[i]['右腿围']} cm</td>
+                            </tr>
+                            <tr>
+                            <td><span>左小腿围 </span>${data[i]['左小腿围']} cm</td>
+                            <td style="padding-left:15px;"><span>右小腿围 </span>${data[i]['右小腿围']} cm</td>
+                            </tr>
 
-            for(i=0;i<Object.keys(data).length;i++){
-                const newDiv=document.createElement('div')
-                newDiv.innerHTML=`                    
-                    <div id="history-${i}" style="padding:10px;">
-                    <div style="vertical-align:bottom;background-color:#ffffff" ><b><span>· 体测日期</span><span style="width:25px;"></span> ${dateFormat(new Date(data[i]['日期']),'date')}</b></div>
-                    </div>
-                    <hr>
-                    <table>
-                        <tr>
-                        <td ><span>体重 </span>${data[i]['体重（Kg）']} Kg</td>
-                        <td style="padding-left:15px;"><span>估算体脂率 </span>${(parseFloat(data[i]['体脂率'])*100).toFixed(2)} %</td>
-                        </tr>
-                        <tr>
-                        <td><span>胸围 </span>${data[i]['胸围']} cm</td>
-                        <td style="padding-left:15px;"><span>腰围 </span>${data[i]['腰围']} cm</td>
-                        </tr>
-                        <tr>
-                        <td><span>臀围 </span>${data[i]['臀围']} cm</td>
-                        </tr>
-                        <tr>
-                        <td><span>左臂围 </span>${data[i]['左臂围']} cm</td>
-                        <td style="padding-left:15px;"><span>右臂围 </span>${data[i]['右臂围']} cm</td>
-                        </tr>
-                        <tr>
-                        <td><span>左大腿围 </span>${data[i]['左腿围']} cm</td>
-                        <td style="padding-left:15px;"><span>右大腿围： </span>${data[i]['右腿围']} cm</td>
-                        </tr>
-                        <tr>
-                        <td><span>左小腿围 </span>${data[i]['左小腿围']} cm</td>
-                        <td style="padding-left:15px;"><span>右小腿围 </span>${data[i]['右小腿围']} cm</td>
-                        </tr>
-
-                    </table>
-                    </div>
-                    `;
-                
-                bodyHistory.appendChild(newDiv);
+                        </table>
+                        </div>
+                        `;
+                    
+                    bodyHistory.appendChild(newDiv);
+                }
             }
         }
         
