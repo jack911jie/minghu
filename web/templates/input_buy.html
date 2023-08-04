@@ -460,17 +460,17 @@
         }
 
         function fillBuyCode(){
-            var cusName=document.getElementById('cusNameInput').value.trim();
-            var dateInput=document.getElementById('dateInput').value.trim()
-            var dateTxt=dateInput.replace(/-/g,"")
+            const cusName=document.getElementById('cusNameInput').value.trim();
+            const dateInput=document.getElementById('dateInput').value.trim()
+            const dateTxt=dateInput.replace(/-/g,"")
             const ptn=/^MH\d{3}.*\d{8}$/;
             if (cusName !== "" && dateInput !== "" ) {
                 // var cusIDName=document.getElementById('cusNameInput').value
                 const testBuyCode=cusName+dateTxt
                 console.log(testBuyCode)
                 if(ptn.test(testBuyCode)){
-                    var buyCodeInput=document.getElementById('buyCode');
-                    buyCodeInput.setAttribute("value", testBuyCode);   
+                    const buyCodeInput=document.getElementById('buyCode');
+                    buyCodeInput.value=testBuyCode;
                 }else{
                     // input3.style.display = "none";
                 }
@@ -509,7 +509,12 @@
                     listItem.addEventListener("click", function() {
                         // 点击后将完整的姓名设置为输入框的值
                         selectedName=name;
-                        document.getElementById("cusNameInput").value = name;        
+                        document.getElementById("cusNameInput").value = name;    
+                        const buyCode=document.getElementById('buyCode');
+                        const buyCodeErr=document.getElementById('buyCodeErr');
+                        buyCode.value='';
+                        buyCodeErr.innerText='';
+
 
                         // 填写进购课编号
                         fillBuyCode()
