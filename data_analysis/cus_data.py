@@ -165,7 +165,7 @@ class CusData:
             else:
                 end_date=latest_ltm['限时课程实际结束日']     
         except Exception as e:
-            print('限时课程到期日错误：',e)
+            print('限时课程到期日错误在 cus_cls_rec：',e)
             end_date=''
 
         try:

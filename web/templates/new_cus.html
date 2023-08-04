@@ -7,9 +7,9 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
-    <h3>生成新的客户</h3>
+    <h3>生成新的会员</h3>
     <hr>
-    <h4>· 输入新客户的姓名
+    <h4>· 输入新会员的姓名
     <input type="text" id="cusName" style="width: 80px;" >   
     </h4>
     <div class="inline2" id="new_cus_res"></div>
@@ -47,7 +47,7 @@
 
     </div>
     <hr>
-    <button onclick="CheckAndGenerateFile()">生成客户资料</button>
+    <button onclick="CheckAndGenerateFile()">生成会员资料</button>
 
     <script>
         let allTrialList;
@@ -66,6 +66,11 @@
             });
 
             hideTrialResultList();
+
+            const TrialCusNameInput=document.getElementById("TrialCusNameInput");
+            TrialCusNameInput.addEventListener("click", function(event) {
+                event.stopPropagation();
+            });
         })
 
         function hideTrialResultList(){
