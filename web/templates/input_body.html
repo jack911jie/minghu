@@ -173,8 +173,15 @@
                 .then(data=>{
                     hideProcessingModel();
                     console.log(data);
-                    alert('已录入体测数据')
-                    window.location.replace('./');
+
+                    if(data.includes('成功')){
+                        alert('已录入体测数据');
+                        window.location.replace('./');
+                    }else{
+                        alert('身体数据录入错误，请联系管理员。');
+                        window.location.replace('./');
+                    }
+                    
                 })
                 .catch(error=>{
                     console.error('写入身体测量表错误：',error)

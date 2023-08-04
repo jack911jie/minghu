@@ -241,9 +241,16 @@ class MinghuService(Flask):
             # print('写入身体数据：',data)
             fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',data['cusName']+'.xlsm')
             df_old=pd.read_excel(os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',data['cusName']+'.xlsm'),sheet_name='身体数据')
+            df_old.dropna(subset=['日期'],inplace=True)
             df_new=pd.DataFrame(data,index=[0])
+
             #第一列为姓名，去除
             df_write=df_new.iloc[:,1:]
+            df_write['bfr']=''
+            df_write=df_write[['date','ht','wt','bfr','chest','l_arm','r_arm','waist','hip',
+                                'l_leg','r_leg','l_calf','r_calf',
+                                'heart','balance','power','flex','core']]
+            # df_write
 
             # print(df_write)
 
@@ -257,7 +264,7 @@ class MinghuService(Flask):
             wb.save(fn)
             wb.close()
             app.quit()
-
+            print('后端：写入身体数据成功')
             return '后端：写入身体数据表成功'
         except Exception as e:
             print('后端写入身体数据错误：',e)
