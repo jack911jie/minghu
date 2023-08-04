@@ -265,23 +265,20 @@ class MinghuService(Flask):
 
 
     def bfr(self,sex,birthday,ht,wt,waist):
-        bfr_test=get_data.cals()
+        bfr_test=get_data.cals()       
+        
         if birthday:
-            try:
-                if re.match(r'\d{4}',str(birthday)) and 1900<int(birthday)<2999:
-                    birthday=datetime.strptime(str(birthday)+'0101','%Y%m%d')
-                    age=relativedelta(datetime.now(),birthday).years
-                    bfr=bfr_test.bfr(age=age,sex=sex,ht=ht,wt=wt,waist=waist,adj_bfr='no',adj_src='prg',formula=1)
-                elif re.match(r'\d{6}',str(birthday)) and datetime.strptime(str(birthday)+'01','%Y%m%d'):
-                    birthday=datetime.strptime(str(birthday)+'01','%Y%m%d')
-                    age=relativedelta(datetime.now(),birthday).years
-                    bfr=bfr_test.bfr(age=age,sex=sex,ht=ht,wt=wt,waist=waist,adj_bfr='no',adj_src='prg',formula=1)
-                elif re.match(r'\d{8}',str(birthday)) and datetime.strptime(birthday,'%Y%m%d'):
-                    birthday=datetime.strptime(str(birthday)+str('01'),'%Y%m%d')
-                    age=relativedelta(datetime.now(),birthday).years
-                    bfr=bfr_test.bfr(age=age,sex=sex,ht=ht,wt=wt,waist=waist,adj_bfr='no',adj_src='prg',formula=1)
-            except Exception as e:
-                print('bfr计算错误:',e)
+           # 可能的日期格式列表
+            date_formats = ['%Y', '%Y%m', '%Y%m%d']
+            for date_format in date_formats:
+                try:
+                    birthday = datetime.strptime(str(birthday), date_format)
+                    age = relativedelta(datetime.now(), birthday).years
+                    bfr = bfr_test.bfr(age=age, sex=sex, ht=ht, wt=wt, waist=waist, adj_bfr='no', adj_src='prg', formula=1)
+                    return bfr
+                except ValueError as e:
+                    # print('bfr计算错误 in bfr():',e)
+                    continue
         else:
             bfr=0
         return bfr
@@ -330,10 +327,10 @@ class MinghuService(Flask):
             for key,item in formatted_data.items():
                 item['体脂率']=self.bfr(sex,birthday,item['身高（cm）'],item['体重（Kg）'],item['腰围'])
         except Exception as e:
-            print('bfr计算错误',e)
+            print('bfr计算错误 in get_body_history()',e)
             item['体脂率']='-'
 
-        print(formatted_data)
+        # print(formatted_data)
         # print(dic_body)
         return jsonify(formatted_data)
     

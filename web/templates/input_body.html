@@ -206,10 +206,10 @@
                 bodyHistory.appendChild(bodyHistoryCountContent);
                 for(i=0;i<Object.keys(data).length;i++){
                     const newDiv=document.createElement('div')
+                    newDiv.id=`history-${i}`;
                     newDiv.innerHTML=`                    
-                        <div id="history-${i}" style="padding:10px;">
                         <div style="vertical-align:bottom;background-color:#ffffff" ><b><span>· 体测日期</span><span style="width:25px;"></span> ${dateFormat(new Date(data[i]['日期']),'date')}</b></div>
-                        </div>
+                        
                         <hr>
                         <table>
                             <tr>
@@ -235,12 +235,43 @@
                             <td><span>左小腿围 </span>${data[i]['左小腿围']} cm</td>
                             <td style="padding-left:15px;"><span>右小腿围 </span>${data[i]['右小腿围']} cm</td>
                             </tr>
-
                         </table>
-                        </div>
                         `;
                     
+                    
                     bodyHistory.appendChild(newDiv);
+                }
+                //大于1条的折叠，最留最近一条记录
+                for(i=0;i<Object.keys(data).length;i++){
+                    if(i!==Object.keys(data).length-1){
+                        const  historyBlock=document.getElementById(`history-${i}`);
+                        historyBlock.style.display='none';
+                    }                    
+                }
+                
+                if(Object.keys(data).length>1){
+                    const firstDiv=document.getElementById('history-0');
+                    const hideButton=document.createElement('button')
+                    hideButton.textContent='显示全部体测记录';
+                    hideButton.addEventListener('click',function(){
+                        if( hideButton.textContent==='显示全部体测记录'){
+                            hideButton.textContent='只显示最近一条记录';
+                        }else{
+                            hideButton.textContent='显示全部体测记录';
+                        }
+                       
+                        for(i=0;i<Object.keys(data).length-1;i++){
+                            const  historyBlock=document.getElementById(`history-${i}`);
+                           
+                            if(window.getComputedStyle(historyBlock).getPropertyValue('display')=='none'){
+                                historyBlock.style.display='inline';
+                            }else{
+                                historyBlock.style.display='none';
+                            }
+                        }
+                            
+                    })
+                    bodyHistory.insertBefore(hideButton,firstDiv);
                 }
             }
         }
