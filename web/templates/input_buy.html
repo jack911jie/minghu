@@ -122,7 +122,7 @@
             //将data赋值给块变量cus_list，供后面的handleInput使用
                 tmplt_info=data;
                 console.log(data)
-                buyTypeSelect(data);
+                generateBuyTypeSelect(data);
                 cashierSelect(data);
                 incomeTypeSelect(data);
                   })
@@ -304,7 +304,38 @@
 
         }
 
-        function buyTypeSelect(data){
+        function showBuyTypePrompt(){
+            const buyTypeSelect=document.getElementById('buyType');
+            console.log(buyTypeSelect.value);
+            const buyDaysInput=document.getElementById('buyDays');               
+            buyDaysInput.removeAttribute('disabled');
+            document.getElementById('errBuyDays').innerText='';
+            document.getElementById('errBuyNum').innerText='';
+            document.getElementById('errBuyType').innerText='';
+            if(buyTypeSelect.value==='限时私教课'){                    
+                buyDaysInput.removeAttribute('disabled');
+                if(document.getElementById('buyDays').value==='' &&  document.getElementById('buyNum').value ||
+                    document.getElementById('buyDays').value===0 &&  document.getElementById('buyNum').value){
+                    document.getElementById('errBuyDays').innerText='限时私教课必须输入天数'
+                }else if(document.getElementById('buyDays').value &&  document.getElementById('buyNum').value==='' ||
+                    document.getElementById('buyDays').value &&  document.getElementById('buyNum').value===0){
+                    document.getElementById('errBuyNum').innerText='限时私教课必须输入节数'
+                }else if(!(document.getElementById('buyDays').value &&  document.getElementById('buyNum').value)){
+                    document.getElementById('errBuyType').innerText='限时私教课必须同时输入节数和天数'
+                }else{
+                    document.getElementById('errBuyDays').innerText='';
+                    document.getElementById('errBuyNum').innerText='';
+                    document.getElementById('errBuyType').innerText='';
+                }                    
+            }
+            if(buyTypeSelect.value==='常规私教课'){      
+                buyDaysInput.value='';              
+                buyDaysInput.setAttribute('disabled','true');
+            }
+
+        }
+
+        function generateBuyTypeSelect(data){
             let buyTypeSelect=document.getElementById('buyType')
             const buyTypes=data.cls_types;
             buyTypes.forEach(function(buyType){
@@ -313,35 +344,7 @@
                 option.innerText=buyType;
                 buyTypeSelect.appendChild(option);
             })
-            buyTypeSelect.addEventListener("change",function(){
-                console.log(buyTypeSelect.value);
-                const buyDaysInput=document.getElementById('buyDays');               
-                buyDaysInput.removeAttribute('disabled');
-                document.getElementById('errBuyDays').innerText='';
-                document.getElementById('errBuyNum').innerText='';
-                document.getElementById('errBuyType').innerText='';
-                if(buyTypeSelect.value==='限时私教课'){                    
-                    buyDaysInput.removeAttribute('disabled');
-                    if(document.getElementById('buyDays').value==='' &&  document.getElementById('buyNum').value ||
-                        document.getElementById('buyDays').value===0 &&  document.getElementById('buyNum').value){
-                        document.getElementById('errBuyDays').innerText='限时私教课必须输入天数'
-                    }else if(document.getElementById('buyDays').value &&  document.getElementById('buyNum').value==='' ||
-                        document.getElementById('buyDays').value &&  document.getElementById('buyNum').value===0){
-                        document.getElementById('errBuyNum').innerText='限时私教课必须输入节数'
-                    }else if(!(document.getElementById('buyDays').value &&  document.getElementById('buyNum').value)){
-                        document.getElementById('errBuyType').innerText='限时私教课必须同时输入节数和天数'
-                    }else{
-                        document.getElementById('errBuyDays').innerText='';
-                        document.getElementById('errBuyNum').innerText='';
-                        document.getElementById('errBuyType').innerText='';
-                    }                    
-                }
-                if(buyTypeSelect.value==='常规私教课'){      
-                    buyDaysInput.value='';              
-                    buyDaysInput.setAttribute('disabled','true');
-                }
-
-            })
+            buyTypeSelect.addEventListener("change",showBuyTypePrompt())
         }
 
         function submitCheck(){
@@ -514,6 +517,9 @@
                         const buyCodeErr=document.getElementById('buyCodeErr');
                         buyCode.value='';
                         buyCodeErr.innerText='';
+
+                        // 检查课程类型，给出提示
+                        showBuyTypePrompt()
 
 
                         // 填写进购课编号
