@@ -343,8 +343,10 @@
                 option.value=buyType;
                 option.innerText=buyType;
                 buyTypeSelect.appendChild(option);
-            })
-            buyTypeSelect.addEventListener("change",showBuyTypePrompt())
+            });
+            buyTypeSelect.addEventListener("change",function(){
+                showBuyTypePrompt()
+            });
         }
 
         function submitCheck(){
