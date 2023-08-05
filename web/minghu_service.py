@@ -573,7 +573,6 @@ class MinghuService(Flask):
             if df_limit_cls_recs.empty:
                 dic_limit_cls_recs=''
                 dic_limit_maxdate_rec={'购课编码':'','限时课程起始日':'','限时课程结束日':'','限时课程实际结束日':''}
-                df_limit_maxdate_rec.fillna('',inplace=True)
                 dic_limit_maxdate_rec={'0':dic_limit_maxdate_rec}
             else:   
                 df_limit_maxdate_rec=df_limit_cls_recs[df_limit_cls_recs['限时课程结束日']==df_limit_cls_recs['限时课程结束日'].max()]
@@ -605,6 +604,7 @@ class MinghuService(Flask):
     
             # print('\n471 line',df_merge)
             df_merge.reset_index(inplace=True)
+            print('df merge',df_merge)
 
             if df_merge.empty:
                 dic_not_start=''
