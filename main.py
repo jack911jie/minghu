@@ -89,47 +89,82 @@ class MingHu:
             while True:
                 verify = simpledialog.askstring(title="是否修改编号？",prompt="请输入新编号（三位数字）")
                 if not verify:
+                    
                     break
                 else:
                     if len(verify)==3 and re.match(r'\d\d\d',verify):
                         break                        
                     else:
                         gui.delete('1.0','end')
+                        verify='000'
                         print('编号格式错误，请输入三位数字。')          
             gui.delete('1.0','end')
         if verify:
-            xls_name=self.prefix+verify+cus_name_input
+            if verify!='000':
+                xls_name=self.prefix+verify+cus_name_input
+                app=xw.App(visible=False)
+                wb=app.books.open(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsm'))
+                sht=wb.sheets['基本情况']
+                sht['A2'].value=xls_name[0:5]
+                sht['B2'].value=cus_name_input
+                if len(cus_name_input)>1:
+                    sht['C2'].value=cus_name_input[1:]
+                else:
+                    sht['C2'].value=cus_name_input
+
+                wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsm'))
+                wb.close()
+                app.quit()
+                
+                # wb=openpyxl.load_workbook(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsm'),keep_vba=True)
+                # sht=wb['基本情况']
+                # sht['A2']=xls_name[0:5]
+                # sht['B2']=cus_name_input
+                # if len(cus_name_input)>1:
+                #     sht['C2']=cus_name_input[1:]
+                # else:
+                #     sht['C2']=cus_name_input
+                
+                # wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsm'))        
+
+                print('\n生成新的会员档案文件：{}'.format(self.cus_file_dir+'\\'+xls_name+'.xlsm'))
+
+                return xls_name
+            else:
+                print('无效的编码')
+                return '无效的编码'
         else:
             xls_name=self.prefix+new_num+cus_name_input
+            app=xw.App(visible=False)
+            wb=app.books.open(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsm'))
+            sht=wb.sheets['基本情况']
+            sht['A2'].value=xls_name[0:5]
+            sht['B2'].value=cus_name_input
+            if len(cus_name_input)>1:
+                sht['C2'].value=cus_name_input[1:]
+            else:
+                sht['C2'].value=cus_name_input
 
-        app=xw.App(visible=False)
-        wb=app.books.open(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsm'))
-        sht=wb.sheets['基本情况']
-        sht['A2'].value=xls_name[0:5]
-        sht['B2'].value=cus_name_input
-        if len(cus_name_input)>1:
-            sht['C2'].value=cus_name_input[1:]
-        else:
-            sht['C2'].value=cus_name_input
+            wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsm'))
+            wb.close()
+            app.quit()
+            
+            # wb=openpyxl.load_workbook(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsm'),keep_vba=True)
+            # sht=wb['基本情况']
+            # sht['A2']=xls_name[0:5]
+            # sht['B2']=cus_name_input
+            # if len(cus_name_input)>1:
+            #     sht['C2']=cus_name_input[1:]
+            # else:
+            #     sht['C2']=cus_name_input
+            
+            # wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsm'))        
 
-        wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsm'))
-        wb.close()
-        app.quit()
+            print('\n生成新的会员档案文件：{}'.format(self.cus_file_dir+'\\'+xls_name+'.xlsm'))
+
+            return xls_name
+
         
-        # wb=openpyxl.load_workbook(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsm'),keep_vba=True)
-        # sht=wb['基本情况']
-        # sht['A2']=xls_name[0:5]
-        # sht['B2']=cus_name_input
-        # if len(cus_name_input)>1:
-        #     sht['C2']=cus_name_input[1:]
-        # else:
-        #     sht['C2']=cus_name_input
-        
-        # wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsm'))        
-
-        print('\n生成新的会员档案文件：{}'.format(self.cus_file_dir+'\\'+xls_name+'.xlsm'))
-
-        return xls_name
 
 
     def fonts(self,font_name,font_size):
