@@ -533,6 +533,8 @@ class MinghuService(Flask):
     def  get_limit_class_records(self,cus_name):
         fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
         df=pd.read_excel(fn,sheet_name='限时课程记录')
+
+        df.fillna('',inplace=True)
         return df
 
     def get_not_start_lmt_list(self,cus_name):
@@ -564,14 +566,18 @@ class MinghuService(Flask):
 
             # 获取限时课程记录、目前生效的限时课程记录
             df_limit_cls_recs=self.get_limit_class_records(cus_name=cus_name_input)
-            # print("df_limit_cls_recs",df_limit_cls_recs)
+            # pd无法直接将NaT替换为空值，将其替换为0后，再转为''
+            df_limit_cls_recs.fillna(0, inplace=True)
+            df_limit_cls_recs.replace(0,'',inplace=True)     
+
             if df_limit_cls_recs.empty:
                 dic_limit_cls_recs=''
                 dic_limit_maxdate_rec={'购课编码':'','限时课程起始日':'','限时课程结束日':'','限时课程实际结束日':''}
+                df_limit_maxdate_rec.fillna('',inplace=True)
                 dic_limit_maxdate_rec={'0':dic_limit_maxdate_rec}
-            else:
-                df_limit_cls_recs.fillna('',inplace=True)
+            else:   
                 df_limit_maxdate_rec=df_limit_cls_recs[df_limit_cls_recs['限时课程结束日']==df_limit_cls_recs['限时课程结束日'].max()]
+                # df_limit_maxdate_rec.fillna('',inplace=True)
                 df_limit_maxdate_rec.reset_index(inplace=True)
                 # print('df_limit_maxdate_rec:',df_limit_maxdate_rec)
 
@@ -581,8 +587,8 @@ class MinghuService(Flask):
 
                 dic_limit_maxdate_rec=df_limit_maxdate_rec.to_dict()
                 dic_limit_maxdate_rec=self.dic_format(dic=dic_limit_maxdate_rec,order_name='购课编码')
-                
-            print(dic_limit_maxdate_rec)
+            # print('df limit cls recs, df limit maxdate rec: \n',df_limit_cls_recs,df_limit_maxdate_rec) 
+            # print('dic_limit_maxdate_rec:',dic_limit_cls_recs)
 
             # 获取并计算未开课的限时课程表，包括限时私教和团课
             df_buy_limit = df_buy[df_buy['购课类型'].isin(['限时私教课', '限时团课'])]
@@ -603,7 +609,7 @@ class MinghuService(Flask):
             if df_merge.empty:
                 dic_not_start=''
             else:      
-                
+                df_merge.fillna('',inplace=True)
                 df_merge.sort_values(by='收款日期',ascending=True,inplace=True)
                 dic_not_start=df_merge.to_dict()
                 # print('\n479 line dic_not_start',dic_not_start)
