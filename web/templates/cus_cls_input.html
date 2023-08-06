@@ -238,7 +238,7 @@
                 .then(data => {
             //将data赋值给块变量cus_list，供后面的handleInput使用
                 console.log('get data from template file:',data);
-                buyTypeSelect(data);
+                generateBuyTypeList(data);
                   })
                 .catch(error => console.error('Error:', error));
 
@@ -398,10 +398,13 @@
                     if (clsType==='限时私教课' || clsType==='限时团课'){
                         if(maxdate_limit_class_rec[0]['限时课程结束日']){
                             if(maxdate_limit_class_rec[0]['限时课程结束日']!==''){
-                                const classDate=document.getElementById('datetime').value;
+                                //获取的datetime有时间2023-08-06T14:32，只需前面的日期，否则会引起上课日期和结束日是同一天时，不算入有效期内。
+                                const classDate=document.getElementById('datetime').value.split('T')[0];
+                                // const classDate=new Date('2023-08-06')
+                                // console.log(classDate)
                                 const compareDate=new Date(classDate)-new Date(maxdate_limit_class_rec[0]['限时课程结束日']);
                                 validClassEndTime.innerText=`目前限时课程结束日：${dateToString(maxdate_limit_class_rec[0]['限时课程结束日'],'date')}`
-                                // console.log('对比选择日及最后生效课程结束日：',compareDate);
+                                console.log('对比选择日及最后生效课程结束日：',compareDate);
                                 allTrainContents.style.display='block';
                                 if(compareDate>0){
                                     allTrainContents.style.display='none';
@@ -1144,7 +1147,7 @@
             }
         }        
 
-        function buyTypeSelect(data){
+        function generateBuyTypeList(data){
             let buyTypeSelect=document.getElementById('buyType')
             const buyTypes=data.cls_types;
             buyTypes.forEach(function(buyType){
