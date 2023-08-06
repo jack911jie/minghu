@@ -18,36 +18,34 @@ class CusData:
     def __init__(self):
         pass
 
-    def get_cus_buy(self,fn='E:\\temp\\minghu\\铭湖健身工作室\\01-会员管理\\会员资料\\MH207杨薇.xlsm',month=''):
+    def get_cus_buy(self,fn='E:\\temp\\minghu\\铭湖健身工作室\\01-会员管理\\会员资料\\MH207杨薇.xlsm',year_month=''):
         df_cus_buy=pd.read_excel(fn,sheet_name='购课表')
-        if month:
+        if year_month:
             try:
-                df_cus_buy=df_cus_buy[df_cus_buy['收款日期'].dt.month==int(month)]
+                df_cus_buy=df_cus_buy[(df_cus_buy['收款日期'].dt.year==int(str(year_month)[:4])) & (df_cus_buy['收款日期'].dt.month==int(str(year_month)[4:])) ]
             except Exception as e:
                 print(fn.split('\\')[-1],'  错误：',e)
-        # if df_cus_buy.empty:
-        #     df_cus_buy=pd.DataFrame(data={'收款日期':'','购课编码':'','购课类型':'','购课节数':'','购课时长（天）':'',
-        #                             '应收金额':'','实收金额':'','收款人':'','收入类别':'','备注':''})
+
         return df_cus_buy
         
 
-    def batch_get_cus_buy(self,dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',month=''):
+    def batch_get_cus_buy(self,dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',year_month=''):
         dfs=[]    
         pbar=tqdm(os.listdir(dir))    
         for fn in pbar:
             pbar.set_description("正在读取客户购课信息")
             if re.match(r'^MH\d{3}.*.xlsm$',fn):
                 realfn=os.path.join(dir,fn) 
-                df=self.get_cus_buy(realfn,month)
+                df=self.get_cus_buy(realfn,year_month)
                 dfs.append(df)
         
         all_df_buy=pd.concat(dfs)
         
         return all_df_buy
 
-    def exp_all_cus_buy(self,input_dir,output_dir,month,out_put_format='xlsx'):
+    def exp_all_cus_buy(self,input_dir,output_dir,year_month,out_put_format='xlsx'):
         # print('\n正在抽取购课数据……',end='')
-        all_df_buy=self.batch_get_cus_buy(dir=input_dir,month=month)
+        all_df_buy=self.batch_get_cus_buy(dir=input_dir,year_month=year_month)
         # print('完成')
         if all_df_buy.shape[0]>0:
             print('\n正在提取及合并数据……',end='')
@@ -59,40 +57,71 @@ class CusData:
         print('完成')
         return all_df_buy
 
-    def merge_old_this_month_cus_buy(self,month,input_dir,output_dir,old_xlsx='E:\\temp\\minghu\\客户业务流水数据.xlsx'):
-        df_old=pd.read_excel(old_xlsx,sheet_name='购课财务流水')
-        df_this_month=self.exp_all_cus_buy(input_dir=input_dir,output_dir=output_dir,month=month,out_put_format='xlsx')
-        df_this_month=df_this_month[['购课编码','购课类型','应收金额','实收金额','收款日期','收款人','收入类别','备注']]
-        df_this_month.rename(columns={'购课编码':'编码','收入类别':'购课类别'},inplace=True)
+    def merge_old_this_month_cus_buy(self,year_month,input_dir,output_dir,old_xlsx='E:\\temp\\minghu\\会员购课数据.xlsx'):
+        df_old=pd.read_excel(old_xlsx,sheet_name='购课表')
+        df_this_month=self.exp_all_cus_buy(input_dir=input_dir,output_dir=output_dir,year_month=year_month,out_put_format='xlsx')
+        # df_this_month=df_this_month[['收款日期','编码','购课类型','应收金额','实收金额','收款人','收入类别','备注']]
+        # df_this_month.rename(columns={'购课编码':'编码','收入类别':'购课类别'},inplace=True)
         
         df_out=pd.concat([df_old,df_this_month])
-        df_out.to_excel(os.path.join(output_dir,'客户业务流水数据-'+str(month)+'月.xlsx'),index=False)
+        df_out.to_excel(os.path.join(output_dir,'会员购课数据-'+str(year_month)+'月.xlsx'),index=False)
        
         print('完成')
         return df_out
 
-    def formal_cls_taken(self,fn='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH120肖婕.xlsm'):
+    def merge_old_this_month_trial_class(self,month,output_dir,new_trial_table='E:\\temp\\minghu\\体验课上课记录.xlsx',old_xlsx='E:\\temp\\minghu\\所有体验课合并.xlsx'):
+        df_old=pd.read_excel(old_xlsx,sheet_name='体验课上课记录表')
+        df_new=pd.read_excel(new_trial_table,sheet_name='体验课上课记录表')    
+        df_this_month=df_new[df_new['体验课日期'].dt.month==int(month)]
+        df_out=pd.concat([df_old,df_this_month])
+        df_out.to_excel(os.path.join(output_dir,'所有体验课合并-'+str(month)+'月.xlsx'),index=False)
+       
+        print('完成')
+        return df_out
+
+    def this_month_formal_cls_taken(self,year_month,fn='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH120肖婕.xlsm'):
         df_formal_tk=pd.read_excel(fn,sheet_name='上课记录')
         df_formal_tk['会员姓名']=fn.split('\\')[-1].split('.')[0]
-        df_formal_tk=df_formal_tk[['日期', '时间', '时长（小时）', '课程类型', '会员姓名', '教练', '备注']]
-        return df_formal_tk
+     
 
-    def batch_fomral_cls_taken(self,dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',out_fn='E:\\temp\\minghu\\教练上课记录合并.xlsx'):
+        df_formal_tk=df_formal_tk[['日期', '时间', '时长（小时）', '课程类型', '会员姓名', '教练', '备注']]
+        try:
+            df_formal_tk_this_month=df_formal_tk[(df_formal_tk['日期'].dt.year==int(str(year_month)[:4])) & (df_formal_tk['日期'].dt.month==int(str(year_month)[4:])) ]
+        except Exception as e:
+            df_formal_tk_this_month=pd.DataFrame()
+            print(fn.split('\\')[-1].split('.')[0],e)
+        
+        return df_formal_tk_this_month
+
+    def batch_fomral_cls_taken(self,year_month,dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',out_fn='E:\\temp\\minghu\\教练上课记录合并.xlsx',out_format='xlsx'):
 
         dfs_tk=[]
         pbar=tqdm(os.listdir(dir))
         for fn in pbar:
             pbar.set_description("正在读取教练上课记录")
             if re.match(r'^MH\d{3}.*.xlsm$',fn):
-                df_tk=self.formal_cls_taken(os.path.join(dir,fn))
+                df_tk=self.this_month_formal_cls_taken(year_month,os.path.join(dir,fn))
                 dfs_tk.append(df_tk)
         
         df_taken=pd.concat(dfs_tk)
         df_taken.dropna(how='any',subset=['日期'],inplace=True)
-        df_taken.to_excel(out_fn,index=False,sheet_name='教练上课记录表')
         df_taken['时长（小时）']=1
+        if out_format=='xlsx':
+            df_taken.to_excel(out_fn,index=False,sheet_name='教练上课记录表')
+        
         print('完成')
         return df_taken
+
+    def merge_this_month_taken_to_old(self,year_month,old_fn='E:\\temp\\minghu\\教练上课记录合并.xlsx',input_dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',out_dir='E:\\temp\\minghu'):
+        
+        df_new=self.batch_fomral_cls_taken(year_month=year_month,dir=input_dir,out_fn=os.path.join(out_dir,'当月教练上课记录-'+str(year_month)+'.xlsx'),out_format='dataframe')
+        df_old=pd.read_excel(old_fn,sheet_name='教练上课记录表')
+        df_merge=pd.concat([df_old,df_new])
+        out_fn=os.path.join(out_dir,'教练上课记录合并'+str(year_month)+'.xlsx')
+        df_merge.to_excel(out_fn,sheet_name='教练上课记录表',index=False)
+
+        print('完成')
+        return df_merge
 
     def trial_cls(self,fn='E:\\temp\\minghu\\体验课上课记录表-2023.xlsx'):
         df_trial=pd.read_excel(fn,sheet_name='体验课上课记录表')
