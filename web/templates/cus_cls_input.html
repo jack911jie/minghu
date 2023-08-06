@@ -11,7 +11,7 @@
         <h3><image src="../static/ico/客户.svg" class="ico"></image> 会员编码及姓名</h3>
             <input type="text" id="nameInput" placeholder="请输入客户姓名" oninput="handleInput()" style="margin-bottom: 8px;width:100px;">
         <div id="cusNameList" class="cus-list-cls-input" style="display:none;"></div>
-        <div id="cusClsTkn" class="cusClsTkn" class="cusClsTkn" ></div>   
+        <div id="cusClsTkn" class="cusClsTkn"></div>   
         <hr>   
     <div id="BasicInfo" style="padding:10px;">   
         <h2>上课基本信息</h2>  
@@ -298,6 +298,7 @@
             const UpperSearchTerm=searchTerm.toUpperCase();
             // 获取展示结果的列表元素
             const resultList = document.getElementById("cusNameList");
+            const cusClsTkn=document.getElementById('cusClsTkn')
 
             // 清空列表
             resultList.innerHTML = "";
@@ -321,7 +322,11 @@
                     listItem.addEventListener("click", function() {
                         // 点击后将完整的姓名设置为输入框的值
                         document.getElementById("nameInput").value = name;
+
+                        // 点击后隐藏名字列表框
                         resultList.style.display = "none";
+                        // 点击后隐藏上课及围度信息
+                        cusClsTkn.style.display='none';
 
                         fetch('/get_cus_info',{
                             method:'POST',
@@ -428,72 +433,96 @@
                 });
         }
 
+        // 递归替换Undefined值为-
+        function replaceUndefinedWithDash(obj) {
+            for (let key in obj) {
+                if (typeof obj[key] === 'object') {
+                // 如果值是嵌套的字典，递归调用函数处理内部的字典
+                obj[key] = replaceUndefinedWithDash(obj[key]);
+                } else if (obj[key] === undefined) {
+                // 如果值是 undefined，替换为 '-'
+                obj[key] = '-';
+                }
+            }
+            return obj;
+            }
+
         function reportClassTaken(){
             data=classAndBodyHistory;
+            // 递归替换Undefined值为-
+            data=replaceUndefinedWithDash(data);
+            console.log('cus buy and body data',data);
             let normalClassRemain;
             const cusName=document.getElementById('nameInput').value;
             const classTakenInfo=document.getElementById('cusClsTkn');
+            classTakenInfo.style.display='block';
             classTakenInfo.innerHTML=''
             console.log('reported by Name:',cusName);
             
+            
             try{
-                if(normalClassRemain===''){
-                    normalClassRemain=0;
-                }
-                let bfr
-                if(!data['msr_num']){
-                    data['msr_num']='-';
-                    data['lst_msr_date']='-';
-                    data['wt']='-';
-                    data['waist']='-';
-                    data['l_leg']='-';
-                    data['r_leg']='-';
-                    data['hip']='-';
-                    bfr='0'
-                    
+                if(data['会员编码及姓名']===''){
+                    classTakenInfo.innerHTML='<div style="margin-top:10px;">客户有未完善的信息或没有以往上课及体测信息。</div>';
                 }else{
-                    bfr=(parseFloat(data['bfr'])*100).toFixed(2)
+                    if(normalClassRemain===''){
+                    normalClassRemain=0;
+                    }
+                    let bfr
+                    if(!data['msr_num']){
+                        data['msr_num']='-';
+                        data['lst_msr_date']='-';
+                        data['wt']='-';
+                        data['waist']='-';
+                        data['l_leg']='-';
+                        data['r_leg']='-';
+                        data['hip']='-';
+                        bfr='0'
+                        
+                    }else{
+                        bfr=(parseFloat(data['bfr'])*100).toFixed(2)
+                    }
+                    classTakenInfo.innerHTML=`
+                            <h2 style="color:#fafafa;">以往上课及体测情况</h2>
+                            <div >
+                            <p><span>· 上次上课日期：</span>${dateFormat(new Date(data['最后一次上课日期']),'date')}</p>
+                            <p><span>· 最近一次限时课程到期日：</span>${dateFormat(new Date(data['限时课程到期日']),'date')?dateFormat(new Date(data['限时课程到期日']),'date'):'-'}</p>
+                            </div>
+                            <div >
+                            <p><span style="display: inline;">· 常规私教课剩余节数：</span>${data['剩余节数-常规私教课']} </p>
+                            </div>
+                            <hr>
+                            <div >
+                            <p><span>· 上课总节数： </span>${data['上课总次数']}  节</p>
+                            <p style="margin-left: 25px; font-size:12px;"><span>- 常规私教课： </span>${data['上课次数-常规私教课']}  节</p>
+                            <p style="margin-left: 25px;font-size:12px;"><span>- 限时私教课： </span>${data['上课次数-限时私教课']}  节</p>
+                            </div>
+                            <hr>
+                            <div >
+                            <p><span>· 围度测量次数 </span>${data['msr_num']}  </p>
+                            <p><span>· 上次围度测量时间： </span>${data['lst_msr_date']}  </p>
+                            <p><span>· 上次围度测量结果</span></p>
+                            <!-- <p style="margin-left: 25px;"><span>体重： </span>xxx Kg <span  style="margin-left: 10px;">估算体脂率： </span>xxx %</p>
+                            <p style="margin-left: 25px;"><span>腰围： </span>xxx cm <span  style="margin-left: 10px;">臀围： </span>xxx cm</p>
+                            <p style="margin-left: 25px;"><span>左大腿围： </span>xxx cm <span  style="margin-left: 10px;">右大腿围： </span>xxx cm</p> -->
+                            <table style="font-size:12px;">
+                                <tr>
+                                <td width="5px"><span>体重： </span>${data['wt']}  Kg</td>
+                                <td ><span>估算体脂率： </span>${bfr} %</td>
+                                </tr>
+                                <tr>
+                                <td width="5px"><span>腰围： </span>${data['waist']}   cm</td>
+                                <td ><span>臀围： </span>${data['hip']}   cm</td>
+                                </tr>
+                                <tr>
+                                <td width="5px"><span>左大腿围： </span>${data['l_leg']}   cm</td>
+                                <td ><span>右大腿围： </span>${data['r_leg']}   cm</td>
+                                </tr>
+                            </table>
+                            </div>
+                            `       
+                        classTakenInfo.style.padding="20px";    
                 }
-                classTakenInfo.innerHTML=`
-                        <h2 style="color:#fafafa;">以往上课及体测情况</h2>
-                        <div >
-                        <p><span>· 上次上课日期：</span>${dateFormat(new Date(data['最后一次上课日期']),'date')}</p>
-                        <p><span>· 最近一次限时课程到期日：</span>${dateFormat(new Date(data['限时课程到期日']),'date')?dateFormat(new Date(data['限时课程到期日']),'date'):'-'}</p>
-                        </div>
-                        <div >
-                        <p><span style="display: inline;">· 常规私教课剩余节数：</span>${data['剩余节数-常规私教课']} </p>
-                        </div>
-                        <hr>
-                        <div >
-                        <p><span>· 上课总节数： </span>${data['上课总次数']}  节</p>
-                        <p style="margin-left: 25px; font-size:12px;"><span>- 常规私教课： </span>${data['上课次数-常规私教课']}  节</p>
-                        <p style="margin-left: 25px;font-size:12px;"><span>- 限时私教课： </span>${data['上课次数-限时私教课']}  节</p>
-                        </div>
-                        <hr>
-                        <div >
-                        <p><span>· 围度测量次数 </span>${data['msr_num']}  </p>
-                        <p><span>· 上次围度测量时间： </span>${data['lst_msr_date']}  </p>
-                        <p><span>· 上次围度测量结果</span></p>
-                        <!-- <p style="margin-left: 25px;"><span>体重： </span>xxx Kg <span  style="margin-left: 10px;">估算体脂率： </span>xxx %</p>
-                        <p style="margin-left: 25px;"><span>腰围： </span>xxx cm <span  style="margin-left: 10px;">臀围： </span>xxx cm</p>
-                        <p style="margin-left: 25px;"><span>左大腿围： </span>xxx cm <span  style="margin-left: 10px;">右大腿围： </span>xxx cm</p> -->
-                        <table style="font-size:12px;">
-                            <tr>
-                            <td width="5px"><span>体重： </span>${data['wt']}  Kg</td>
-                            <td ><span>估算体脂率： </span>${bfr} %</td>
-                            </tr>
-                            <tr>
-                            <td width="5px"><span>腰围： </span>${data['waist']}   cm</td>
-                            <td ><span>臀围： </span>${data['hip']}   cm</td>
-                            </tr>
-                            <tr>
-                            <td width="5px"><span>左大腿围： </span>${data['l_leg']}   cm</td>
-                            <td ><span>右大腿围： </span>${data['r_leg']}   cm</td>
-                            </tr>
-                        </table>
-                        </div>
-                        `       
-                    classTakenInfo.style.padding="20px";     
+                 
             }catch(error){
                 classTakenInfo.innerHTML='<div style="margin-top:10px;">客户有未完善的信息或没有以往上课及体测信息。</div>'
                 console.error('Error:',error);

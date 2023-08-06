@@ -11,7 +11,7 @@ from tqdm import tqdm
 from flask import jsonify
 import pandas as pd
 pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
-# pd.set_option('display.max_columns', None) #显示所有列
+pd.set_option('display.max_columns', None) #显示所有列
 
 
 class CusData:
@@ -346,9 +346,9 @@ class CusData:
             df_out=pd.concat([df_out,df_tkn_nums,df_buy_nums,buy_pays,df_msr],axis=1)
         except Exception as err:
             df_out=pd.DataFrame()
-            print('生成既往课程及围度测量结果错误',cus_name,'：',err)
+            print('cus_cls_rec() 生成既往课程及围度测量结果错误',cus_name,'：',err)
  
-
+        print('cus_cls_rec() result',df_out)
 
         return df_out
 
@@ -375,17 +375,41 @@ class CusData:
 
     def cus_cls_rec_toweb(self,fn='E:\\temp\\minghu\\MH017李俊娴.xlsm',cls_types=['常规私教课','限时私教课','常规团课','限时团课'],not_lmt_types=['常规私教课','常规团课']):
         df_web=self.cus_cls_rec(fn=fn,cls_types=cls_types,not_lmt_types=not_lmt_types)
-        try:
-            if df_web['限时课程到期日'].tolist()[0]>=datetime.now():
-                df_web['限时课程是否有效']='是'
-            else:
+        
+        if not df_web.empty:
+            try:
+                if df_web['限时课程到期日'].tolist()[0]>=datetime.now():
+                    df_web['限时课程是否有效']='是'
+                else:
+                    df_web['限时课程是否有效']='否'
+            except Exception as e:
+                print('计算限时课程错误在cus_cls_rec_toweb中：',e)
                 df_web['限时课程是否有效']='否'
-        except Exception as e:
-            print('计算限时课程错误在cus_cls_rec_toweb中：',e)
-            df_web['限时课程是否有效']='否'
-            df_web['限时课程到期日']='-'
+                df_web['限时课程到期日']='-'
 
-        df_web=df_web.fillna('-')
+            df_web=df_web.fillna('-')
+        else:
+            # df_web=pd.DataFrame(data={'限时课程是否有效':'否','限时课程到期日':'-'},index=[0])
+            df_web=pd.DataFrame(data={'会员编码及姓名':'', '限时课程到期日': '-', '总消费金额': '-', 
+            '平均每单消费金额': '-', '最后一次购课日期': '-', '开始上课日期': '-', 
+            '最后一次上课日期': '-', '上课总天数': 0, '上课总次数': 0, 
+            '上课频率': 0, '上课次数-限时私教课': 0, 
+            '上课次数-常规私教课': 0, '上课次数-限时团课': 0, 
+            '上课次数-常规团课': 0, '购课次数-限时私教课': 0, 
+            '购课次数-常规私教课': 0, '购课次数-限时团课': 0, 
+            ' 购课次数-常规团课': 0, '购课节数-常规私教课': 0, 
+            '剩余节数-常规私教课': 0, '购课节数- 常规团课': 0, 
+            '剩余节数-常规团课': 0, '消费金额-限时私教课': '-', 
+            '消费金额-常规私教课': '-', '消费金额-限时团课': '-', 
+            '消费金额-常规团课': '-', 'lst_msr_date': '-', 'msr_num': '-', 
+            'msr_dates': '-', 'bfr': '-', 'age': '-', 'ht': '-', 'wt': '-', 'waist': '-', 
+            'chest': '-', 'l_arm': '-', 'r_arm': '-', 'hip': '-', 'l_leg': '-', 
+            'r_leg': '-', 'l_calf': '-', 'r_calf': '-', 
+            'heart': '-', 'balance': '-', 'power': '-', 
+            'flex': '-', 'core': '-', '限时课程是否有效': '-'},index=[0])
+
+            
+        # print('df buy and body data',df_web)
         return df_web
 
     def all_cus_cls_rec(self,dir='E:\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料',cls_types=['常规私教课','限时私教课','常规团课','限时团课']):

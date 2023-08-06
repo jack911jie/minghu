@@ -884,6 +884,7 @@ class MinghuService(Flask):
         res=p.cus_cls_rec_toweb(fn=fn,cls_types=self.config_mh['all_cls_types'],not_lmt_types=self.config_mh['not_lmt_cls_types'])
         res.fillna(0)
         data=res.iloc[0].to_dict()
+        print('get_cus_info() ',data)
         return jsonify(data)
 
 
