@@ -604,7 +604,7 @@ class MinghuService(Flask):
     
             # print('\n471 line',df_merge)
             df_merge.reset_index(inplace=True)
-            print('df merge',df_merge)
+            # print('deal_start_limit_page()',df_merge)
 
             if df_merge.empty:
                 dic_not_start=''
@@ -884,7 +884,7 @@ class MinghuService(Flask):
         res=p.cus_cls_rec_toweb(fn=fn,cls_types=self.config_mh['all_cls_types'],not_lmt_types=self.config_mh['not_lmt_cls_types'])
         res.fillna(0)
         data=res.iloc[0].to_dict()
-        print('get_cus_info() ',data)
+        # print('get_cus_info() ',data)
         return jsonify(data)
 
 

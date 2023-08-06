@@ -346,9 +346,9 @@ class CusData:
             df_out=pd.concat([df_out,df_tkn_nums,df_buy_nums,buy_pays,df_msr],axis=1)
         except Exception as err:
             df_out=pd.DataFrame()
-            print('cus_cls_rec() 生成既往课程及围度测量结果错误',cus_name,'：',err)
+            print('cus_cls_rec() 生成既往课程及围度测量结果错误:',cus_name,'：',err)
  
-        print('cus_cls_rec() result',df_out)
+        # print('cus_cls_rec() result',df_out)
 
         return df_out
 
