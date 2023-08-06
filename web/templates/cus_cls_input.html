@@ -408,12 +408,14 @@
                                 allTrainContents.style.display='block';
                                 if(compareDate>0){
                                     allTrainContents.style.display='none';
+                                    validClassEndTime.innerText='';
                                     errBuyType.innerText='无有效的限时私教课';
                                     // alert('无有效的限时私教课')
                                 }
                             }
                         }else{
                             allTrainContents.style.display='none';
+                            validClassEndTime.innerText='';
                             errBuyType.innerText='无有效的限时私教课';
                             // alert('无有效的限时私教课')
                         }
@@ -429,9 +431,9 @@
                         
                     }
                 })
-                .catch(error=>{
-                    
+                .catch(error=>{                    
                     errBuyType.innerText='客户无有效的限时课程';
+                    validClassEndTime.innerText='';
                     console.error('获取目前有效限时课程错误：',error)
                 });
         }
