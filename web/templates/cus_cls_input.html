@@ -1076,6 +1076,8 @@
 
                 if(option==='有氧训练'){
                     label.style.color='#1e4129';
+                    const br = document.createElement("br"); // 创建一个 <br> 元素,在有氧训练后换行
+                    label.appendChild(br); // 将 <br> 元素添加到 label 中 
                 }else{
                     label.style.color='#752320';
                 }
