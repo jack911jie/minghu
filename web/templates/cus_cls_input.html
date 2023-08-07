@@ -1044,6 +1044,13 @@
                 trainList=Object.keys(train_list.by_category);
             }
 
+            // 将有氧训练排队在第一位
+            let indexOfOxy = trainList.indexOf("有氧训练");
+            // 将元素 "有氧训练" 插入到数组的开头
+            if (indexOfOxy !== -1) {
+                trainList.splice(indexOfOxy, 1); // 先将 "有氧训练" 从原来位置移除
+                trainList.unshift("有氧训练"); // 再将 "有氧训练" 插入到数组的开头
+            }
 
             let firstRadio=true;
             // 遍历数组，为每个选项生成radio，并添加到容器中
@@ -1056,6 +1063,7 @@
                 radioInput.setAttribute("value", option);
                 radioInput.setAttribute("class","dynamic-radio");
                 radioInput.setAttribute("onchange", "generateTrainItem(this)");
+                
 
                 if(firstRadio){
                     radioInput.checked=true;
@@ -1065,6 +1073,12 @@
                 // 创建一个label元素，并设置其内容为选项文字
                 const label = document.createElement("label");
                 label.innerText = option;
+
+                if(option==='有氧训练'){
+                    label.style.color='#1e4129';
+                }else{
+                    label.style.color='#752320';
+                }
                 
                 // 将radio和label元素添加到容器中
                 TrainFormRadio.appendChild(radioInput);
