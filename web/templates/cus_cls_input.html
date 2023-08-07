@@ -409,18 +409,18 @@
                                 if(compareDate>0){
                                     allTrainContents.style.display='none';
                                     validClassEndTime.innerText='';
-                                    errBuyType.innerText='无有效的限时私教课';
+                                    errBuyType.innerText='无有效的限时课程';
                                     // alert('无有效的限时私教课')
                                 }
                             }
                         }else{
                             allTrainContents.style.display='none';
                             validClassEndTime.innerText='';
-                            errBuyType.innerText='无有效的限时私教课';
+                            errBuyType.innerText='无有效的限时课程';
                             // alert('无有效的限时私教课')
                         }
-                    }else{
-                        const normalClassRemain=classAndBodyHistory['剩余节数-常规私教课'];
+                    }else if(clsType==='常规私教课' ){
+                        const normalClassRemain=classAndBodyHistory['剩余节数-常规私教课'];                        
                         if(normalClassRemain && normalClassRemain>0){
                             errBuyType.innerText='';
                             allTrainContents.style.display='block';
@@ -429,6 +429,15 @@
                             allTrainContents.style.display='none';
                         }
                         
+                    }else if(clsType==='常规团课' ){
+                        const normalClassGroupRemain=classAndBodyHistory['剩余节数-常规团课'];
+                        if(normalClassGroupRemain && normalClassGroupRemain>0){
+                            errBuyType.innerText='';
+                            allTrainContents.style.display='block';
+                        }else{
+                            errBuyType.innerText='无常规团课';
+                            allTrainContents.style.display='none';
+                        }
                     }
                 })
                 .catch(error=>{                    

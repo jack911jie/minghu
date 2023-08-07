@@ -65,7 +65,7 @@ class WeCom:
                 "attendees": [{
                     "userid": userid
                 } for userid in userids],
-                "summary": "今日限时课程到期会员",
+                "summary": "【限时课程会员到期】点击查看名单",
                 "description":desp,
                 "reminders": {
                     "is_remind": 1,
