@@ -38,7 +38,7 @@
 
     </div>
     <div>
-        <h4 style="color:brown;">· 关联的体验课客户  <input id='TrialCusNameInput' style="width:100px;" oninput="handleTrialCusNameInput()" onclick="handleTrialCusNameInput()"></h4>            
+        <h4 style="color:brown;">· 关联的体验课客户  <input id='trialCusNameInput' style="width:100px;" oninput="handletrialCusNameInput()" onclick="handletrialCusNameInput()"></h4>            
         <h4>· 体验客户有效期
             <input type="radio" name="trailPeriod" value="all">全部
             <input type="radio" name="trailPeriod" value="latest2" checked>近2个月
@@ -47,7 +47,7 @@
 
     </div>
     <hr>
-    <button onclick="CheckAndGenerateFile()">生成会员资料</button>
+    <button onclick="generateFile()">生成会员资料</button>
 
     <script>
         let allTrialList;
@@ -67,8 +67,8 @@
 
             hideTrialResultList();
 
-            const TrialCusNameInput=document.getElementById("TrialCusNameInput");
-            TrialCusNameInput.addEventListener("click", function(event) {
+            const trialCusNameInput=document.getElementById("trialCusNameInput");
+            trialCusNameInput.addEventListener("click", function(event) {
                 event.stopPropagation();
             });
         })
@@ -80,16 +80,16 @@
             });           
         }
 
-        function handleTrialCusNameInput() {
+        function handletrialCusNameInput() {
             
             
             // 获取输入框中的值
-            const TrialCusNameInput=document.getElementById("TrialCusNameInput");
-            const searchTerm = document.getElementById("TrialCusNameInput").value.trim();
+            const trialCusNameInput=document.getElementById("trialCusNameInput");
+            const searchTerm = document.getElementById("trialCusNameInput").value.trim();
             const UpperSearchTerm=searchTerm.toUpperCase();
             const resultList=document.getElementById('trialResultList')
 
-            TrialCusNameInput.addEventListener("click", function(event) {
+            trialCusNameInput.addEventListener("click", function(event) {
                 event.stopPropagation();
             });
 
@@ -123,7 +123,7 @@
                     listItem.addEventListener("click", function(event) {
                         event.stopPropagation();
                         // 点击后将完整的姓名设置为输入框的值
-                        document.getElementById("TrialCusNameInput").value = item['体验客户姓名'];
+                        document.getElementById("trialCusNameInput").value = item['体验客户姓名'];
                         document.getElementById("cusName").value = item['体验客户姓名'];  
                         if(item['客户来源'] && item['客户来源']!==''){
                             document.getElementById("cusSource").value=item['客户来源'];
@@ -199,7 +199,7 @@
             document.getElementById("new_cus_res").innerText=''
             const cusName=document.getElementById("cusName").value.trim();
             const gender=document.querySelector('input[name="gender"]:checked').value;
-            const trailCusName=document.getElementById("TrialCusNameInput").value.trim();
+            const trailCusName=document.getElementById("trialCusNameInput").value.trim();
             const cusSource=document.getElementById("cusSource").value.trim();
             console.log('客户来源：',cusSource)
 
@@ -212,7 +212,7 @@
                     headers: {
                         'Content-Type': 'text/plain'
                     },
-                    body: 'new'
+                    body: 'checking'
                 })
                 .then(response => response.text())
                 .then(Num => {
@@ -232,7 +232,7 @@
                                 newNum = prompt("输入的不是三位数字，请重新请输入。");   
                             }                        
                         }
-                        generateFile(newNum+cusName,trailCusName,gender,birthMonth,cusSource);  
+                        generateFile(cusName,trailCusName,gender,birthMonth,cusSource);  
                         
                     }
                 
@@ -246,26 +246,39 @@
 
         }
 
-        function generateFile(NumName,trialCusName,sex,birthMonth,cusSource){
-            const isMo=isMobile();
-            dvc=isMo?"mobile":"pc";
-            document.getElementById("new_cus_res").innerHTML='<p>正在生成新会员文件……</p>'
-            fetch('/generate_new',{
-                method:"POST",
-                headers:{
-                    'Content-Type':'text/plain'
-                },
-                body:NumName+"|"+trialCusName+"|"+sex+"|"+birthMonth+"|"+cusSource+"|"+dvc
-            })
-            .then(response=>response.text())
-            .then(data=>{
-                console.log(data)
-                // document.getElementById("new_cus_res").innerHTML='<p>生成文件名：</p><p>'+data+'</p>'
-                alert(`新增客户 MH${NumName} 成功`);
-                window.location.replace('./');
-                // alert(data)
-            })
-            .catch(error=>console.error('Error:',error))
+        function generateFile(){
+            document.getElementById("new_cus_res").innerText=''
+            const cusName=document.getElementById("cusName").value.trim();
+            const gender=document.querySelector('input[name="gender"]:checked').value;
+            const trialCusName=document.getElementById("trialCusNameInput").value.trim();
+            const cusSource=document.getElementById("cusSource").value.trim();
+            console.log('客户来源：',cusSource)
+
+            let birthMonth=document.getElementById("dateMonth").value
+            birthMonth=birthMonth.replace(/-/g,'');
+
+            if(cusName){
+                const isMo=isMobile();
+                dvc=isMo?"mobile":"pc";
+                document.getElementById("new_cus_res").innerHTML='<p>正在生成新会员文件……</p>'
+                fetch('/generate_new',{
+                    method:"POST",
+                    headers:{
+                        'Content-Type':'text/plain'
+                    },
+                    body:cusName+"|"+trialCusName+"|"+sex+"|"+birthMonth+"|"+cusSource+"|"+dvc
+                })
+                .then(response=>response.text())
+                .then(data=>{
+                    console.log(data)
+                    // document.getElementById("new_cus_res").innerHTML='<p>生成文件名：</p><p>'+data+'</p>'
+                    alert(`新增客户 ${data} 成功`);
+                    window.location.replace('./');
+                    // alert(data)
+                })
+                .catch(error=>console.error('Error:',error));
+            }
+            
         }
 
         function isMobile(){

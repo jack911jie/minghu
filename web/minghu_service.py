@@ -9,28 +9,24 @@ from datetime import datetime,date
 import time
 from dateutil.relativedelta import relativedelta
 import re
+import threading
+from multiprocessing import Value
 import xlwings as xw
 import pandas as pd
 pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
 # pd.set_option('display.max_columns', None) #显示所有列
 from flask import Flask, request, jsonify,render_template
 
+
+
 class MinghuService(Flask):
-
-    def log_time_and_function_name(func):
-        def wrapper(*args, **kwargs):
-            dt=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            func
-            print(f"在 {dt} 执行 '{func.__name__}()' ")
-            return 
-        return wrapper
-
-
 
     def __init__(self,*args,**kwargs):
         super(MinghuService, self).__init__(*args, **kwargs)
         config_fn=os.path.join(os.path.join(os.path.dirname(__file__),'config','minghu_service.config'))
         self.config_mh=readconfig.exp_json2(config_fn)
+        self.app_lock=threading.Lock()
+
 
         #路由
         #渲染页面
@@ -69,7 +65,7 @@ class MinghuService(Flask):
         #打开客户的xlsm文件
         self.add_url_rule('/open_cus_fn', view_func=self.open_cus_fn,methods=['GET','POST'])
         #遍历会员资料文件夹，生成新的客户ID号
-        self.add_url_rule('/check_new', view_func=self.check_new,methods=['GET','POST'])
+        # self.add_url_rule('/check_new', view_func=self.check_new,methods=['GET','POST'])
         #通过copy模板.xlsm生成新会员的文件 
         self.add_url_rule('/generate_new', view_func=self.generate_new,methods=['GET','POST'])
         #写入购课记录
@@ -94,6 +90,7 @@ class MinghuService(Flask):
         self.add_url_rule('/get_trial_list', view_func=self.get_trial_list,methods=['GET','POST'])
         # 写入体验课上课记录
         self.add_url_rule('/write_trial_rec', view_func=self.write_trial_rec,methods=['GET','POST'])
+
 
 
     def write_trial_rec(self):
@@ -899,58 +896,61 @@ class MinghuService(Flask):
         else:
             return '会员编码及编码为空/无此会员档案'
 
+    def _get_max_code(self):        
+        cus_li = self.cus_list()
+        cus_num = [int(x[2:5]) for x in cus_li]
+        max_num = max(cus_num)
+        new_num = max_num + 1
+        return str(new_num).zfill(3)
+
 
     def check_new(self):
-        dat=request.data
-        cus_li=self.cus_list()
-        cus_num=[int(x[2:5]) for x in cus_li]
-        max_num=max(cus_num)
-        new_num=max_num+1
-        txt_num=str(new_num).zfill(3)
-        # new_name='MH'+new_num.zfill(3)+cus_name+'.xlsm'
-        # new_name=os.path.join(wecom_dir,new_name)
-        print('新客户自动编号：',txt_num)
+        # dat=request.data.decode('utf-8')        
+        # with self.app_lock:
+        txt_num=self._get_max_code()            
+        print('新客户自动编号：',txt_num)           
+            
         return txt_num
 
     
     def generate_new(self):
-        try:
-            fn_in=request.data
-            fn='MH'+fn_in.decode('utf-8')
-            print(fn)
-            fn,trial_cus_name,sex,birthMonth,cusSource,dvc=fn.split('|')
-            work_dir=self.wecom_dir()
-            tplt_dir=os.path.dirname(work_dir)
-            new_fn=os.path.join(work_dir,fn+'.xlsm')
+        with self.app_lock:
+            txt_num=self.check_new()
+            print('generating new',txt_num)
+            try:
+                fn_in=request.data
+                fn='MH'+txt_num+fn_in.decode('utf-8')
+                print(fn)
+                fn,trial_cus_name,sex,birthMonth,cusSource,dvc=fn.split('|')
+                work_dir=self.wecom_dir()
+                tplt_dir=os.path.dirname(work_dir)
+                new_fn=os.path.join(work_dir,fn+'.xlsm')
 
-            app=xw.App(visible=False)
-            wb=app.books.open(os.path.join(tplt_dir,'模板.xlsm'))
-            sht=wb.sheets['基本情况']
-            sht['A2'].value=fn[0:5]
-            sht['B2'].value=fn[5:]
-            sht['D2'].value=sex
-            sht['E2'].value=birthMonth
-            sht['F2'].value=cusSource
-            if len(fn[5:])>1:
-                sht['C2'].value=fn[5:][1:]
-            else:
-                sht['C2'].value=fn[5:]
+                app=xw.App(visible=False)
+                wb=app.books.open(os.path.join(tplt_dir,'模板.xlsm'))
+                sht=wb.sheets['基本情况']
+                sht['A2'].value=fn[0:5]
+                sht['B2'].value=fn[5:]
+                sht['D2'].value=sex
+                sht['E2'].value=birthMonth
+                sht['F2'].value=cusSource
+                if len(fn[5:])>1:
+                    sht['C2'].value=fn[5:][1:]
+                else:
+                    sht['C2'].value=fn[5:]
 
-            wb.save(new_fn)
-            wb.close()
-            app.quit()
+                wb.save(new_fn)
+                wb.close()
+                app.quit()
 
-            if trial_cus_name:
-                self.write_deal_cus_name_to_trial_table(formal_cus_name=fn,trial_cus_name=trial_cus_name)
+                if trial_cus_name:
+                    self.write_deal_cus_name_to_trial_table(formal_cus_name=fn,trial_cus_name=trial_cus_name)
 
-            # os.startfile(work_dir)
-            # if dvc=='pc':
-            #     os.startfile(new_fn)
-
-            return new_fn
-        except Exception as e:
-            return e
-    
+                return fn
+            except Exception as e:
+                self.release_event.set()
+                return e
+        
     def write_deal_cus_name_to_trial_table(self,formal_cus_name,trial_cus_name):
         try:
             fn=os.path.join(self.config_mh['work_dir'],'03-教练管理','体验课上课记录表.xlsx')
