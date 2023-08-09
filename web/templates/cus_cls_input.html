@@ -251,7 +251,8 @@
                 .then(response => response.json())
                 .then(data => {
             //将data赋值给块变量cus_list，供后面的handleInput使用
-                cus_list=data
+                // console.log(data);
+                cus_list=data;
                   })
                 .catch(error => console.error('Error:', error));
 
@@ -266,7 +267,7 @@
                 .then(data => {
             //将data赋值给块变量cus_list，供后面的handleInput使用
                 console.log('ins list:',data);
-                ins_radios(data);
+                ins_radios(data['ins_list']);
                  })
                 .catch(error => console.error('Error:', error));
 

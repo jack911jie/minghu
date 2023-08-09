@@ -16,7 +16,8 @@ import pandas as pd
 pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
 # pd.set_option('display.max_columns', None) #显示所有列
 from flask import Flask, request, jsonify,render_template
-
+import pymysql
+import datetime
 
 
 class MinghuService(Flask):
@@ -55,11 +56,11 @@ class MinghuService(Flask):
 
         #功能
         #从模板.xlsm获取基本信息，如教练姓名、课程种类等
-        self.add_url_rule('/get_template_info', view_func=self.get_template_info,methods=['GET','POST'])
+        self.add_url_rule('/get_template_info', view_func=self.get_template_info_db,methods=['GET','POST'])
         #遍历会员资料文件夹获取所有 客户列表
-        self.add_url_rule('/get_cus_list', view_func=self.get_cus_list,methods=['GET','POST'])
+        self.add_url_rule('/get_cus_list', view_func=self.get_cus_list_db,methods=['GET','POST'])
         #从,'03-教练管理','教练资料','教练信息.xlsx'中获取教练列表
-        self.add_url_rule('/get_ins_list', view_func=self.get_ins_list,methods=['GET','POST'])
+        self.add_url_rule('/get_ins_list', view_func=self.get_ins_list_db,methods=['GET','POST'])
         #获取客户信息，包括既往购课、上课信息，剩余课时信息，限时课程信息，围度测量信息
         self.add_url_rule('/get_cus_info', view_func=self.get_cus_info,methods=['GET','POST'])
         #打开客户的xlsm文件
@@ -77,7 +78,7 @@ class MinghuService(Flask):
         #获取客户未开课的购课编码
         self.add_url_rule('/deal_start_limit_page', view_func=self.deal_start_limit_page,methods=['GET','POST'])
         #通过'05-专业资料','训练项目.xlsx'获取训练项目的名称及分类
-        self.add_url_rule('/get_train_list', view_func=self.get_train_list,methods=['GET','POST'])        
+        self.add_url_rule('/get_train_list', view_func=self.get_train_list_db,methods=['GET','POST'])        
         #执行写入上课记录、写入训练记录
         self.add_url_rule('/deal_cls', view_func=self.deal_cls,methods=['GET','POST'])
         #获取既往体测记录
@@ -87,11 +88,23 @@ class MinghuService(Flask):
         #写入体测记录
         self.add_url_rule('/deal_start_class_page', view_func=self.deal_start_class_page,methods=['GET','POST'])
         # 获取体验课记录
-        self.add_url_rule('/get_trial_list', view_func=self.get_trial_list,methods=['GET','POST'])
+        self.add_url_rule('/get_trial_list', view_func=self.get_trial_list_db,methods=['GET','POST'])
         # 写入体验课上课记录
         self.add_url_rule('/write_trial_rec', view_func=self.write_trial_rec,methods=['GET','POST'])
 
+    def connect_mysql(self):
+        # 连接数据库
+        conn = pymysql.connect(
+            host='localhost',         # 数据库主机地址
+            user='minghu',     # 数据库用户名
+            password='minghu88', # 数据库密码
+            database='minghu_trial',  # 要连接的数据库名称
+            port=3306
+        )
 
+        return conn
+
+    
 
     def write_trial_rec(self):
         try:
@@ -139,7 +152,7 @@ class MinghuService(Flask):
 
         raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
 
-    def get_trial_list(self,):
+    def get_trial_list(self):
         
         df_trial=pd.read_excel(os.path.join(self.config_mh['work_dir'],'03-教练管理','体验课上课记录表.xlsx'),sheet_name='体验课上课记录表')
         df_trial.dropna(subset=['体验客户姓名'],inplace=True)
@@ -147,16 +160,45 @@ class MinghuService(Flask):
         df_trial['体验课日期']=df_trial['体验课日期'].apply(lambda x:self.date_to_string(x,'date'))
         df_trial['体验课时间']=df_trial['体验课时间'].apply(lambda x:self.date_to_string(x,'time'))
         df_trial['出单日期']=df_trial['出单日期'].apply(lambda x:self.date_to_string(x,'date'))
-
+        print(df_trial.dtypes)
         dic_trial=df_trial.to_dict()
         num_keys=len(dic_trial[list(dic_trial.keys())[0]])
         result={}
         for i in range(num_keys):
             result[i] = {key: dic_trial[key][i] for key in dic_trial}
         # print(result)
-        
+        print(type(result))
+
+        # dic_trial=df_trial.T.to_dict()
+
         return jsonify({'all_trial':result})
 
+    def get_trial_list_db(self):
+        conn=self.connect_mysql()
+        cursor = conn.cursor()
+
+        # 执行SQL查询
+        # sql = "SELECT * FROM `id_table`"
+        sql="select * from trial_cls_table"
+        cursor.execute(sql)
+
+        # # 获取查询结果
+        results = cursor.fetchall()
+        # data=((1, datetime.datetime(2022, 5, 14, 9, 0), 1, 'TS0501唐家源', None, '韦越棋', '是', '小红书', None, '是', datetime.date(2022, 5, 22), None), (2, datetime.datetime(2022, 5, 23, 19, 30), 1, 'TS0502毛圆', None, '韦越棋', '是', '小红书', None, None, None, None))
+        df=pd.DataFrame(results)
+        df.columns=['序号','体验课日期时间','时长','体验客户姓名','体验客户手机','教练','是否完成','客户来源','备注','是否出单','出单日期','出单后正式会员编码及姓名']
+        df['体验课日期']=df['体验课日期时间'].dt.strftime('%Y-%m-%d')
+        df['体验课时间']=df['体验课日期时间'].dt.strftime('%H:%M:%S')
+        df=df[['序号','体验课日期','体验课时间','时长','体验客户姓名','体验客户手机','教练','是否完成','客户来源','备注','是否出单','出单日期','出单后正式会员编码及姓名']]
+
+        dic_trial_list=df.T.to_dict()
+
+        # 关闭游标和连接
+        cursor.close()
+        conn.close()
+
+        return jsonify({'all_trial':dic_trial_list})
+           
 
     def deal_start_class_page(self):
         data=request.json
@@ -337,6 +379,68 @@ class MinghuService(Flask):
         # print(formatted_data)
         # print(dic_body)
         return jsonify(formatted_data)
+    
+    def get_body_history_db(self):
+        print('from minghu database, get body history db.')
+        cus_id_name=request.data.decode('utf-8')
+        print(f'\n{cus_name}')
+        cus_id,cus_name=cus_id_name[:7],cus_id_name[7:]
+
+
+        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name+'.xlsm')
+        df_body=pd.read_excel(fn,sheet_name='身体数据')
+        df_basic=pd.read_excel(fn,sheet_name='基本情况')
+
+
+
+        conn=self.connect_mysql()
+        cursor = conn.cursor()
+
+        # 执行SQL查询
+        # sql = "SELECT * FROM `id_table`"
+        sql=f"select msr_date,ht,wt,bfr,chest,l_arm,r_arm,waist,hip,l_leg,r_leg,l_calf,r_calf,heart,balance,power,flex,core from body_msr_table WHERE cus_id={cus_id} and cus_name={cus_name}"
+        cursor.execute(sql)
+
+        # # 获取查询结果
+        body_history_results = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        df_body=pd.DataFrame(body_history_results)
+
+        print(df_body)
+
+        sex=df_basic['性别'].tolist()[0]
+        birthday=df_basic['出生年月'].tolist()[0]
+
+        # print(df_body)
+        if df_body.empty:
+            empty_body={'0': {'日期': '', '身高（cm）': '', '体重（Kg）': '', '体脂率': '', 
+                        '胸围': '', '左臂围': '', '右臂围': '', '腰围': '', '臀围': '', '左腿围': '', 
+                        '右腿围': '', '左小腿围': '', '右小腿围': '', '心肺': '', '平衡': '', 
+                        '力量': '', '柔韧性': '', '核心': ''}}
+            return jsonify(empty_body)
+        else:
+            df_body.dropna(subset=['日期'],inplace=True)
+            df_body.fillna(0,inplace=True)
+            
+            dic_body=df_body.to_dict()
+
+            formatted_data=self.dic_format(dic=dic_body,order_name='日期')
+
+        # 计算bfr
+        try:
+            for key,item in formatted_data.items():
+                item['体脂率']=self.bfr(sex,birthday,item['身高（cm）'],item['体重（Kg）'],item['腰围'])
+        except Exception as e:
+            print('bfr计算错误 in get_body_history()',e)
+            item['体脂率']='-'
+
+        # print(formatted_data)
+        # print(dic_body)
+        return jsonify(formatted_data)
+
     
     def input_body(self):
         return render_template('./input_body.html')
@@ -772,6 +876,90 @@ class MinghuService(Flask):
         return train_data
 
 
+    def  get_train_list_db(self):
+        # fn=os.path.join(self.config_mh['work_dir'],'05-专业资料','训练项目.xlsx')
+        # df=pd.read_excel(fn,sheet_name='训练项目')
+        # df.fillna('',inplace=True)
+        print('from minghu database,get train item list.')
+        conn=self.connect_mysql()
+        cursor = conn.cursor()
+
+        result={}
+
+        # 获取收款人
+        sql="select * from train_item_table"
+        cursor.execute(sql)
+        train_items = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        df=pd.DataFrame(train_items)
+        df.columns=['形式','肌肉部位','动作大类','动作名称']
+        # print(df)
+
+
+        
+        train_data={}
+    
+        train_data_by_action_name={}
+        for index,row in df.iterrows():
+            action_name=row['动作名称']
+            form=row['形式']
+            muscle = row['肌肉部位']
+            category = row['动作大类']
+            
+            # 判断动作名称是否已经在字典中，若不在则添加
+            if action_name not in train_data_by_action_name:
+                train_data_by_action_name[action_name] = []
+            
+            # 将相关信息添加到对应动作名称的列表中
+            train_data_by_action_name[action_name].append(form)
+            train_data_by_action_name[action_name].append(muscle)
+            train_data_by_action_name[action_name].append(category)
+
+        train_data_by_muscle={}
+        for index,row in df.iterrows():
+            action_name=row['动作名称']
+            form=row['形式']
+            muscle = row['肌肉部位']
+            category = row['动作大类']
+            
+            # 判断动作名称是否已经在字典中，若不在则添加
+            if muscle not in train_data_by_muscle:
+                train_data_by_muscle[muscle] = []
+            
+            # 将相关信息添加到对应动作名称的列表中
+            train_data_by_muscle[muscle].append([form,category,action_name])   
+            # train_data_by_muscle[muscle].append(form)
+            # train_data_by_muscle[muscle].append(category)
+            # train_data_by_muscle[muscle].append(action_name) 
+
+        train_data_by_category={}
+        for index,row in df.iterrows():
+            action_name=row['动作名称']
+            form=row['形式']
+            muscle = row['肌肉部位']
+            category = row['动作大类']
+            
+            # 判断动作名称是否已经在字典中，若不在则添加
+            if category not in train_data_by_category:
+                train_data_by_category[category] = []
+            
+            # 将相关信息添加到对应动作名称的列表中
+            train_data_by_category[category].append([form,muscle,action_name])    
+            # train_data_by_category[category].append(form)
+            # train_data_by_category[category].append(muscle)
+            # train_data_by_category[category].append(action_name)
+
+        train_data['by_action_name']=train_data_by_action_name
+        train_data['by_muscle']=train_data_by_muscle
+        train_data['by_category']=train_data_by_category
+        
+        # return train_data
+
+        return jsonify(train_data)
+
+
     def  get_train_list(self):
         fn=os.path.join(self.config_mh['work_dir'],'05-专业资料','训练项目.xlsx')
         df=pd.read_excel(fn,sheet_name='训练项目')
@@ -844,16 +1032,97 @@ class MinghuService(Flask):
         infos=self.read_template()
         return jsonify(infos)
 
+    def get_template_info_db(self):
+        # 创建一个游标对象
+        print('from minghu database,from template_info.')
+        conn=self.connect_mysql()
+        cursor = conn.cursor()
+
+        result={}
+
+        # 获取收款人
+        sql="select cashier_name from cashier_table"
+        cursor.execute(sql)
+        cashiers_res = cursor.fetchall()
+        cashiers=[x[0] for x in cashiers_res]
+        result['cashiers']=cashiers
+
+        #获取课程类型
+        sql="select cls_name from cls_type_table"
+        cursor.execute(sql)
+        cls_types_res=cursor.fetchall()
+
+        cls_types=[x[0] for x in cls_types_res]
+        result['cls_types']=cls_types
+
+
+        #获取收入类型
+        sql="select income_type from income_type_table"
+        cursor.execute(sql)
+        income_type_res=cursor.fetchall()
+
+        income_types=[x[0] for x in income_type_res]
+        result['income_types']=income_types
+
+        # print(result)
+        # 关闭游标和连接
+        cursor.close()
+        conn.close()
+
+        return jsonify(result)
+
     #遍历会员资料生成名字
     def get_cus_list(self):
         dic_li=self.cus_list()
         return jsonify(dic_li)
+
+    def get_cus_list_db(self):
+        print('from minghu database, get cus list')
+        conn=self.connect_mysql()
+        cursor = conn.cursor()
+
+        result={}
+
+        # 获取收款人
+        sql="select concat(cus_id,cus_name) from basic_info_table"
+        cursor.execute(sql)
+        cus_list_res = cursor.fetchall()
+        cus_list=[x[0] for x in cus_list_res]
+        # result['cus_list']=cus_list
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(cus_list)
+
+        
+
+
 
     #获取教练信息
     def get_ins_list(self):
         ins_li=self.ins_list()
         return jsonify(ins_li)
 
+    def get_ins_list_db(self):
+         # 创建一个游标对象
+        print('from minghu database,get ins list.')
+        conn=self.connect_mysql()
+        cursor = conn.cursor()
+
+        result={}
+
+        # 获取收款人
+        sql="select ins_name from ins_table"
+        cursor.execute(sql)
+        ins_res = cursor.fetchall()
+        ins_list=[x[0] for x in ins_res]
+        result['ins_list']=ins_list
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(result)
 
     # 定义前端页面路由
    
