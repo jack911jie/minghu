@@ -18,6 +18,8 @@ pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
 from flask import Flask, request, jsonify,render_template
 import pymysql
 import datetime
+from decimal import Decimal
+import json
 
 
 class MinghuService(Flask):
@@ -62,7 +64,19 @@ class MinghuService(Flask):
         #从,'03-教练管理','教练资料','教练信息.xlsx'中获取教练列表
         self.add_url_rule('/get_ins_list', view_func=self.get_ins_list_db,methods=['GET','POST'])
         #获取客户信息，包括既往购课、上课信息，剩余课时信息，限时课程信息，围度测量信息
-        self.add_url_rule('/get_cus_info', view_func=self.get_cus_info,methods=['GET','POST'])
+        self.add_url_rule('/get_cus_info', view_func=self.get_cus_info_db,methods=['GET','POST'])
+        #获取客户未开课的购课编码
+        self.add_url_rule('/deal_start_limit_page', view_func=self.deal_start_limit_page_db,methods=['GET','POST'])
+        #通过'05-专业资料','训练项目.xlsx'获取训练项目的名称及分类
+        self.add_url_rule('/get_train_list', view_func=self.get_train_list_db,methods=['GET','POST'])    
+        # 获取体验课记录
+        self.add_url_rule('/get_trial_list', view_func=self.get_trial_list_db,methods=['GET','POST']) 
+        #获取客户既往购课记录,并整理合并
+        self.add_url_rule('/get_cus_buy', view_func=self.get_cus_buy_db,methods=['GET','POST'])
+        #获取既往体测记录
+        self.add_url_rule('/get_body_history', view_func=self.get_body_history_db,methods=['GET','POST'])
+
+
         #打开客户的xlsm文件
         self.add_url_rule('/open_cus_fn', view_func=self.open_cus_fn,methods=['GET','POST'])
         #遍历会员资料文件夹，生成新的客户ID号
@@ -71,24 +85,18 @@ class MinghuService(Flask):
         self.add_url_rule('/generate_new', view_func=self.generate_new,methods=['GET','POST'])
         #写入购课记录
         self.add_url_rule('/write_buy', view_func=self.write_buy,methods=['GET','POST'])
-        #获取客户既往购课记录,并整理合并
-        self.add_url_rule('/get_cus_buy', view_func=self.get_cus_buy,methods=['GET','POST'])
+        
         #获取客户既往购课记录表，不整理
-        self.add_url_rule('/get_cus_buy_list', view_func=self.get_cus_buy_list,methods=['GET','POST'])
-        #获取客户未开课的购课编码
-        self.add_url_rule('/deal_start_limit_page', view_func=self.deal_start_limit_page,methods=['GET','POST'])
-        #通过'05-专业资料','训练项目.xlsx'获取训练项目的名称及分类
-        self.add_url_rule('/get_train_list', view_func=self.get_train_list_db,methods=['GET','POST'])        
+        self.add_url_rule('/get_cus_buy_list', view_func=self.get_cus_buy_list,methods=['GET','POST'])        
+           
         #执行写入上课记录、写入训练记录
         self.add_url_rule('/deal_cls', view_func=self.deal_cls,methods=['GET','POST'])
-        #获取既往体测记录
-        self.add_url_rule('/get_body_history', view_func=self.get_body_history,methods=['GET','POST'])
+        
         #写入体测记录
         self.add_url_rule('/write_body', view_func=self.write_body,methods=['GET','POST'])
         #写入体测记录
         self.add_url_rule('/deal_start_class_page', view_func=self.deal_start_class_page,methods=['GET','POST'])
-        # 获取体验课记录
-        self.add_url_rule('/get_trial_list', view_func=self.get_trial_list_db,methods=['GET','POST'])
+        
         # 写入体验课上课记录
         self.add_url_rule('/write_trial_rec', view_func=self.write_trial_rec,methods=['GET','POST'])
 
@@ -103,8 +111,7 @@ class MinghuService(Flask):
         )
 
         return conn
-
-    
+  
 
     def write_trial_rec(self):
         try:
@@ -381,66 +388,40 @@ class MinghuService(Flask):
         return jsonify(formatted_data)
     
     def get_body_history_db(self):
-        print('from minghu database, get body history db.')
+        # cus_id_name='MH00008苏云'
         cus_id_name=request.data.decode('utf-8')
-        print(f'\n{cus_name}')
         cus_id,cus_name=cus_id_name[:7],cus_id_name[7:]
 
-
-        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name+'.xlsm')
-        df_body=pd.read_excel(fn,sheet_name='身体数据')
-        df_basic=pd.read_excel(fn,sheet_name='基本情况')
-
-
-
         conn=self.connect_mysql()
-        cursor = conn.cursor()
-
-        # 执行SQL查询
-        # sql = "SELECT * FROM `id_table`"
-        sql=f"select msr_date,ht,wt,bfr,chest,l_arm,r_arm,waist,hip,l_leg,r_leg,l_calf,r_calf,heart,balance,power,flex,core from body_msr_table WHERE cus_id={cus_id} and cus_name={cus_name}"
+        cursor=conn.cursor()
+        sql=f"select * from body_msr_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}'"
         cursor.execute(sql)
-
-        # # 获取查询结果
-        body_history_results = cursor.fetchall()
+        body_history=cursor.fetchall()
+        body_history_str=[]
+        if body_history:
+            for r,row in enumerate(body_history):
+                row_body_history=[]
+                for c,value in enumerate(row):
+                    if isinstance(value,datetime.date):
+                        row_body_history.append(value.strftime('%Y-%m-%d'))
+                    elif isinstance(value,Decimal):
+                        row_body_history.append(float(value))
+                    else:
+                        row_body_history.append(value)
+                body_history_str.append(row_body_history)        
+            body_history_cols=['id','cus-id','cus_name','日期','身高（cm）','体重（Kg）','体脂率','胸围','左臂围','右臂围','腰围','臀围','左腿围','右腿围','左小腿围','右小腿围','心肺','平衡','力量','柔韧性','核心']
+            dic_body_history=self.mysql_list_data_to_dic(data=body_history_str,mysql_cols=body_history_cols)
+        else:
+            dic_body_history={'0': {'id':'','cus-id':'','cus_name':'','日期': '', '身高（cm）': '', '体重（Kg）': '', '体脂率': '', 
+                        '胸围': '', '左臂围': '', '右臂围': '', '腰围': '', '臀围': '', '左腿围': '', 
+                        '右腿围': '', '左小腿围': '', '右小腿围': '', '心肺': '', '平衡': '', 
+                        '力量': '', '柔韧性': '', '核心': ''}}
+        
 
         cursor.close()
         conn.close()
 
-        df_body=pd.DataFrame(body_history_results)
-
-        print(df_body)
-
-        sex=df_basic['性别'].tolist()[0]
-        birthday=df_basic['出生年月'].tolist()[0]
-
-        # print(df_body)
-        if df_body.empty:
-            empty_body={'0': {'日期': '', '身高（cm）': '', '体重（Kg）': '', '体脂率': '', 
-                        '胸围': '', '左臂围': '', '右臂围': '', '腰围': '', '臀围': '', '左腿围': '', 
-                        '右腿围': '', '左小腿围': '', '右小腿围': '', '心肺': '', '平衡': '', 
-                        '力量': '', '柔韧性': '', '核心': ''}}
-            return jsonify(empty_body)
-        else:
-            df_body.dropna(subset=['日期'],inplace=True)
-            df_body.fillna(0,inplace=True)
-            
-            dic_body=df_body.to_dict()
-
-            formatted_data=self.dic_format(dic=dic_body,order_name='日期')
-
-        # 计算bfr
-        try:
-            for key,item in formatted_data.items():
-                item['体脂率']=self.bfr(sex,birthday,item['身高（cm）'],item['体重（Kg）'],item['腰围'])
-        except Exception as e:
-            print('bfr计算错误 in get_body_history()',e)
-            item['体脂率']='-'
-
-        # print(formatted_data)
-        # print(dic_body)
-        return jsonify(formatted_data)
-
+        return jsonify(dic_body_history)
     
     def input_body(self):
         return render_template('./input_body.html')
@@ -622,6 +603,41 @@ class MinghuService(Flask):
         except Exception as err:
             return {'dat':'获取客户购课错误：','error':err}      
    
+    def get_cus_buy_db(self):
+        # cus_name=request.data.decode('utf-8')
+        print('from minghu database,get_cus_buy_statistics')
+        cus_id_name=request.data.decode('utf-8')
+        # cus_id_name='MH00113肖婕'
+        cus_id,cus_name=cus_id_name[:7],cus_id_name[7:]
+
+        conn=self.connect_mysql()
+        cursor=conn.cursor()
+        sql=f'''SELECT 
+                    buy_code,
+                    AVG(pay) AS 平均应收金额,
+                    SUM(real_pay) AS 总实收金额,
+                    MIN(buy_type) AS 购课类型,
+                    GROUP_CONCAT(DISTINCT DATE_FORMAT(buy_date, '%Y/%m/%d') ORDER BY buy_date ASC SEPARATOR '\n') AS 收款日期列表,
+                    COUNT(*) AS 收款次数
+                FROM
+                    buy_rec_table
+                WHERE
+                    cus_name='{cus_name}' and cus_id='{cus_id}'
+                GROUP BY
+                    buy_code;
+        '''
+        cursor.execute(sql)
+        buy_stat=cursor.fetchall()
+        df=pd.DataFrame(buy_stat)
+        df.columns=['购课编码','应收金额','实收金额','购课类型','收款日期','收款次数']
+        df['应收金额']=df['应收金额'].astype(float)
+        df['实收金额']=df['实收金额'].astype(float)
+        df['未收金额']=df['应收金额']-df['实收金额']
+        df=df[['购课编码','购课类型','应收金额','实收金额','未收金额','收款次数','收款日期']]
+
+        buy_stat_list=[row.tolist() for row in df.values]        
+        return jsonify(buy_stat_list)
+
     def get_cus_buy_list(self,cus_name):
         # cus_name=request.data.decode('utf-8')
         fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
@@ -720,6 +736,107 @@ class MinghuService(Flask):
         except Exception as e:
             return jsonify({'error':e,'not_start_list':dic_not_start,'buy_list':dic_buy,'limit_cls_recs':dic_limit_cls_recs,'maxdate_limit_class_rec':dic_limit_maxdate_rec})
 
+    def deal_start_limit_page_db(self,cus_id_name='MH00113肖婕'):
+        cus_id,cus_name=cus_id_name[:7],cus_id_name[7:]
+        conn=self.connect_mysql() 
+        cursor=conn.cursor()
+
+        # not_start_list
+        sql=f"select * from buy_rec_table where buy_code in (SELECT buy_code from not_start_lmt_table WHERE cus_id='{cus_id}' and cus_name='{cus_name}')"
+        cursor.execute(sql)
+        not_start_list=cursor.fetchall()
+        if not_start_list:
+            not_start_list=self.convert_mysql_data_to_string(not_start_list)
+            # buy_rec_cols=['id','cus_id','cus_name','buy_date','buy_code','buy_type','buy_num','buy_cls_days','pay','real_pay','cashier_name','income_type','comment']
+            buy_rec_cols=['index','cus_id','cus_name','收款日期','购课编码','购课类型','购课节数','购课时长（天）','应收金额','实收金额','收款人','收入类别','备注']
+            not_start_list=self.mysql_list_data_to_dic(data=not_start_list,mysql_cols=buy_rec_cols)  
+        else:
+            not_start_list={'index':'','cus_id':'','cus_name':'','收款日期':'','购课编码':'','购课类型':'','购课节数':'','购课时长（天）':'',
+                                            '应收金额':'','实收金额':'','收款人':'','收入类别':'','备注':''}      
+
+        # buy_list
+        sql=f"select * from buy_rec_table where cus_id='{cus_id}' and cus_name='{cus_name}'"
+        cursor.execute(sql)
+        buy_list=cursor.fetchall()
+        if buy_list:
+            buy_list=self.convert_mysql_data_to_string(buy_list)
+            # buy_rec_cols=['id','cus_id','cus_name','buy_date','buy_code','buy_type','buy_num','buy_cls_days','pay','real_pay','cashier_name','income_type','comment']
+            buy_list_cols=['index','cus_id','cus_name','收款日期','购课编码','购课类型','购课节数','购课时长（天）','应收金额','实收金额','收款人','收入类别','备注']
+            buy_list=self.mysql_list_data_to_dic(data=buy_list,mysql_cols=buy_list_cols)  
+        else:
+            buy_list={'index':'','cus_id':'','cus_name':'','收款日期':'','购课编码':'','购课类型':'','购课节数':'','购课时长（天）':'',
+                                            '应收金额':'','实收金额':'','收款人':'','收入类别':'','备注':''}      
+
+        # limit_cls_recs
+        sql=f"SELECT * FROM lmt_cls_rec_table where cus_id='{cus_id}' and cus_name='{cus_name}'"
+        cursor.execute(sql)
+        limit_cls_recs=cursor.fetchall()
+        if limit_cls_recs:
+            limit_cls_recs=self.convert_mysql_data_to_string(limit_cls_recs)
+            # limit_cls_recs_cols=['id','cus_id','cus_name','buy_code','start_date','end_date']
+            limit_cls_recs_cols=['id','cus_id','cus_name','购课编码','限时课程起始日','限时课程结束日']
+            limit_cls_recs=self.mysql_list_data_to_dic(data=limit_cls_recs,mysql_cols=limit_cls_recs_cols)  
+        else:
+            limit_cls_recs={'id':'','cus_id':'','cus_name':'','购课编码':'','限时课程起始日':'','限时课程结束日':''}      
+
+
+        # maxdate_limit_cls_rec
+        sql=f"SELECT * FROM lmt_cls_rec_table WHERE cus_id='{cus_id}' and cus_name='{cus_name}' ORDER BY end_date desc limit 1"
+        cursor.execute(sql)
+        maxdate_limit_cls_rec=cursor.fetchall()
+        if maxdate_limit_cls_rec:
+            maxdate_limit_cls_rec=self.convert_mysql_data_to_string(maxdate_limit_cls_rec)
+            # maxdate_limit_cls_rec=['id','cus_id','cus_name','buy_code','start_date','end_date']
+            maxdate_limit_cls_rec_cols=['id','cus_id','cus_name','购课编码','限时课程起始日','限时课程结束日']
+            maxdate_limit_cls_rec=self.mysql_list_data_to_dic(data=maxdate_limit_cls_rec,mysql_cols=maxdate_limit_cls_rec_cols)  
+        else:
+            maxdate_limit_cls_rec={'id':'','cus_id':'','cus_name':'','购课编码':'','限时课程起始日':'','限时课程结束日':''}   
+
+
+        return jsonify({'not_start_list':not_start_list,'buy_list':buy_list,'limit_cls_recs':limit_cls_recs,'maxdate_limit_class_rec':maxdate_limit_cls_rec})
+        
+    
+
+    def convert_mysql_data_to_string(self,data,method=1):        
+        if method==1:
+            converted_data = []
+            for item in data:
+                if isinstance(item, tuple) or isinstance(item, list):
+                    converted_data.append(self.convert_mysql_data_to_string(item))
+                elif isinstance(item, datetime.date):
+                    converted_data.append(item.strftime('%Y-%m-%d'))
+                elif isinstance(item, Decimal):
+                    converted_data.append(float(item))
+                else:
+                    converted_data.append(item)
+        elif method==2:
+            # 用于既往购课次数、未收金额的统计,输入的是字典
+            converted_data = {}
+            for key,item in data.items():
+                if isinstance(item, tuple) or isinstance(item, list) or isinstance(item, dict):
+                    converted_data[key]=self.convert_mysql_data_to_string(item,method=2)
+                elif isinstance(item, datetime.date):
+                    converted_data[key]=item.strftime('%Y-%m-%d')
+                elif isinstance(item, Decimal):
+                    converted_data[key]=float(item)
+                else:
+                    converted_data[key]=item
+        
+        return converted_data
+
+    def mysql_list_data_to_dic(self,data,mysql_cols):
+        result={}
+        for key,item in enumerate(data):
+            result[key]=self.list_to_dict(item,column_list=mysql_cols)
+
+        return result
+
+    def list_to_dict(self,data,column_list):
+        result={}
+        for key,item in enumerate(column_list):
+            result[item]=data[key]
+        
+        return result
 
     def read_template(self):
         df=pd.read_excel(os.path.join(self.config_mh['work_dir'],'01-会员管理','模板.xlsm'),sheet_name='辅助表')
@@ -1152,6 +1269,350 @@ class MinghuService(Flask):
         data=res.iloc[0].to_dict()
         # print('get_cus_info() ',data)
         return jsonify(data)
+
+    def get_cus_info_db(self):
+        cus_id_name=request.json.get('selected_name')
+        cus_id,cus_name=cus_id_name[:7],cus_id_name[7:]
+        print('from minghu database, get cus list')
+        conn=self.connect_mysql()
+        cursor = conn.cursor()
+
+        result={}
+
+        result['会员编码及姓名']=cus_id_name
+
+        # 限时课程到期日
+        # sql=f"select max(end_date) from lmt_cls_rec_table WHERE cus_name={cus_name} and cus_id={cus_id}"
+        sql=f"select end_date from lmt_cls_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' order by end_date desc limit 1 "
+        cursor.execute(sql)
+        maxdate_limit_cls_get = cursor.fetchall()
+        if maxdate_limit_cls_get:
+            max_date=maxdate_limit_cls_get[0][0]
+            max_date=max_date.strftime('%Y-%m-%d')
+        else:
+            max_date='-'
+
+        result['限时课程到期日']=max_date
+
+        # 限时课程是否有效
+        if maxdate_limit_cls_get:
+            if datetime.datetime.now().date()<=maxdate_limit_cls_get[0][0]:
+                result['限时课程是否有效']='是'
+            else:
+                result['限时课程是否有效']='否'
+        else:
+            result['限时课程是否有效']='否'
+
+
+        #总消费金额
+        sql=f"select sum(real_pay) from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}'"
+        cursor.execute(sql)
+        total_pay=cursor.fetchall()
+        total_pay=total_pay[0][0]
+        if not total_pay:
+            total_pay=0
+
+        result['总消费金额']=float(total_pay)
+
+        #平均每单消费金额
+        sql=f"select sum(real_pay)/count(real_pay) as avr_pay from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}'"
+        cursor.execute(sql)
+        avr_pay=cursor.fetchall()
+        avr_pay=avr_pay[0][0]
+        if not avr_pay:
+            avr_pay=0
+
+        result['平均每单消费金额']=float(avr_pay)
+
+        #最后一次购课日期
+        sql=f"select max(buy_date) from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}'"
+        cursor.execute(sql)
+        latest_buy_date=cursor.fetchall()
+        latest_buy_date=latest_buy_date[0][0]
+        if latest_buy_date:
+            latest_buy_date=latest_buy_date.strftime('%Y-%m-%d')
+        else:
+            latest_buy_date='-'
+
+        result['最后一次购课日期']=latest_buy_date
+
+        #开始上课日期
+        sql=f"select min(cls_datetime) from cls_tkn_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}'"
+        cursor.execute(sql)
+        first_cls_tkn_date=cursor.fetchall()
+        first_cls_tkn_date=first_cls_tkn_date[0][0]
+        if first_cls_tkn_date:
+            first_cls_tkn_date=first_cls_tkn_date.strftime('%Y-%m-%d')
+        else:
+            first_cls_tkn_date='-'
+
+        result['开始上课日期']=first_cls_tkn_date
+
+
+        #最后一次上课日期
+        sql=f"select max(cls_datetime) from cls_tkn_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}'"
+        cursor.execute(sql)
+        latest_cls_tkn_date=cursor.fetchall()
+        latest_cls_tkn_date=latest_cls_tkn_date[0][0]
+        if latest_cls_tkn_date:
+            latest_cls_tkn_date=latest_cls_tkn_date.strftime('%Y-%m-%d')
+        else:
+            latest_cls_tkn_date='-'
+
+        result['最后一次上课日期']=latest_cls_tkn_date
+
+        #上课总天数
+        sql=f"select datediff(max(cls_datetime),min(cls_datetime)) as total_cls_tkn_days from cls_tkn_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}'"
+        cursor.execute(sql)
+        total_cls_tkn_days=cursor.fetchall()
+        total_cls_tkn_days=total_cls_tkn_days[0][0]
+        if not total_cls_tkn_days:
+            total_cls_tkn_days=0
+
+        result['上课总天数']=total_cls_tkn_days
+
+        #上课总次数
+        sql=f"select count(cls_datetime) as cls_tkn_count from cls_tkn_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}'"
+        cursor.execute(sql)
+        cls_tkn_count=cursor.fetchall()
+        cls_tkn_count=cls_tkn_count[0][0]
+        if not cls_tkn_count:
+            cls_tkn_count=0
+
+        result['上课总次数']=cls_tkn_count
+
+        #上课频率
+        if cls_tkn_count!=0:
+            cls_frqcy=total_cls_tkn_days/cls_tkn_count
+        else:
+            cls_frqcy=0
+        result['上课频率']=cls_frqcy
+        
+        #上课次数-限时私教课
+        sql=f"select count(cls_datetime) as cls_tkn_count from cls_tkn_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and cls_type='限时私教课'"
+        cursor.execute(sql)
+        cls_tkn_count_lmt_sj=cursor.fetchall()
+        cls_tkn_count_lmt_sj=cls_tkn_count_lmt_sj[0][0]
+        if not cls_tkn_count_lmt_sj:
+            cls_tkn_count_lmt_sj=0
+
+        result['上课次数-限时私教课']=cls_tkn_count_lmt_sj
+
+        #上课次数-常规私教课
+        sql=f"select count(cls_datetime) as cls_tkn_count from cls_tkn_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and cls_type='常规私教课'"
+        cursor.execute(sql)
+        cls_tkn_count_cg_sj=cursor.fetchall()
+        cls_tkn_count_cg_sj=cls_tkn_count_cg_sj[0][0]
+        if not cls_tkn_count_cg_sj:
+            cls_tkn_count_cg_sj=0
+
+        result['上课次数-常规私教课']=cls_tkn_count_cg_sj
+
+        #上课次数-限时团课
+        sql=f"select count(cls_datetime) as cls_tkn_count from cls_tkn_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and cls_type='限时团课'"
+        cursor.execute(sql)
+        cls_tkn_count_lmt_grp=cursor.fetchall()
+        cls_tkn_count_lmt_grp=cls_tkn_count_lmt_grp[0][0]
+        if not cls_tkn_count_lmt_grp:
+            cls_tkn_count_lmt_grp=0
+
+        result['上课次数-限时团课']=cls_tkn_count_lmt_grp
+
+        #上课次数-常规团课
+        sql=f"select count(cls_datetime) as cls_tkn_count from cls_tkn_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and cls_type='常规团课'"
+        cursor.execute(sql)
+        cls_tkn_count_cg_grp=cursor.fetchall()
+        cls_tkn_count_cg_grp=cls_tkn_count_cg_grp[0][0]
+        if not cls_tkn_count_cg_grp:
+            cls_tkn_count_cg_grp=0
+
+        result['上课次数-常规团课']=cls_tkn_count_cg_grp
+
+        ######################################################################
+        #购课次数-限时私教课
+        sql=f"select count(buy_date) as buy_count from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='限时私教课'"
+        cursor.execute(sql)
+        buy_count_lmt_sj=cursor.fetchall()
+        buy_count_lmt_sj=buy_count_lmt_sj[0][0]
+        if not buy_count_lmt_sj:
+            buy_count_lmt_sj=0
+
+        result['购课次数-限时私教课']=buy_count_lmt_sj
+
+        #购课次数-常规私教课
+        sql=f"select count(buy_date) as buy_count from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='常规私教课'"
+        cursor.execute(sql)
+        buy_count_cg_sj=cursor.fetchall()
+        buy_count_cg_sj=buy_count_cg_sj[0][0]
+        if not buy_count_cg_sj:
+            buy_count_cg_sj=0
+
+        result['购课次数-常规私教课']=buy_count_cg_sj
+
+        #购课次数-限时团课
+        sql=f"select count(buy_date) as buy_count from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='限时团课'"
+        cursor.execute(sql)
+        buy_count_lmt_grp=cursor.fetchall()
+        buy_count_lmt_grp=buy_count_lmt_grp[0][0]
+        if not buy_count_lmt_grp:
+            buy_count_lmt_grp=0
+
+        result['购课次数-限时团课']=buy_count_lmt_grp
+
+        #购课次数-常规团课
+        sql=f"select count(buy_date) as buy_count from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='常规团课'"
+        cursor.execute(sql)
+        buy_count_cg_grp=cursor.fetchall()
+        buy_count_cg_grp=buy_count_cg_grp[0][0]
+        if not buy_count_cg_grp:
+            buy_count_cg_grp=0
+
+        result['购课次数-常规团课']=buy_count_cg_grp
+
+        ###########################################
+        #购课节数-常规私教课
+        sql=f"select sum(buy_num) from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='常规私教课'"
+        cursor.execute(sql)
+        buy_num_cg_sj=cursor.fetchall()
+        buy_num_cg_sj=buy_num_cg_sj[0][0]
+        if not buy_num_cg_sj:
+            buy_num_cg_sj=0
+
+        result['购课节数-常规私教课']=float(buy_num_cg_sj)
+
+
+
+        #购课节数-常规团课
+        sql=f"select sum(buy_num) from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='常规团课'"
+        cursor.execute(sql)
+        buy_num_cg_grp=cursor.fetchall()
+        buy_num_cg_grp=buy_num_cg_grp[0][0]
+        if not buy_num_cg_grp:
+            buy_num_cg_grp=0
+
+        result['购课节数-常规团课']=float(buy_num_cg_grp)
+
+
+        ###########################################
+        #剩余节数-常规私教课
+        sql=f"SELECT cls_tkn_adj_num_cg_sj from adjust_table where cus_name='{cus_name}' and cus_id='{cus_id}'"
+        cursor.execute(sql)
+        adj_num_cg_sj=cursor.fetchall()
+        if adj_num_cg_sj:
+            adj_num_cg_sj=adj_num_cg_sj[0][0]
+        else:
+            adj_num_cg_sj=0
+
+        result['剩余节数-常规私教课']=result['购课节数-常规私教课']-result['上课次数-常规私教课']-adj_num_cg_sj
+
+
+        #########################################
+        #消费金额-限时私教课
+        sql=f"select sum(real_pay) from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='限时私教课'"
+        cursor.execute(sql)
+        total_pay_lmt_sj=cursor.fetchall()
+        total_pay_lmt_sj=total_pay_lmt_sj[0][0]
+        if not total_pay_lmt_sj:
+            total_pay_lmt_sj=0
+
+        result['消费金额-限时私教课']=float(total_pay_lmt_sj)
+
+        #消费金额-常规私教课
+        sql=f"select sum(real_pay) from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='常规私教课'"
+        cursor.execute(sql)
+        total_pay_cg_sj=cursor.fetchall()
+        total_pay_cg_sj=total_pay_cg_sj[0][0]
+        if not total_pay_cg_sj:
+            total_pay_cg_sj=0
+
+        result['消费金额-常规私教课']=float(total_pay_cg_sj)
+
+        #消费金额-限时团课
+        sql=f"select sum(real_pay) from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='限时团课'"
+        cursor.execute(sql)
+        total_pay_lmt_grp=cursor.fetchall()
+        total_pay_lmt_grp=total_pay_lmt_grp[0][0]
+        if not total_pay_lmt_grp:
+            total_pay_lmt_grp=0
+
+        result['消费金额-限时团课']=float(total_pay_lmt_grp)
+
+
+        #消费金额-常规团课
+        sql=f"select sum(real_pay) from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='常规团课'"
+        cursor.execute(sql)
+        total_pay_cg_grp=cursor.fetchall()
+        total_pay_cg_grp=total_pay_cg_grp[0][0]
+        if not total_pay_cg_grp:
+            total_pay_cg_grp=0
+
+
+        #最近一次体测结果
+        body_history=self.get_lst_body_history_db(cus_id_name,jsonify='no')
+
+        result.update(body_history)
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(result)
+
+    def get_lst_body_history_db(self,cus_id_name,jsonify='yes'):
+        if not cus_id_name:
+            cus_id_name=request.text.decode('utf-8')
+        cus_id,cus_name=cus_id_name[:7],cus_id_name[7:]
+        conn=self.connect_mysql()
+        cursor = conn.cursor()
+        #获取最近一次的体测数据
+        sql=f"select * from body_msr_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' order by msr_date DESC limit 1"
+        cursor.execute(sql)
+        lst_body_history=cursor.fetchall()
+
+        result={}
+        if lst_body_history:
+            for key,item in enumerate(['id','cus_id','cus_name','msr_date','ht','wt','bfr','chest','l_arm','r_arm','waist','hip','l_leg','r_leg','l_calf','r_calf','heart','balance','power','flex','core']):
+                try:
+                    result[item]=float(lst_body_history[0][key])
+                except:
+                    result[item]=lst_body_history[0][key]
+            #修改键值名返回前端
+            result['lst_msr_date']=result.pop('msr_date')
+            result['lst_msr_date']=result['lst_msr_date'].strftime('%Y-%m-%d')
+            result.pop('id')
+            result.pop('cus_id')
+            result.pop('cus_name')
+
+            #获取体检日期列表
+            sql=f"select msr_date from body_msr_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}'"
+            cursor.execute(sql)
+            msr_dates=cursor.fetchall()
+            msr_dates=[x[0].strftime('%Y-%m-%d') for x in msr_dates]
+            msr_dates_txt='\n'.join(msr_dates)
+            result['msr_dates']=msr_dates_txt
+
+            #获取体测次数
+            sql=f"select count(msr_date) from body_msr_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}'"
+            cursor.execute(sql)
+            msr_num=cursor.fetchall()
+            msr_num=msr_num[0][0]
+            result['msr_num']=msr_num
+
+        else:
+            result={'lst_msr_date': '-', 'msr_num': '-', 
+            'msr_dates': '-', 'bfr': '-', 'ht': '-', 'wt': '-', 'waist': '-', 
+            'chest': '-', 'l_arm': '-', 'r_arm': '-', 'hip': '-', 'l_leg': '-', 
+            'r_leg': '-', 'l_calf': '-', 'r_calf': '-', 
+            'heart': '-', 'balance': '-', 'power': '-', 
+            'flex': '-', 'core': '-'}
+
+        if jsonify=='yes':
+            cursor.close()
+            conn.close()
+            return jsonify({'lst_msr_date':result})
+        else:
+            return result
+       
+
 
 
     def open_cus_fn(self):

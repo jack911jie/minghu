@@ -92,7 +92,7 @@
                 .then(data => {
             //将data赋值给块变量cus_list，供后面的handleInput使用
                 cus_list=data
-                console.log(cus_list);
+                // console.log(cus_list);
                   })
                 .catch(error => console.error('Error:', error));       
                 
@@ -134,7 +134,7 @@
                     const buyList=Object.keys(buy_list).map(key => (                
                         buy_list[key]
                         ));
-                    console.log(buyList)
+                    console.log('buyList',buyList)
                     let currentClsLong;
                     buyList.forEach(buyRecord=>{
                         if(buyRecord['购课编码']===currentBuyCode){
@@ -173,7 +173,7 @@
                     const buyList=Object.keys(buy_list).map(key => (                
                         buy_list[key]
                         ));
-                    console.log(buyList)
+                    console.log('buyList',buyList)
                     let currentClsLong;
                     buyList.forEach(buyRecord=>{
                         if(buyRecord['购课编码']===currentBuyCode){
