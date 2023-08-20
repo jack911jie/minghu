@@ -93,12 +93,12 @@ class MinghuService(Flask):
         self.add_url_rule('/deal_cls', view_func=self.deal_cls,methods=['GET','POST'])
         
         #写入体测记录
-        self.add_url_rule('/write_body', view_func=self.write_body,methods=['GET','POST'])
-        #写入体测记录
+        self.add_url_rule('/write_body', view_func=self.write_body_db,methods=['GET','POST'])
+        #处理开课记录
         self.add_url_rule('/deal_start_class_page', view_func=self.deal_start_class_page,methods=['GET','POST'])
         
         # 写入体验课上课记录
-        self.add_url_rule('/write_trial_rec', view_func=self.write_trial_rec,methods=['GET','POST'])
+        self.add_url_rule('/write_trial_rec', view_func=self.write_trial_rec_db,methods=['GET','POST'])
 
     def connect_mysql(self):
         # 连接数据库
@@ -143,6 +143,16 @@ class MinghuService(Flask):
 
         return '写入体验课表成功'
         
+    def write_trial_rec_db(self):
+        try:
+            data=request.json
+            print(data)
+
+        except Exception as e:
+            print('写入体验课表错误：',e)
+            return '写入体验课表成功'+e
+
+        return '写入体验课表成功'
 
 
     def trial_class(self):
@@ -316,6 +326,44 @@ class MinghuService(Flask):
             print('后端写入身体数据错误：',e)
             return '后端写入身体数据错误：'+e
 
+    def write_body_db(self):
+        try:
+            data=request.json
+            conn=self.connect_mysql()
+            cursor=conn.cursor()
+            cus_id,cus_name=data['cusName'][:7],data['cusName'][7:]
+            sql=f"select sex,birthday from basic_info_table where cus_id='{cus_id}' and cus_name='{cus_name}'"
+            cursor.execute(sql)
+            res=cursor.fetchall()
+            sex=res[0][0]
+            birthday=res[0][1].strftime('%Y%m%d')
+            bfr=self.bfr(sex,birthday,float(data['ht']),float(data['wt']),float(data['waist']))
+            # print(sex,birthday,bfr)
+            data['bfr']=bfr
+            data['cus_id']=cus_id
+            data['cus_name']=cus_name
+            del data['cusName']
+            sorted_cols=['cus_id','cus_name','date','ht','wt','bfr','chest','l_arm','r_arm','waist','hip','l_leg','r_leg','l_calf','r_calf','heart','balance','power','flex','core']
+            sorted_data={key:data[key] for key in sorted_cols}
+            for key,value in sorted_data.items():
+                try:
+                    sorted_data[key]=float(value)
+                except:
+                    pass
+            
+            value=tuple(sorted_data.values())
+            sql=f"insert into body_msr_table (cus_id,cus_name,msr_date,ht,wt,bfr,chest,l_arm,r_arm,waist,hip,l_leg,r_leg,l_calf,r_calf,heart,balance,power,flex,core) values {value}"
+            print(value,sql)
+            cursor.execute(sql)
+            conn.commit()
+            cursor.close()
+            conn.close()
+            #返回字符必须包含“成功”二字供前端
+            return '写入体测数据成功' 
+
+        except Exception as e:
+            print('write body error in write_body_db():',e)
+            return  'error'
 
     def bfr(self,sex,birthday,ht,wt,waist):
         bfr_test=get_data.cals()       
@@ -325,8 +373,8 @@ class MinghuService(Flask):
             date_formats = ['%Y', '%Y%m', '%Y%m%d']
             for date_format in date_formats:
                 try:
-                    birthday = datetime.strptime(str(birthday), date_format)
-                    age = relativedelta(datetime.now(), birthday).years
+                    birthday = datetime.datetime.strptime(str(birthday), date_format)
+                    age = relativedelta(datetime.datetime.now(), birthday).years
                     bfr = bfr_test.bfr(age=age, sex=sex, ht=ht, wt=wt, waist=waist, adj_bfr='no', adj_src='prg', formula=1)
                     return bfr
                 except ValueError as e:
