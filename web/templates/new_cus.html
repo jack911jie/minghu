@@ -29,6 +29,10 @@
         <h4>· 出生年月  <input id="dateMonth" type="month" ></h4>       
     </div>
     <div>
+        <h4>· 客户手机号 <input type="text" id="mobilePhone" style="width:120px;" oninput="checkMobileValid()"></h4>
+        <span id="mobileValidResult" style="display:inline; color:rgb(221, 126, 123)"></span>
+    </div>
+    <div>
         <h4>· 客户来源  <select id="cusSource"> 
             <option value="小红书">小红书</option>
             <option value="转介绍">转介绍</option>
@@ -72,6 +76,19 @@
                 event.stopPropagation();
             });
         })
+        
+        function checkMobileValid(){
+            const mobilePattern = /^1[3-9]\d{9}$/;
+            const mobile=document.getElementById('mobilePhone').value;
+            const mobileValidResult=document.getElementById('mobileValidResult');
+            mobileValidResult.innerText='';
+            if(mobile && mobile!==''){
+                if(!mobilePattern.test(mobile)){
+                    mobileValidResult.innerText='无效的手机号码'
+                }
+
+            }
+        }
 
         function hideTrialResultList(){
             document.addEventListener('click',function(){
@@ -127,6 +144,7 @@
                         document.getElementById("cusName").value = item['体验客户姓名'];  
                         if(item['客户来源'] && item['客户来源']!==''){
                             document.getElementById("cusSource").value=item['客户来源'];
+                            document.getElementById("mobilePhone").value=item['体验客户手机'];
                             document.getElementById("cusSource").disabled=true;
                         }else{
                             document.getElementById("cusSource").disabled=false;
@@ -252,6 +270,7 @@
             const gender=document.querySelector('input[name="gender"]:checked').value;
             const trialCusName=document.getElementById("trialCusNameInput").value.trim();
             const cusSource=document.getElementById("cusSource").value.trim();
+            const mobilePhone=document.getElementById("mobilePhone").value.trim();
             console.log('客户来源：',cusSource)
 
             let birthMonth=document.getElementById("dateMonth").value
@@ -266,7 +285,7 @@
                     headers:{
                         'Content-Type':'text/plain'
                     },
-                    body:cusName+"|"+trialCusName+"|"+sex+"|"+birthMonth+"|"+cusSource+"|"+dvc
+                    body:cusName+"|"+trialCusName+"|"+gender+"|"+mobilePhone+"|"+birthMonth+"|"+cusSource+"|"+dvc
                 })
                 .then(response=>response.text())
                 .then(data=>{

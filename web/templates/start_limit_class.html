@@ -117,91 +117,97 @@
             const  currentClass=document.getElementById('currentClass');
             currentClass.style.display="none";
             currentClass.innerHTML='';
+            console.log(valid_limit_class_rec);
+            
+            if(valid_limit_class_rec){
 
-            const validLimitClassRec=Object.keys(valid_limit_class_rec).map(key => ({                
-                'validLimitClassRec':valid_limit_class_rec[key]
-            }));
+                const validLimitClassRec=Object.keys(valid_limit_class_rec).map(key => ({                
+                    'validLimitClassRec':valid_limit_class_rec[key]
+                }));
 
-            console.log('validLimitClassRec:',validLimitClassRec);
-            //如果返回的有效限时课程的购课编多于1条
-            if(validLimitClassRec.length>=2){
-                if(validLimitClassRec[0]['validLimitClassRec']['购课编码']!==''){
-                    currentClass.style.display="block";
-                    const currentBuyCode=validLimitClassRec[0]['validLimitClassRec']['购课编码'];
-                    const currentStartDate=validLimitClassRec[0]['validLimitClassRec']['限时课程起始日'];
-                    const currentEndDate=validLimitClassRec[0]['validLimitClassRec']['限时课程结束日'];
+                console.log('validLimitClassRec:',validLimitClassRec);
+                //如果返回的有效限时课程的购课编多于1条
+                if(validLimitClassRec.length>=2){
+                    if(validLimitClassRec[0]['validLimitClassRec']['购课编码']!==''){
+                        currentClass.style.display="block";
+                        const currentBuyCode=validLimitClassRec[0]['validLimitClassRec']['购课编码'];
+                        const currentStartDate=validLimitClassRec[0]['validLimitClassRec']['限时课程起始日'];
+                        const currentEndDate=validLimitClassRec[0]['validLimitClassRec']['限时课程结束日'];
 
-                    const buyList=Object.keys(buy_list).map(key => (                
-                        buy_list[key]
-                        ));
-                    console.log('buyList',buyList)
-                    let currentClsLong;
-                    buyList.forEach(buyRecord=>{
-                        if(buyRecord['购课编码']===currentBuyCode){
-                            currentClsLong=buyRecord['购课时长（天）']
+                        const buyList=Object.keys(buy_list).map(key => (                
+                            buy_list[key]
+                            ));
+                        console.log('buyList',buyList)
+                        let currentClsLong;
+                        buyList.forEach(buyRecord=>{
+                            if(buyRecord['购课编码']===currentBuyCode){
+                                currentClsLong=buyRecord['购课时长（天）']
+                            }
+                        });
+                        const compareDate=new Date(currentEndDate)-new Date();
+                        let h4Title;
+                        if(compareDate<=0){
+                            h4Title='最近一次失效的限时课程';
+                        }else{
+                            //如果有多于一条，显示“目前有效”
+                            h4Title='目前有效的限时课程';
                         }
-                    });
-                    const compareDate=new Date(currentEndDate)-new Date();
-                    let h4Title;
-                    if(compareDate<=0){
-                        h4Title='最近一次失效的限时课程';
+                        currentClass.innerHTML=`
+                        <div class="body-history-list" style="padding:8px;">
+                        <h4>${h4Title}</h4>
+                        <hr>
+                        <div><h5>购课编码: ${currentBuyCode}</h5></div>
+                        <div><h5>购课时长: ${currentClsLong}</h5></div>
+                        <div ><h5>生效日期: ${dateToString(currentStartDate,'date')}</h5></div>
+                        <div id='latestValidEndDate'><h5>结束日期: ${dateToString(currentEndDate,'date')}</h5></div>
+                        </div>
+                        `
                     }else{
-                        //如果有多于一条，显示“目前有效”
-                        h4Title='目前有效的限时课程';
+                        currentClass.style.display="none";
                     }
-                    currentClass.innerHTML=`
-                    <div class="body-history-list" style="padding:8px;">
-                    <h4>${h4Title}</h4>
-                    <hr>
-                    <div><h5>购课编码: ${currentBuyCode}</h5></div>
-                    <div><h5>购课时长: ${currentClsLong}</h5></div>
-                    <div ><h5>生效日期: ${dateToString(currentStartDate,'date')}</h5></div>
-                    <div id='latestValidEndDate'><h5>结束日期: ${dateToString(currentEndDate,'date')}</h5></div>
-                    </div>
-                    `
+                    
                 }else{
-                    currentClass.style.display="none";
+                    if(validLimitClassRec[0]['validLimitClassRec']['购课编码']!==''){
+                        currentClass.style.display="block";               
+                        const currentBuyCode=latest_limit_class_rec[0]['购课编码'];
+                        const currentStartDate=latest_limit_class_rec[0]['限时课程起始日'];
+                        const currentEndDate=latest_limit_class_rec[0]['限时课程结束日'];
+
+                        const buyList=Object.keys(buy_list).map(key => (                
+                            buy_list[key]
+                            ));
+                        console.log('buyList',buyList)
+                        let currentClsLong;
+                        buyList.forEach(buyRecord=>{
+                            if(buyRecord['购课编码']===currentBuyCode){
+                                currentClsLong=buyRecord['购课时长（天）']
+                            }
+                        });
+                        //如果只有一条，显示“最近一次生效课程”
+                        const compareDate=new Date(currentEndDate)-new Date();
+                        let h4Title;
+                        if(compareDate<=0){
+                            h4Title='最近一次失效的限时课程';
+                        }else{
+                            //如果有多于一条，显示“目前有效”
+                            h4Title='目前有效的限时课程';
+                        }
+                        currentClass.innerHTML=`
+                        <div class="body-history-list" style="padding:8px;">                
+                        <h4>${h4Title}</h4>
+                        <hr>
+                        <div><h5>购课编码: ${currentBuyCode}</h5></div>
+                        <div><h5>购课时长: ${currentClsLong}</h5></div>
+                        <div><h5>生效日期: ${dateToString(currentStartDate,'date')}</h5></div>
+                        <div id='latestValidEndDate'><h5>结束日期: ${dateToString(currentEndDate,'date')}</h5></div>
+                        </div>
+                        `
+                    }else{
+                        currentClass.style.display="none";
+                    }             
                 }
-                
             }else{
-                if(validLimitClassRec[0]['validLimitClassRec']['购课编码']!==''){
-                    currentClass.style.display="block";               
-                    const currentBuyCode=latest_limit_class_rec[0]['购课编码'];
-                    const currentStartDate=latest_limit_class_rec[0]['限时课程起始日'];
-                    const currentEndDate=latest_limit_class_rec[0]['限时课程结束日'];
-
-                    const buyList=Object.keys(buy_list).map(key => (                
-                        buy_list[key]
-                        ));
-                    console.log('buyList',buyList)
-                    let currentClsLong;
-                    buyList.forEach(buyRecord=>{
-                        if(buyRecord['购课编码']===currentBuyCode){
-                            currentClsLong=buyRecord['购课时长（天）']
-                        }
-                    });
-                    //如果只有一条，显示“最近一次生效课程”
-                    const compareDate=new Date(currentEndDate)-new Date();
-                    let h4Title;
-                    if(compareDate<=0){
-                        h4Title='最近一次失效的限时课程';
-                    }else{
-                        //如果有多于一条，显示“目前有效”
-                        h4Title='目前有效的限时课程';
-                    }
-                    currentClass.innerHTML=`
-                    <div class="body-history-list" style="padding:8px;">                
-                    <h4>${h4Title}</h4>
-                    <hr>
-                    <div><h5>购课编码: ${currentBuyCode}</h5></div>
-                    <div><h5>购课时长: ${currentClsLong}</h5></div>
-                    <div><h5>生效日期: ${dateToString(currentStartDate,'date')}</h5></div>
-                    <div id='latestValidEndDate'><h5>结束日期: ${dateToString(currentEndDate,'date')}</h5></div>
-                    </div>
-                    `
-                }else{
-                    currentClass.style.display="none";
-                }             
+                currentClass.innerHTML='<div><h5>客户无既往限时课程记录</h5><div>';
             }
             
         }
@@ -329,23 +335,28 @@
                 limit_cls_recs=data['limit_cls_recs'];
                 latest_limit_class_rec=data['maxdate_limit_class_rec'];
                 const maxdate_limit_class_rec=data['maxdate_limit_class_rec'];
-                const maxDateArr=Object.keys(maxdate_limit_class_rec).map(key => (maxdate_limit_class_rec[key]));
-                console.log(maxDateArr)
-                
-                maxDateArr.forEach(maxDate=>{     
-                    const compareDate=new Date(maxDate['限时课程结束日'])-new Date();           
-                    //今天已超过结束日
-                    if(compareDate<0){
-                        if(startType==='新单'){
-                            valid_limit_class_rec='';
+                console.log('maxdate_limit_class_rec',maxdate_limit_class_rec)
+                if(Object.keys(maxdate_limit_class_rec).length>0 && maxdate_limit_class_rec[0]['cus_id']){
+                    const maxDateArr=Object.keys(maxdate_limit_class_rec).map(key => (maxdate_limit_class_rec[key]));
+                    console.log(maxDateArr)
+                    
+                    maxDateArr.forEach(maxDate=>{     
+                        const compareDate=new Date(maxDate['限时课程结束日'])-new Date();           
+                        //今天已超过结束日
+                        if(compareDate<0){
+                            if(startType==='新单'){
+                                valid_limit_class_rec='';
+                            }else{
+                                valid_limit_class_rec=maxdate_limit_class_rec;
+                            }
+                        //今天没有超过结束日    
                         }else{
                             valid_limit_class_rec=maxdate_limit_class_rec;
                         }
-                        
-                    }else{
-                        valid_limit_class_rec=maxdate_limit_class_rec;
-                    }
-                })
+                    })
+                }else{
+                    valid_limit_class_rec='';
+                }
                 //显示有效课程
                 showCurrentClass();
 
@@ -371,8 +382,7 @@
                         prompt.innerText='没有待开课的限时课程'
                     
                         console.log('没有待开课的限时课程')
-                    }
-                    
+                    }                   
 
                 }else if(startType==='延长'){
                     if(valid_limit_class_rec && valid_limit_class_rec[0]['购课编码']!==''){
@@ -400,18 +410,14 @@
 
                         
                     }else{
-                        clsLongBlock.innerText='';
+                        clsLongBlock.style.display='None';
                         prompt.innerText='没有待延长的限时课程'
                         
                         console.log('没有待延长的限时课程')
                     }
                     
-                    
-                    //提示是否需要购课
-                    // showConfirmationDialog()
-                    
                 }
-                  })
+                })
                 .catch(error => console.error('Error:', error));
 
             

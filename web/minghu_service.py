@@ -81,10 +81,11 @@ class MinghuService(Flask):
         self.add_url_rule('/open_cus_fn', view_func=self.open_cus_fn,methods=['GET','POST'])
         #遍历会员资料文件夹，生成新的客户ID号
         # self.add_url_rule('/check_new', view_func=self.check_new,methods=['GET','POST'])
-        #通过copy模板.xlsm生成新会员的文件 
-        self.add_url_rule('/generate_new', view_func=self.generate_new,methods=['GET','POST'])
+
+        #生成新会员
+        self.add_url_rule('/generate_new', view_func=self.generate_new_db,methods=['GET','POST'])
         #写入购课记录
-        self.add_url_rule('/write_buy', view_func=self.write_buy,methods=['GET','POST'])
+        self.add_url_rule('/write_buy', view_func=self.write_buy_db,methods=['GET','POST'])
         
         #获取客户既往购课记录表，不整理
         self.add_url_rule('/get_cus_buy_list', view_func=self.get_cus_buy_list,methods=['GET','POST'])        
@@ -95,7 +96,7 @@ class MinghuService(Flask):
         #写入体测记录
         self.add_url_rule('/write_body', view_func=self.write_body_db,methods=['GET','POST'])
         #处理开课记录
-        self.add_url_rule('/deal_start_class_page', view_func=self.deal_start_class_page,methods=['GET','POST'])
+        self.add_url_rule('/deal_start_class_page', view_func=self.deal_start_class_page_db,methods=['GET','POST'])
         
         # 写入体验课上课记录
         self.add_url_rule('/write_trial_rec', view_func=self.write_trial_rec_db,methods=['GET','POST'])
@@ -146,7 +147,30 @@ class MinghuService(Flask):
     def write_trial_rec_db(self):
         try:
             data=request.json
-            print(data)
+            data['trial_cls_long']=1
+            data['datetime']=data['dateString']+' '+data['timeString']
+            data['finish_yn']='是'
+            data['deal_yn']='否'
+            data['deal_date']=None
+            data['formal_cus_id_name']=None
+            del data['dateString']
+            del data['timeString']
+            data_cols=['datetime','trial_cls_long','cusNameInput','mobilePhone','ins','finish_yn','cusSource','comment','deal_yn','deal_date','formal_cus_id_name']
+            sorted_data={key:data[key] for key in data_cols}
+            values=tuple(sorted_data.values())
+            # values = ', '.join(f'"{data[key]}"' if sorted_data[key] is not None else 'NULL' for key in data_cols)
+            # print(values)            
+            conn=self.connect_mysql()
+            cursor=conn.cursor()
+            sql=f'''
+                    insert into trial_cls_table (trial_datetime,trial_cls_long,trial_cus_name,trial_cus_mobile,ins_name,finish_yn,trial_cus_source,comment,deal_yn,deal_date,formal_cus_id_name)
+                    values 
+                    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                '''
+            cursor.execute(sql,values)
+            conn.commit()
+            cursor.close()
+            conn.close()
 
         except Exception as e:
             print('写入体验课表错误：',e)
@@ -228,7 +252,47 @@ class MinghuService(Flask):
             print('写入限时课程表或辅助表错误：',e)
             return jsonify({'result':'写入限时课程表及辅助表成功错误'+e})
 
-    
+    def deal_start_class_page_db(self):    
+        try:
+            data=request.json
+            print(data)
+            data['cus_id']=data['cusName'][:7].strip()
+            data['cus_name']=data['cusName'][7:].strip()
+            del data['cusName']
+            data_cols=['cus_id','cus_name','buyCode','startDate','endDate']
+            sorted_data={key: data[key] for key in data_cols}
+            # print(sorted_data)
+            values=tuple(sorted_data.values())
+            conn=self.connect_mysql()
+            cursor=conn.cursor()
+            sql=f'''
+                insert into lmt_cls_rec_table
+                (cus_id,cus_name,buy_code,start_date,end_date)
+                values
+                (%s,%s,%s,%s,%s)
+            '''
+            cursor.execute(sql,values)
+
+            sql=f'''
+                delete from  not_start_lmt_table
+                where
+                buy_code=%s
+            '''
+            cursor.execute(sql,(sorted_data['buyCode']))
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+
+
+
+            return jsonify({'result':'写入限时课程表,删除未开课表记录成功'})
+        except Exception as e:
+            print('写入限时课程表或辅助表错误：',e)
+            return jsonify({'result':'写入限时课程表及删除未开课表错误'+e})
+
+   
     def add_rec_to_start_class_table(self,dic):
         fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',dic['cusName'].strip()+'.xlsm')
 
@@ -353,7 +417,7 @@ class MinghuService(Flask):
             
             value=tuple(sorted_data.values())
             sql=f"insert into body_msr_table (cus_id,cus_name,msr_date,ht,wt,bfr,chest,l_arm,r_arm,waist,hip,l_leg,r_leg,l_calf,r_calf,heart,balance,power,flex,core) values {value}"
-            print(value,sql)
+            # print(value,sql)
             cursor.execute(sql)
             conn.commit()
             cursor.close()
@@ -676,15 +740,18 @@ class MinghuService(Flask):
         '''
         cursor.execute(sql)
         buy_stat=cursor.fetchall()
-        df=pd.DataFrame(buy_stat)
-        df.columns=['购课编码','应收金额','实收金额','购课类型','收款日期','收款次数']
-        df['应收金额']=df['应收金额'].astype(float)
-        df['实收金额']=df['实收金额'].astype(float)
-        df['未收金额']=df['应收金额']-df['实收金额']
-        df=df[['购课编码','购课类型','应收金额','实收金额','未收金额','收款次数','收款日期']]
+        if buy_stat:
+            df=pd.DataFrame(buy_stat)
+            df.columns=['购课编码','应收金额','实收金额','购课类型','收款日期','收款次数']
+            df['应收金额']=df['应收金额'].astype(float)
+            df['实收金额']=df['实收金额'].astype(float)
+            df['未收金额']=df['应收金额']-df['实收金额']
+            df=df[['购课编码','购课类型','应收金额','实收金额','未收金额','收款次数','收款日期']]
 
-        buy_stat_list=[row.tolist() for row in df.values]        
-        return jsonify(buy_stat_list)
+            buy_stat_list=[row.tolist() for row in df.values]        
+            return jsonify({'buy_stat_list':buy_stat_list})
+        else:
+            return jsonify({'buy_stat_list':None})
 
     def get_cus_buy_list(self,cus_name):
         # cus_name=request.data.decode('utf-8')
@@ -784,7 +851,10 @@ class MinghuService(Flask):
         except Exception as e:
             return jsonify({'error':e,'not_start_list':dic_not_start,'buy_list':dic_buy,'limit_cls_recs':dic_limit_cls_recs,'maxdate_limit_class_rec':dic_limit_maxdate_rec})
 
-    def deal_start_limit_page_db(self,cus_id_name='MH00113肖婕'):
+    def deal_start_limit_page_db(self):
+        print('get buy history via deal_start_limit_page_db()')
+        cus_id_name=request.data.decode('utf-8')
+        # print(cus_id_name)
         cus_id,cus_name=cus_id_name[:7],cus_id_name[7:]
         conn=self.connect_mysql() 
         cursor=conn.cursor()
@@ -838,7 +908,7 @@ class MinghuService(Flask):
             maxdate_limit_cls_rec_cols=['id','cus_id','cus_name','购课编码','限时课程起始日','限时课程结束日']
             maxdate_limit_cls_rec=self.mysql_list_data_to_dic(data=maxdate_limit_cls_rec,mysql_cols=maxdate_limit_cls_rec_cols)  
         else:
-            maxdate_limit_cls_rec={'id':'','cus_id':'','cus_name':'','购课编码':'','限时课程起始日':'','限时课程结束日':''}   
+            maxdate_limit_cls_rec={'0':{'id':'','cus_id':'','cus_name':'','购课编码':'','限时课程起始日':'','限时课程结束日':''}}   
 
 
         return jsonify({'not_start_list':not_start_list,'buy_list':buy_list,'limit_cls_recs':limit_cls_recs,'maxdate_limit_class_rec':maxdate_limit_cls_rec})
@@ -924,7 +994,7 @@ class MinghuService(Flask):
             print('写入体验课表错误：',e)
             return '写入体验课表错误：'+e
     
-    def write_buy(self,):
+    def write_buy(self):
         wk_dir=self.config_mh['work_dir']
         dat=request.json
         for key,value in dat.items():
@@ -961,6 +1031,55 @@ class MinghuService(Flask):
         self.write_buy_date_to_trial_table(formal_cus_name=df['客户购课编号'].tolist()[0][:-8],first_buy_date=df['收款日期'].tolist()[0])
 
         return f'写入成功, 行号：{row}, {aux_res}'
+
+    def write_buy_db(self):
+        try:
+            wk_dir=self.config_mh['work_dir']
+            dat=request.json
+            dat['cus_id']=dat['客户编码及姓名'][:7].strip()
+            dat['cus_name']=dat['客户编码及姓名'][7:].strip()
+            del dat['客户编码及姓名']
+            data_cols=['cus_id','cus_name','收款日期', '客户购课编号','购课类型','购课节数', '购课时长（天）', '应收金额', '实收金额', '收款人', '收入类别', '备注']
+            sorted_data={key: dat[key] for key in data_cols}
+            values=tuple(sorted_data.values())
+
+            conn=self.connect_mysql()
+            cursor=conn.cursor()
+
+            sql=f'''
+                insert into buy_rec_table
+                (cus_id,cus_name,buy_date,buy_code,buy_type,buy_num,buy_cls_days,pay,real_pay,cashier_name,income_type,comment)
+                values
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            '''
+
+            cursor.execute(sql,values)
+            cus_name=sorted_data['cus_name']
+            res_txt=f'{cus_name} 增加一条购课记录'
+
+
+            if sorted_data['购课类型'] in ['限时私教课','限时团课']:
+                try:
+                    sql=f'''
+                        insert into not_start_lmt_table
+                        (cus_id,cus_name,buy_code)
+                        values
+                        (%s,%s,%s)
+                    '''
+                    cursor.execute(sql,[sorted_data['cus_id'],sorted_data['cus_name'],sorted_data['客户购课编号']])
+                    res_txt=f'; {cus_name} 未开课的限时课程记录增加成功'
+                except Exception as e:
+                    res_txt=f'; ERROR: {cus_name} 未开课限时课程记录未增加成功'
+                    print(f'ERROR: {cus_name} 未开课限时课程记录未增加成功')
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            return res_txt
+        except Exception as e:
+            print('wirte_buy_db() error', e)
+            return 'error'
 
 
     def cus_list(self):
@@ -1293,6 +1412,8 @@ class MinghuService(Flask):
    
     def cus_infos(self):
         return render_template('cus_infos.html')
+
+
 
     def input_buy(self):
         return render_template('input_buy.html')
@@ -1729,6 +1850,67 @@ class MinghuService(Flask):
                 self.release_event.set()
                 return e
         
+    def generate_new_db(self):
+        with self.app_lock:
+            conn=self.connect_mysql()
+            cursor=conn.cursor()
+            # sql=f"select max(id) from basic_info_table"
+            sql=f"SELECT max(cast(substring(cus_id,3) as UNSIGNED)) FROM basic_info_table;"
+            cursor.execute(sql)
+            max_id=cursor.fetchall()[0][0]
+            cursor.close()
+            conn.close()
+            txt_num=str(max_id+1).zfill(5)
+            try:
+                fn_in=request.data
+                fn='MH'+txt_num+fn_in.decode('utf-8')
+                # fn='MH00220王测试|王测试|女|199008|小红书|pc'
+                data={}
+  
+                data['cus_id_name'],data['trial_cus_name'],data['sex'],data['mobile_phone'],data['birth_month'],data['source'],data['dvc']=fn.split('|')
+                data['cus_id']=data['cus_id_name'][:7]
+                data['cus_name']=data['cus_id_name'][7:]
+                data['nick_name']=data['cus_name'] if len(data['cus_name'])<2 else data['cus_name'][1:]
+                data['birthday']=data['birth_month'][:4]+'-'+data['birth_month'][4:]+'-'+'01'
+                data['birthday_type']='ym'
+                trial_cus_name=data['trial_cus_name']
+                cus_id_name=data['cus_id_name']
+                del data['cus_id_name']
+                del data['birth_month']
+                del data['trial_cus_name']
+                data_col=['cus_id','cus_name','nick_name','sex','mobile_phone','birthday','birthday_type','source']
+                sorted_data={key: data[key].strip() for key in data_col}
+                values=tuple(sorted_data.values())
+                today=datetime.datetime.now().strftime('%Y-%m-%d')
+                
+                conn=self.connect_mysql()
+                cursor=conn.cursor()
+                sql=f'''
+                        insert into  basic_info_table (cus_id,cus_name,nick_name,sex,mobile_phone,birthday,birthday_type,source) 
+                        values
+                        (%s,%s,%s,%s,%s,%s,%s,%s)
+                    '''
+                cursor.execute(sql,values)
+
+                if trial_cus_name:
+                    sql=f'''
+                        update trial_cls_table 
+                        set deal_yn='是',deal_date=%s,formal_cus_id_name=%s                        
+                        where trial_cus_name=%s order by 'id' Desc LIMIT 1
+                        '''
+                    cursor.execute(sql,[today,cus_id_name,trial_cus_name])
+
+                conn.commit()
+                cursor.close()
+                conn.close()
+
+                return f'{cus_id_name} 已成为会员'
+            except Exception as e:
+                print(e)
+                return e
+        
+
+
     def write_deal_cus_name_to_trial_table(self,formal_cus_name,trial_cus_name):
         try:
             fn=os.path.join(self.config_mh['work_dir'],'03-教练管理','体验课上课记录表.xlsx')
