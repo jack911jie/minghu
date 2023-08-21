@@ -91,7 +91,7 @@ class MinghuService(Flask):
         self.add_url_rule('/get_cus_buy_list', view_func=self.get_cus_buy_list,methods=['GET','POST'])        
            
         #执行写入上课记录、写入训练记录
-        self.add_url_rule('/deal_cls', view_func=self.deal_cls,methods=['GET','POST'])
+        self.add_url_rule('/deal_cls', view_func=self.deal_cls_db,methods=['GET','POST'])
         
         #写入体测记录
         self.add_url_rule('/write_body', view_func=self.write_body_db,methods=['GET','POST'])
@@ -551,6 +551,110 @@ class MinghuService(Flask):
 
         # print(cls_data)
         return cls_tkn_res+'\n'+train_rec_res
+
+    def deal_cls_db(self):
+        try:
+            data=request.json
+            conn=self.connect_mysql()
+            cursor=conn.cursor()
+
+            #教练上课记录
+            cls_tkn_rec=data['cls_tkn']
+            cls_tkn_rec['cus_id']=cls_tkn_rec['cus_name'][:7]
+            cls_tkn_rec['cus_name']=cls_tkn_rec['cus_name'][7:]
+            cls_tkn_rec['cls_datetime']=cls_tkn_rec['cls_tkn_date']+' '+cls_tkn_rec['cls_tkn_time']
+            cus_id=cls_tkn_rec['cus_id']
+            cus_name=cls_tkn_rec['cus_name']
+            ins_name=cls_tkn_rec['ins_name']
+            basic_cls_comment=cls_tkn_rec['basic_cls_comment']
+            train_datetime=cls_tkn_rec['cls_datetime']
+
+            del cls_tkn_rec['cls_tkn_date']
+            del cls_tkn_rec['cls_tkn_time']
+
+            cls_tkn_data_cols=['cus_id','cus_name','cls_datetime','cls_long','cls_type','ins_name','basic_cls_comment']
+            sorted_cls_tkn_data={key: cls_tkn_rec[key] for key in cls_tkn_data_cols} 
+            values_cls_tkn=tuple(sorted_cls_tkn_data.values())
+            
+            sql_cls_tkn=f'''
+                insert into cls_tkn_rec_table
+                (cus_id,cus_name,cls_datetime,cls_long,cls_type,ins_name,comment) 
+                values 
+                (%s,%s,%s,%s,%s,%s,%s)
+            '''
+            cursor.execute(sql_cls_tkn,values_cls_tkn)
+
+            #训练记录
+            train_data=data['train_rec']
+            #替换''为'0'
+           
+            
+
+            calories=train_data['calories']
+            train_comment=train_data['trainComment']
+            train_items=train_data['train_recs']
+
+            
+
+            oxy_items=[]
+            non_oxy_items=[]
+            for train_item in train_items:
+                # 抗阻运动
+                non_oxy_row=[]
+                oxy_row=[]
+                if train_item['nonOxyName']:   
+                    action_name=train_item['nonOxyName']
+                    sql=f'select muscle from train_item_table where action_name="{action_name}"'
+                    cursor.execute(sql)
+                    muscle=cursor.fetchall()[0][0]
+                    non_oxy_row.extend([train_datetime,cus_id,cus_name,muscle,action_name,train_item['nonOxyWt'],
+                                            train_item['nonOxyDis'],train_item['nonOxyNum'],train_item['nonOxyGroup'],
+                                            calories,ins_name,basic_cls_comment])
+                if non_oxy_row:
+                    non_oxy_items.append(non_oxy_row)
+
+                if train_item['oxyName']:                   
+                    oxy_row.extend([train_datetime,cus_id,cus_name,train_item['oxyName'],train_item['oxyTime'],
+                                    train_item['oxyGroup'],calories,ins_name,train_comment])
+                if oxy_row:
+                    oxy_items.append(oxy_row)
+
+            #将''替换为'0',再将数字转换为浮点数      
+            oxy_items = [[item if item != '' else '0' for item in sublist] for sublist in oxy_items]     
+            non_oxy_items = [[item if item != '' else '0' for item in sublist] for sublist in non_oxy_items]                                      
+            oxy_items = [[float(item) if item.replace('.', '', 1).isdigit() else item for item in sublist] for sublist in oxy_items]
+            non_oxy_items = [[float(item) if item.replace('.', '', 1).isdigit() else item for item in sublist] for sublist in non_oxy_items]
+            
+            # print(oxy_items,non_oxy_items)
+
+            non_oxy_train_sql=f'''
+                insert into train_nonoxy_rec_table 
+                (train_datetime,cus_id,cus_name,muscle,non_oxy_name,non_oxy_wt,non_oxy_dis,non_oxy_num,non_oxy_group,calories,ins_name,comment) 
+                values 
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
+            '''
+            cursor.executemany(non_oxy_train_sql,non_oxy_items)
+            
+            oxy_train_sql=f'''
+                insert into train_oxy_rec_table 
+                (train_datetime,cus_id,cus_name,oxy_name,oxy_time,oxy_group,calories,ins_name,comment) 
+                values 
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s);
+
+            '''
+            cursor.executemany(oxy_train_sql,oxy_items)
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+
+            return '写入上课记录及训练记录成功'
+        except Exception as e:
+            print('deal_cls_db() ERROR',e)
+            return  '写入上课记录及训练记录错误'
+
+
 
     def train_info(self,action_name,dic):
     # print('162----',action_name,dic)
