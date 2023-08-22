@@ -14,6 +14,14 @@
         <div id="cusList" class="cus-list-input-start-limit-class" style="display:none;"></div>
         <div id="currentClass"></div>
 
+        <div>
+        <h4>开课人
+        <select id="insSelect">
+            <option value="">请选择</option>
+        </select>
+        </h4>
+        </div>
+
         <div id="cusNameBelowDivs" style="display:none;">
             <div  id="startType" ><h4>开课方式
             
@@ -59,6 +67,7 @@
         let buy_list;
         let valid_limit_class_rec;
         let latest_limit_class_rec;
+        let ins_list;
 
         // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
         document.addEventListener("DOMContentLoaded", function() {   
@@ -96,9 +105,34 @@
                   })
                 .catch(error => console.error('Error:', error));       
                 
-                
+            fetch('/get_ins_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                // ins_list=data
+                console.log(data)
+                insSelector(data)
+                // console.log(cus_list);
+                  })
+                .catch(error => console.error('Error:', error));    
             
         });
+
+        function insSelector(data){
+            const insSelect=document.getElementById('insSelect');
+            const insList=data.ins_list;
+            insList.forEach(function(ins){
+                let option=document.createElement('option');
+                option.value=ins;
+                option.innerText=ins;
+                insSelect.appendChild(option)
+            })
+        }
 
         function showClsLongBlock(clsLong){
             const clsLongBlock=document.getElementById('clsLongBlock');
@@ -217,6 +251,7 @@
             const startDate=document.getElementById('startDate').value;
             const endDate=document.getElementById('endDate').value;
             const startType=document.querySelector('input[name="startTypeRadio"]:checked').value;
+            const insName=document.getElementById('insSelect').value;
             if(startType==='延长'){
                 if(latest_limit_class_rec && latest_limit_class_rec[0]['购课编码']!==''){
                     const compareDate=new Date(endDate)-new Date(latest_limit_class_rec[0]['限时课程结束日']);
@@ -232,7 +267,7 @@
             }
             
             // const compareDate=new Date(endDate)-new Date(latestValidEndDate);
-            if(buyCode===''||startDate===''||endDate===''){
+            if(buyCode===''||startDate===''||endDate===''||insName===''){
                 return '有未选择项目';
             }
             
@@ -250,7 +285,8 @@
                     'cusName':cusName,
                     'buyCode':document.getElementById('selectBuyCodeContainer').value,
                     'startDate':document.getElementById('startDate').value,
-                    'endDate':document.getElementById('endDate').value
+                    'endDate':document.getElementById('endDate').value,
+                    'insName':document.getElementById('insSelect').value
                 }
                 fetch('/deal_start_class_page',{
                     method:"POST",

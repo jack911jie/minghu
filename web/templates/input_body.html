@@ -17,25 +17,25 @@
         <div><h2>录入本次体测数据</h2></div>
         <h4 >体测日期<span style="width:25px;"></span> <input id='date' type='date'></h4>
             <div id="body_msr_data" style="padding-left:10px;padding-right:10px;">
-                <h4>身高 <input id='ht' type="number" style="width:90px;"> cm</h4>
-                <h4>体重 <input id='wt' type="number" style="width:90px;"> Kg</h4>
-                <h4>胸围 <input id='chest' type="number" style="width:90px;"> cm</h4>
-                <h4>左臂围 <input id='l_arm' type="number" style="width:90px;"> cm</h4>
-                <h4>右臂围 <input id='r_arm' type="number" style="width:90px;"> cm</h4>
-                <h4>腰围 <input id='waist' type="number" style="width:90px;"> cm</h4>
-                <h4>臀围 <input id='hip' type="number" style="width:90px;"> cm</h4>
-                <h4>左腿围 <input id='l_leg' type="number" style="width:90px;"> cm</h4>
-                <h4>右腿围 <input id='r_leg' type="number" style="width:90px;"> cm</h4>
-                <h4>左小腿围 <input id='l_calf' type="number" style="width:90px;"> cm</h4>
-                <h4>右小腿围 <input id='r_calf' type="number" style="width:90px;"> cm</h4>
+                <h4>身高 <input id='ht' type="number" min="0" style="width:90px;"> cm</h4>
+                <h4>体重 <input id='wt' type="number" min="0" style="width:90px;"> Kg</h4>
+                <h4>胸围 <input id='chest' type="number" min="0" style="width:90px;"> cm</h4>
+                <h4>左臂围 <input id='l_arm' type="number" min="0" style="width:90px;"> cm</h4>
+                <h4>右臂围 <input id='r_arm' type="number" min="0" style="width:90px;"> cm</h4>
+                <h4>腰围 <input id='waist' type="number" min="0" style="width:90px;"> cm</h4>
+                <h4>臀围 <input id='hip' type="number" min="0" style="width:90px;"> cm</h4>
+                <h4>左腿围 <input id='l_leg' type="number" min="0" style="width:90px;"> cm</h4>
+                <h4>右腿围 <input id='r_leg' type="number" min="0" style="width:90px;"> cm</h4>
+                <h4>左小腿围 <input id='l_calf' type="number" min="0" style="width:90px;"> cm</h4>
+                <h4>右小腿围 <input id='r_calf' type="number" min="0" style="width:90px;"> cm</h4>
             </div>  
         <hr>
             <div id="ins_evaluate" style="padding-left:10px;padding-right:10px;">
-                <h4>心肺 <input id='heart' type="number" style="width:90px;"> 分（满分10分）</h4>
-                <h4>平衡 <input id='balance' type="number" style="width:90px;"> 分（满分10分）</h4>
-                <h4>力量 <input id='power' type="number" style="width:90px;"> 分（满分10分）</h4>
-                <h4>柔韧性 <input id='flex' type="number" style="width:90px;"> 分（满分10分）</h4>
-                <h4>核心 <input id='core' type="number" style="width:90px;"> 分（满分10分）</h4>
+                <h4>心肺 <input id='heart' type="number" min="0" max="10" style="width:90px;"> 分（满分10分）</h4>
+                <h4>平衡 <input id='balance' type="number" min="0" max="10" style="width:90px;"> 分（满分10分）</h4>
+                <h4>力量 <input id='power' type="number" min="0" max="10" style="width:90px;"> 分（满分10分）</h4>
+                <h4>柔韧性 <input id='flex' type="number" min="0" max="10" style="width:90px;"> 分（满分10分）</h4>
+                <h4>核心 <input id='core' type="number" min="0" max="10" style="width:90px;"> 分（满分10分）</h4>
             </div>
         <hr>
         <div id="processingModel" style="display: none;">
@@ -131,23 +131,97 @@
             console.log(inputs);
             let isFormValid=true;
             let blank=0;
-            inputs.forEach(input=>{
-                if(input.id!=='_w_simile' && input.value.trim()===''){                          
-                    console.log('数据检查：填写数据有空项');           
-                    blank+=1;
-                }
-            })
+            try{
+                inputs.forEach(input=>{
+                    if(input.id!=='_w_simile' && input.value.trim()===''){                          
+                        console.log('数据检查：填写数据有空项');           
+                        blank+=1;
+                    }
+                })
 
-            if(blank>0){
-                return false;
-            }else{
-                return true;
+                if(blank>0){                    
+                    throw new Error('有空项');
+                }
+
+                if(parseFloat(document.getElementById('ht').value)<0){
+                    throw new Error('身高为负数');
+                }
+                if(parseFloat(document.getElementById('wt').value)<0){
+                    throw new Error('体重为负数');
+                }
+                if(parseFloat(document.getElementById('chest').value)<0){
+                    throw new Error('胸围为负数');
+                }
+                if(parseFloat(document.getElementById('l_arm').value)<0){
+                    throw new Error('左臂围为负数');
+                }
+                if(parseFloat(document.getElementById('r_arm').value)<0){
+                    throw new Error('右臂围为负数');
+                }
+                if(parseFloat(document.getElementById('waist').value)<0){
+                    throw new Error('腰围为负数');
+                }
+                if(parseFloat(document.getElementById('hip').value)<0){
+                    throw new Error('臀围为负数');
+                }
+
+                if(parseFloat(document.getElementById('l_leg').value)<0){
+                    throw new Error('左大腿围为负数');
+                }
+
+                if(parseFloat(document.getElementById('r_leg').value)<0){
+                    throw new Error('右大腿围为负数');
+                }
+
+                if(parseFloat(document.getElementById('l_calf').value)<0){
+                    throw new Error('左小腿围为负数');
+                }
+                if(parseFloat(document.getElementById('r_calf').value)<0){
+                    throw new Error('右小腿围为负数');
+                }
+                if(parseFloat(document.getElementById('heart').value)<0){
+                    throw new Error('心肺为负数');
+                }
+                if(parseFloat(document.getElementById('balance').value)<0){
+                    throw new Error('平衡为负数');
+                }
+                if(parseFloat(document.getElementById('power').value)<0){
+                    throw new Error('力量为负数');
+                }
+                if(parseFloat(document.getElementById('flex').value)<0){
+                    throw new Error('柔韧性为负数');
+                }
+                if(parseFloat(document.getElementById('core').value)<0){
+                    throw new Error('核心为负数');
+                }
+                if(parseFloat(document.getElementById('heart').value)>10){
+                    throw new Error('心肺超范围');
+                }
+                if(parseFloat(document.getElementById('balance').value)>10){
+                    throw new Error('平衡超范围');
+                }
+                if(parseFloat(document.getElementById('power').value)>10){
+                    throw new Error('力量超范围');
+                }
+                if(parseFloat(document.getElementById('flex').value)>10){
+                    throw new Error('柔韧性超范围');
+                }
+                if(parseFloat(document.getElementById('core').value)>10){
+                    throw new Error('核心超范围');
+                }
+            
+            return 'OK';
+
+            }catch(error){
+                return error;
             }
+            
             
         }
 
         function submit(){
-            if(submitCheck()){
+            const checkResult=submitCheck();
+            if(checkResult==='OK'){
                 console.log('数据完整');
                 const inputs=document.querySelectorAll('input');
                 let dicBody={};
@@ -191,7 +265,7 @@
 
                 
             }else{
-                alert('有项目未填写，请完成。');   
+                alert(checkResult);   
                 console.log('填写数据有空项');
             }
             

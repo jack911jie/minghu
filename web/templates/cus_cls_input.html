@@ -147,7 +147,7 @@
                         </h4>
 
                         <h4>距离
-                            <input id="nonOxyDis-0" style="width: 40px;" type="number">米</h4>
+                            <input id="nonOxyDis-0" style="width: 40px;" type="number" min="0">米</h4>
 
                         <h4>组数
                         <select id="nonOxyGroup-0">
@@ -170,7 +170,7 @@
                     <input id="oxyName-0" oninput="handleOxyNameInput(this)" onclick="handleOxyNameInput(this)" style="font-size:18px;color:rgb(26, 122, 58);">
                     <div id="oxyTrainList-0" class="train-list4" style="display:none"></div>
                         <h4>有氧时间 
-                        <input id="oxyTime-0" style="width: 50px;" type="number"> 分</h4>
+                        <input id="oxyTime-0" style="width: 50px;" type="number" min="0"> 分</h4>
 
                     <h4>组数<span style="width:10px;"></span>
                     <select id="oxyGroup-0">
@@ -196,7 +196,7 @@
         <button id="appendTrainButton" onclick="copyTrain()">添加一条训练记录</button>
         <div>
             <h4>热量消耗
-            <input  type="number" id="calories" style="width:50px;"> Kcal</h4>
+            <input  type="number" id="calories" style="width:50px;" min="0"> Kcal</h4>
             <h4>上课点评</h4>
             <input type="text" id="trainComment" style="height:80px;">
             <div></div>
@@ -645,9 +645,16 @@
                 //不是备注的基础信息不能为空
                 if(key==='calories' && cls_recs['train_rec'][key]===''){
                     checkValueEmpty+=1;
-                    emptyItem=emptyItem+'，'+'卡路里';
+                    emptyItem=emptyItem+'，'+'消耗热量未填写';
+                }
+
+                //热量消耗必须为正数
+                if(key==='calories' && parseInt(cls_recs['train_rec'][key])<0){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+'消耗热量为负数';
                 }
             }
+            
 
             let num=1;
             for(const key in cls_recs['train_rec']['train_recs']){
@@ -664,6 +671,22 @@
                     checkValueEmpty+=1;
                     emptyItem=emptyItem+'，'+`第${num}条：有氧训练时间`;
                 }
+
+                //有氧训练时间必须为正数
+                if(cls_recs['train_rec']['train_recs'][key]['oxyName']!=='' && parseInt(cls_recs['train_rec']['train_recs'][key]['oxyTime'])<0){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+`第${num}条：有氧训练时间为负数`;
+                }
+
+                //抗阻训练距离必须为正数
+                if(cls_recs['train_rec']['train_recs'][key]['nonOxyDis']!=='' && parseInt(cls_recs['train_rec']['train_recs'][key]['nonOxyDis'])<0){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+`第${num}条：抗阻训练距离为负数`;
+                }
+
+                
+
+
                 num+=1;
 
                 
@@ -731,7 +754,7 @@
             }else{
                 document.getElementById("submit").style.display = "none";
                 document.getElementById("submit").disabled=true;
-                alert(`有些信息未填写，请填完: ${emptyItem.slice(1,)}`);
+                alert(`有些信息未填写或填写错误，请检查: ${emptyItem.slice(1,)}`);
             }
 
         }

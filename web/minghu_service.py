@@ -255,11 +255,11 @@ class MinghuService(Flask):
     def deal_start_class_page_db(self):    
         try:
             data=request.json
-            print(data)
+            # print(data)
             data['cus_id']=data['cusName'][:7].strip()
             data['cus_name']=data['cusName'][7:].strip()
             del data['cusName']
-            data_cols=['cus_id','cus_name','buyCode','startDate','endDate']
+            data_cols=['cus_id','cus_name','buyCode','startDate','endDate','insName']
             sorted_data={key: data[key] for key in data_cols}
             # print(sorted_data)
             values=tuple(sorted_data.values())
@@ -267,12 +267,13 @@ class MinghuService(Flask):
             cursor=conn.cursor()
             sql=f'''
                 insert into lmt_cls_rec_table
-                (cus_id,cus_name,buy_code,start_date,end_date)
+                (cus_id,cus_name,buy_code,start_date,end_date,ins_name)
                 values
-                (%s,%s,%s,%s,%s)
+                (%s,%s,%s,%s,%s,%s)
             '''
             cursor.execute(sql,values)
 
+            #从未开课表中删除对应的购课记录，如无，mysql也不会报错
             sql=f'''
                 delete from  not_start_lmt_table
                 where
@@ -576,6 +577,7 @@ class MinghuService(Flask):
             sorted_cls_tkn_data={key: cls_tkn_rec[key] for key in cls_tkn_data_cols} 
             values_cls_tkn=tuple(sorted_cls_tkn_data.values())
             
+            
             sql_cls_tkn=f'''
                 insert into cls_tkn_rec_table
                 (cus_id,cus_name,cls_datetime,cls_long,cls_type,ins_name,comment) 
@@ -609,21 +611,29 @@ class MinghuService(Flask):
                     muscle=cursor.fetchall()[0][0]
                     non_oxy_row.extend([train_datetime,cus_id,cus_name,muscle,action_name,train_item['nonOxyWt'],
                                             train_item['nonOxyDis'],train_item['nonOxyNum'],train_item['nonOxyGroup'],
-                                            calories,ins_name,basic_cls_comment])
+                                            calories,ins_name,train_comment])
                 if non_oxy_row:
+                    non_oxy_row[-1]=non_oxy_row[-1] if non_oxy_row[-1] else None
                     non_oxy_items.append(non_oxy_row)
 
                 if train_item['oxyName']:                   
                     oxy_row.extend([train_datetime,cus_id,cus_name,train_item['oxyName'],train_item['oxyTime'],
                                     train_item['oxyGroup'],calories,ins_name,train_comment])
                 if oxy_row:
+                    oxy_row[-1]=oxy_row[-1] if oxy_row[-1] else None
                     oxy_items.append(oxy_row)
 
             #将''替换为'0',再将数字转换为浮点数      
             oxy_items = [[item if item != '' else '0' for item in sublist] for sublist in oxy_items]     
-            non_oxy_items = [[item if item != '' else '0' for item in sublist] for sublist in non_oxy_items]                                      
-            oxy_items = [[float(item) if item.replace('.', '', 1).isdigit() else item for item in sublist] for sublist in oxy_items]
-            non_oxy_items = [[float(item) if item.replace('.', '', 1).isdigit() else item for item in sublist] for sublist in non_oxy_items]
+            non_oxy_items = [[item if item != '' else '0' for item in sublist] for sublist in non_oxy_items]    
+            # #评论为空                  
+            # oxy_items[-1]=''        
+            # non_oxy_items[-1]=''
+            try:
+                oxy_items = [[float(item) if item.replace('.', '', 1).isdigit() else item for item in sublist] for sublist in oxy_items]
+                non_oxy_items = [[float(item) if item.replace('.', '', 1).isdigit() else item for item in sublist] for sublist in non_oxy_items]
+            except:
+                pass
             
             # print(oxy_items,non_oxy_items)
 

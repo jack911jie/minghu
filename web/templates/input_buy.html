@@ -38,21 +38,21 @@
         <div id="errBuyType" class="inline2"></div>
 
         <h3>购课节数</h3>
-        <input type="number" id="buyNum" name="buyNum" step="1" oninput="onInputBuyNumDaysCheck(this.id)">
+        <input type="number" id="buyNum" name="buyNum" step="1" min="0" oninput="onInputBuyNumDaysCheck(this.id)">
         <div id="errBuyNum" class="inline2" ></div>
         <p></p>
 
         <h3>购课时长（天）</h3>
-        <input type="number" id="buyDays" name="buyDays" step="1" oninput="onInputBuyNumDaysCheck(this.id)">
+        <input type="number" id="buyDays" name="buyDays" step="1" min="0" oninput="onInputBuyNumDaysCheck(this.id)">
         <div id="errBuyDays" class="inline2" ></div>
         <p></p>
 
         <h3>应收金额</h3>
-        <input type="number" id="pay" name="pay" step="0.01">
+        <input type="number" id="pay" name="pay" step="0.01" min="0">
         <p></p>
 
         <h3>实收金额</h3>
-        <input type="number" id="realPay" name="realPay" step="0.01">
+        <input type="number" id="realPay" name="realPay" step="0.01" min="0">
         <p></p>
 
         <h3>收款人</h3>
@@ -387,7 +387,19 @@
                         ){
                             throw new Error('限时课程必须同时输入购课节数及购课时长（天）');
                         }
-                    }                    
+                    }         
+                    if(parseInt(document.getElementById('buyNum').value)<0){
+                        throw new Error('购课节数必须为正数')
+                    }          
+                    if(parseInt(document.getElementById('buyDays').value)<0){
+                        throw new Error('购课天数必须为正数')
+                    }      
+                    if(parseFloat(document.getElementById('pay').value)<0){
+                        throw new Error('应收金额必须为正数')
+                    }   
+                    if(parseFloat(document.getElementById('realPay').value)<0){
+                        throw new Error('实收金额必须为正数')
+                    }   
                 });
                 selectElements.forEach((select)=>{
                     console.log(select.value);
