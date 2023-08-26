@@ -2054,7 +2054,7 @@ class MinghuService(Flask):
 
     def welcome(self):
         print('welcome')
-        return jsonify({'res':'关于我们页面','res2':'这个是welcome页面'})
+        return jsonify({'res':'关于我们页面','res2':'这个是welcome页面KK'})
 
 class Vividict(dict):
     def __missing__(self, key):
