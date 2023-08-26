@@ -39,6 +39,8 @@ class MinghuService(Flask):
         self.add_url_rule('/cus_infos',view_func=self.cus_infos)
         #欢迎页面
         self.add_url_rule('/welcome',view_func=self.welcome)
+        #欢迎页面
+        self.add_url_rule('/test_copy',view_func=self.test_copy)
         #上课记录页面
         self.add_url_rule('/cus_cls_input',view_func=self.cus_cls_input)
         #新生成客户页面
@@ -112,6 +114,9 @@ class MinghuService(Flask):
         )
 
         return conn
+
+    def test_copy(self):
+        return render_template('./test_copy.html')
   
 
     def write_trial_rec(self):
@@ -2048,7 +2053,8 @@ class MinghuService(Flask):
 
 
     def welcome(self):
-        return '关于我们页面'
+        print('welcome')
+        return jsonify({'res':'关于我们页面','res2':'这个是welcome页面'})
 
 class Vividict(dict):
     def __missing__(self, key):
