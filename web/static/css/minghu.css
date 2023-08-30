@@ -27,6 +27,14 @@ h3{
   background: rgb(248, 249, 252);
   color:#5a6ba3
 }
+.book_cusname_list{
+  width:80px;
+  height: 18px;
+  font-size: 9px;
+  margin-right:10px;
+  margin-right:10px;
+  margin-bottom: 6px;
+}
 .cover-button{
   display:table-cell;
   margin-bottom: 15px; 
@@ -145,6 +153,22 @@ h3{
     left:225px;
     background-color: rgb(245, 249, 254);
     z-index: 1;
+  }
+  .cus-list-booking {
+    display: flex;
+    align-items: center; /* 垂直居中 */
+    justify-content: center;
+    overflow: auto;
+    height: 120px;
+    font-size: 12px;
+    line-height: 25px;
+    position:fixed;
+    /* top:50%;
+    transform: translate(0,-50%); */
+    color:rgb(47, 54, 100);
+    padding-right: 20px;
+    padding-left: 20px;
+    background-color: rgb(245, 249, 254);
   }
   .cus-list-input-buy{
     font-size: 13px;

@@ -55,6 +55,9 @@ class MinghuService(Flask):
         self.add_url_rule('/start_limit_class', view_func=self.start_limit_class,methods=['GET','POST'])
         # 体验课上课页面
         self.add_url_rule('/trial_class', view_func=self.trial_class,methods=['GET','POST'])
+        # 上课预约页面
+        self.add_url_rule('/ins_book', view_func=self.ins_book_page,methods=['GET','POST'])
+        
         
                
 
@@ -114,6 +117,9 @@ class MinghuService(Flask):
         )
 
         return conn
+
+    def ins_book_page(self):
+        return render_template('./ins_book.html')
 
     def test_copy(self):
         return render_template('./test_copy.html')
