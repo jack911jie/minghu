@@ -9,7 +9,7 @@
 <body>
     <div>
         <div><h4>铭湖健身客户预约登记</h4></div>
-        <div style="display:inline-block"><h5>日期：<input type="date" id="dateInput" name="dateInput" onchange="showWeekDay()"></h5></div> <div id="dayBlock" style="display:inline-block;color:burlywood"></div>
+        <div style="display:inline-block"><h5>日期：<input type="date" id="dateInput" name="dateInput" onchange="showWeekDay();get_book_data();"></h5></div> <div id="dayBlock" style="display:inline-block;color:burlywood"></div>
         <br>
         <div style="display:inline-block"><h5 style="display:inline-block">教练姓名：</h5><div style="display:inline-block;font-size:13px;" id='insNameRadio'></div></div>
 
@@ -89,8 +89,11 @@
             <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="2100" value="2100" onchange="toggleInputBox(this.id)" checked>21:00 <input id="2100cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
             <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="2130" value="2130" onchange="toggleInputBox(this.id)">21:30 <input id="2130cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
         </div>
+        <div>备注<div><input id="comment" type="text"></div></div>
         <hr>
-        <div><button>修改约课</button></div>
+        <div><button id="submit" onclick="submit();">修改约课</button></div>
+        <!-- <button onclick="get_book_data()">get book data</button>
+        <button onclick="setDefaultCheckBoxAndInputBox()">set default</button> -->
         
     </div>
 
@@ -127,15 +130,16 @@
             focusInputXy= {'left':inputBoxRect.left,'bottom':inputBoxRect.bottom,'y':inputBoxRect.y};
         }
 
-                // Listen for scroll event
+        // Listen for scroll event,让fixed的cusNameList跟着滚动走。
         window.addEventListener('scroll', () => {           
             try{
-                const inputXy=document.getElementById(focusId).getBoundingClientRect();
-                let yDistance=focusInputXy.bottom-inputXy.bottom;          
+                const inputXy=document.getElementById(focusId).getBoundingClientRect();      
                 const cusList=document.getElementById('cusNameList');
-                cusList.style.top=inputXy.bottom+'px';
-                const cusListXy=document.getElementById('cusNameList').getBoundingClientRect();
-                // console.log('cuslist top:',cusListXy.top,'inputxy.y:',inputXy.y,'yDis:',yDistance,'focus xy:',focusInputXy)
+                if(parseInt(focusId.substring(0,2))>=20){
+                    cusList.style.top = inputXy.bottom-130 + "px";
+                }else{
+                    cusList.style.top = inputXy.bottom-20 + "px";
+                }
             }catch{
                 error=>{
                     console.log('inputXy not defined')
@@ -148,16 +152,14 @@
 
             selectToday(id='dateInput',format='date');
             showWeekDay();
+            
 
+            //侦听页面事件，点击时页面空白处隐藏cusNameList，在需要点击的部分event.stopPropagation();即可
             const cusNameList=document.getElementById('cusNameList');
+            document.addEventListener('click',()=>{
+                cusNameList.style.display='none';
+            });
 
-            //页面加载时，在页面上绑定点击时隐藏购课编码div的动作
-            // document.addEventListener("click",function(){
-            //     cusNameList.innerText='';
-            //     cusNameList.style.display = "none";  
-            // });
-            
-            
 
             fetch('/get_template_info', {
                 method: 'POST',
@@ -182,7 +184,7 @@
                 .then(data => {
             //将data赋值给块变量cus_list，供后面的handleInput使用
                     // console.log(data);
-                    cus_list=data;                    
+                    cus_list=data;     
                  })
                 .catch(error => console.error('Error:', error));
 
@@ -197,12 +199,15 @@
             //将data赋值给块变量cus_list，供后面的handleInput使用
                 console.log('ins list:',data);
                 ins_radios(data['ins_list']);
+                get_book_data();       
                  })
                 .catch(error => console.error('Error:', error));
 
             timePrd.forEach((checkBoxId)=>{
                 toggleInputBox(checkBoxId);
             });     
+
+            
 
         });
 
@@ -218,8 +223,11 @@
                 const radioInput = document.createElement("input");
                 radioInput.setAttribute("type", "radio");
                 radioInput.setAttribute("name", "insName");
-                radioInput.setAttribute("id", "insName");
                 radioInput.setAttribute("value", option);
+
+                radioInput.addEventListener('change',()=>{
+                    get_book_data();
+                });
 
                 if(firstRadio){
                     radioInput.checked=true;
@@ -232,11 +240,7 @@
                 
                 // 将radio和label元素添加到容器中
                 radioOptionsContainer.appendChild(radioInput);
-                radioOptionsContainer.appendChild(label);
-
-
-
-                
+                radioOptionsContainer.appendChild(label);                
                 // 添加换行，使每个选项占一行
                 // radioOptionsContainer.appendChild(document.createElement("br"));
             });
@@ -275,6 +279,63 @@
             dayBlock.innerText=dateDisplay;
         }
 
+        function get_book_data(){
+            const dateInput=document.getElementById('dateInput').value;
+            const insName=document.querySelector('input[name="insName"]:checked').value;
+            // console.log(dateInput,insName);
+            fetch('/get_book_data',{
+                method:"POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body:JSON.stringify({'ins_name':insName,'date':dateInput})
+            })
+            .then(response=>response.json())
+            .then(data=>{
+                // console.log(data.ins_book_data);
+                insBookData=data.ins_book_data;
+                // console.log(insBookData);
+                if(insBookData){
+                    Object.keys(insBookData).forEach(checkBoxId=>{
+                        if(checkBoxId.match(/\d{4}/)){
+                            const checkBox=document.getElementById(checkBoxId);
+                            const inputbox=document.getElementById(checkBoxId+'cus_name');
+                            checkBox.disabled=false;
+                            if(insBookData[checkBoxId].split('|')[0]==='valid'){
+                                checkBox.checked=true;
+                                inputbox.disabled=false;
+                                inputbox.value=insBookData[checkBoxId].split('|')[1];
+                            }else{
+                                checkBox.checked=false;
+                                inputbox.disabled=true;
+                                inputbox.value='';
+                            }
+                        }
+                    });
+                    document.getElementById('comment').value=insBookData['comment'];
+                }else{
+                    setDefaultCheckBoxAndInputBox();
+                }
+                // console.log('insbookdata:',insBookData)
+                const today=new Date();
+                const selectedDay=new Date(dateInput);
+                today.setHours(0, 0, 0, 0);
+                selectedDay.setHours(0, 0, 0, 0);
+                if(today-selectedDay>0){
+                    setAllInputDisable();
+                }else{
+                    if(!insBookData){
+                        setDefaultCheckBoxAndInputBox();
+                    }   
+                    document.getElementById('submit').disabled=false;   
+                    document.getElementById('comment').disabled=false;   
+                }
+            })
+            .catch(error=>{
+                console.log('get book data error:',error);
+            });
+        }
+
         function toggleInputBox(checkBoxId){
             
             const inputBox=document.getElementById(checkBoxId+'cus_name');
@@ -311,7 +372,7 @@
 
                     // 添加点击事件监听器,点击名字时执行。
                     listItem.addEventListener("click", function(event) {
-                        // event.stopPropagation();
+                        event.stopPropagation();
                         // 点击后将完整的姓名设置为输入框的值
                         const inputBox=document.getElementById(inputId);
                         inputBox.value = name;
@@ -330,7 +391,7 @@
             }
             //左边输入结果显示在屏幕右边，右边输入结果显示在屏幕左边
             if(inputId.substring(2,4)==='30'){
-                left_x=40;
+                left_x=20;
             }else{
                 left_x=180;
             }
@@ -342,8 +403,50 @@
             if(parseInt(inputId.substring(0,2))>=20){
                 resultList.style.top = focusInputRect.bottom-130 + "px";
             }else{
-                resultList.style.top = focusInputRect.bottom + "px";
+                resultList.style.top = focusInputRect.bottom-20 + "px";
             }
+        }
+
+        function setDefaultCheckBoxAndInputBox(){
+
+            const validTime=['0900','0930',
+            '1000','1030','1100','1130',
+            '1200','1230','1300','1330',
+            '1400','1430','1500','1530',
+            '1600','1630','1700','1730',
+            '1800','1830','1900','1930',
+            '2000','2030','2100']
+            timePrd.forEach(time=>{
+                const checkBox=document.getElementById(time);
+                const inputBox=document.getElementById(time+'cus_name');
+                const submitButton=document.getElementById('submit');
+                const commentBox=document.getElementById('comment');
+                if(validTime.includes(time)){
+                    checkBox.checked=true;                    
+                    inputBox.disabled=false;
+                }else{
+                    checkBox.checked=false;                    
+                    inputBox.disabled=true;
+                }
+                checkBox.disabled=false;
+                inputBox.value='';
+                submitButton.disabled=false;
+                commentBox.disabled=false;
+            });
+            document.getElementById('comment').value='';
+        }
+
+        function setAllInputDisable(){
+            timePrd.forEach(id=>{
+                const checkBox=document.getElementById(id);
+                const inputBox=document.getElementById(id+'cus_name');
+                const commentBox=document.getElementById('comment');
+                const submitButton=document.getElementById('submit');
+                checkBox.disabled=true;
+                inputBox.disabled=true;
+                submitButton.disabled=true;
+                commentBox.disabled=true;
+            });
         }
 
         function fillInputBox(){
@@ -354,6 +457,42 @@
             // resultList.style.display='none';
             
               
+        }
+    
+        function submit(){
+            // console.log('submitting...')
+            let data={};
+            data['date']=document.getElementById('dateInput').value;
+            data['insName']=document.querySelector('input[name="insName"]:checked').value;
+            timePrd.forEach(id=>{
+                let strValCusIdName;
+                const checkBox=document.getElementById(id);
+                const inputBox=document.getElementById(id+'cus_name');
+                if(checkBox.checked){
+                    strValCusIdName='valid|'+inputBox.value;
+                }else{
+                    strValCusIdName='invalid|'+inputBox.value;
+                }
+                data[id]=strValCusIdName;
+
+            });
+            const comment=document.getElementById('comment').value;
+            data['comment']=comment;
+            // console.log(data);
+            fetch('/write_ins_book',{
+                method:"POST",
+                headers: {
+                        'Content-Type': 'application/json'
+                    },
+                body:JSON.stringify(data)
+            })
+            .then(response=>response.json())
+            .then(data=>{
+                console.log(data.res);
+            })
+            .catch(error=>{
+                console.log('write booking error:',error);
+            })
         }
     </script>
 </body>

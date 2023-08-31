@@ -105,6 +105,10 @@ class MinghuService(Flask):
         
         # 写入体验课上课记录
         self.add_url_rule('/write_trial_rec', view_func=self.write_trial_rec_db,methods=['GET','POST'])
+        #查询约课记录
+        self.add_url_rule('/get_book_data',view_func=self.get_book_data_db,methods=['GET','POST'])
+        #写入约课记录表
+        self.add_url_rule('/write_ins_book',view_func=self.write_ins_book_db,methods=['GET','POST'])
 
     def connect_mysql(self):
         # 连接数据库
@@ -117,6 +121,102 @@ class MinghuService(Flask):
         )
 
         return conn
+
+    def write_ins_book_db(self):
+        try:
+            data=request.json
+            conn=self.connect_mysql()
+            cursor=conn.cursor()
+
+            #通过教练姓名获取ins_id
+            sql=f'''
+                SELECT ins_id FROM ins_table WHERE ins_name=%s ;
+            '''
+            cursor.execute(sql,data['insName'])
+            ins_id=cursor.fetchall()[0][0]
+
+            data['ins_id']=ins_id
+            col_names=['date','ins_id','insName','0600','0630','0700','0730','0800','0830','0900','0930','1000','1030','1100','1130','1200','1230','1300','1330','1400','1430','1500','1530','1600','1630','1700','1730','1800','1830','1900','1930','2000','2030','2100','2130','comment']
+            sorted_data={key:data[key] for key in col_names}
+            values=list(sorted_data.values())
+            # print(values)
+            #查询是否已有数据
+            sql=f'''
+                SELECT ins_id,ins_name FROM ins_book_table WHERE ins_name=%s and date=%s;
+            '''
+            cursor.execute(sql,[data['insName'],data['date']])
+            res=cursor.fetchall()
+            #如已有教练、日期 数据，更新
+            if res:
+                #update的时候，加上这些参数
+                values.extend([data['ins_id'],data['insName'],data['date']])
+                print('old data,updating')     
+                sql=f'''
+                        update ins_book_table
+                        set 
+                        date=%s,ins_id=%s,ins_name=%s,`0600`=%s,`0630`=%s,`0700`=%s,`0730`=%s,`0800`=%s,`0830`=%s,`0900`=%s,`0930`=%s,`1000`=%s,`1030`=%s,`1100`=%s,`1130`=%s,`1200`=%s,`1230`=%s,`1300`=%s,`1330`=%s,`1400`=%s,`1430`=%s,`1500`=%s,`1530`=%s,`1600`=%s,`1630`=%s,`1700`=%s,`1730`=%s,`1800`=%s,`1830`=%s,`1900`=%s,`1930`=%s,`2000`=%s,`2030`=%s,`2100`=%s,`2130`=%s,comment=%s
+                        where
+                        ins_id=%s and ins_name=%s and date=%s
+                    '''
+                cursor.execute(sql,values)
+                conn.commit()
+                cursor.close()
+                conn.close()     
+                return  jsonify({'res':'old data:update in booking table successfully.'})  
+            #如无教练、日期 数据，插入
+            else:           
+                print('new data,inserting')     
+                
+                sql=f'''
+                        insert into ins_book_table
+                        (date,ins_id,ins_name,`0600`,`0630`,`0700`,`0730`,`0800`,`0830`,`0900`,`0930`,`1000`,`1030`,`1100`,`1130`,`1200`,`1230`,`1300`,`1330`,`1400`,`1430`,`1500`,`1530`,`1600`,`1630`,`1700`,`1730`,`1800`,`1830`,`1900`,`1930`,`2000`,`2030`,`2100`,`2130`,comment)
+                        values
+                        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    '''
+                cursor.execute(sql,values)
+                conn.commit()
+                cursor.close()
+                conn.close()     
+                return  jsonify({'res':'new data:write in booking table successfully.'})      
+        except Exception as e:
+            print('write into ins book table error: ',e)
+            return  jsonify({'res':'error'+e})
+        
+       
+
+    def get_book_data_db(self):
+        print('from minghu database,get ins book data')
+        data=request.json
+
+        # print(data)
+        conn=self.connect_mysql()
+        cursor=conn.cursor()
+        sql=f'''
+            SELECT ins_id FROM ins_table WHERE ins_name=%s ;
+        '''
+        cursor.execute(sql,data['ins_name'])
+        res_ins_id=cursor.fetchall()[0][0]
+
+        sql=f'''
+            SELECT * FROM ins_book_table WHERE ins_name=%s and ins_id=%s and date=%s;
+        '''
+
+        cursor.execute(sql,[data['ins_name'],res_ins_id,data['date']])
+        # print([data['ins_name'],res_ins_id,data['date']])
+        ins_book_data=cursor.fetchall()
+        # print(ins_book_data)
+        if ins_book_data:
+            cols=['id','date','ins_id','ins_name','0600','0630','0700','0730','0800','0830','0900','0930','1000','1030','1100','1130','1200','1230','1300','1330','1400','1430','1500','1530','1600','1630','1700','1730','1800','1830','1900','1930','2000','2030','2100','2130','comment']
+            ins_book_dic={}
+            for n,col in enumerate(cols):
+                ins_book_dic[col]=ins_book_data[0][n]
+        else:
+            ins_book_dic=''
+
+        cursor.close()
+        conn.close()
+        # print(ins_book_dic)
+        return jsonify({'ins_book_data':ins_book_dic})
 
     def ins_book_page(self):
         return render_template('./ins_book.html')
