@@ -107,6 +107,7 @@
         let pageHeightChange = 0;
         let focusInputXy;
         let focusId;
+        let nextCheckBoxStatus;
 
         const timePrd=[
             '0600','0630','0700','0730',
@@ -294,7 +295,7 @@
             .then(data=>{
                 // console.log(data.ins_book_data);
                 insBookData=data.ins_book_data;
-                // console.log(insBookData);
+                console.log(insBookData);
                 if(insBookData){
                     Object.keys(insBookData).forEach(checkBoxId=>{
                         if(checkBoxId.match(/\d{4}/)){
@@ -336,12 +337,31 @@
             });
         }
 
+        function generateNextId(inputId){
+            let h=parseInt(inputId.slice(0,2));
+            let m=parseInt(inputId.slice(2,4));
+            let newId;
+            if(m+30===60){
+                newId=(h+1).toString().padStart(2,'0')+'00';
+            }else{
+                newId=(h).toString().padStart(2,'0')+'30';
+            }
+            return newId
+        }
+
         function toggleInputBox(checkBoxId){
             
             const inputBox=document.getElementById(checkBoxId+'cus_name');
             // console.log(inputBox.id, document.getElementById(checkBoxId).checked)
             inputBox.disabled = !document.getElementById(checkBoxId).checked;
             inputBox.value='';
+            if(checkBoxId!=='2130'){  
+                const nextId=generateNextId(checkBoxId);
+                document.getElementById(nextId).checked=true;
+                document.getElementById(nextId).disabled=false;
+                document.getElementById(nextId+'cus_name').disabled=false;
+                document.getElementById(nextId+'cus_name').value='';
+            }
         }
 
         function generateCusList(inputId){            
@@ -356,9 +376,32 @@
             if (UpperSearchTerm === "") {
                 resultList.style.display = "none";
                 resultList.innerHTML = "";
+                console.log(inputId)
+                if(inputId.slice(0,4)!=='2130'){
+                    
+                    console.log('input  empty')
+                    const nextId=generateNextId(inputId);
+                    // nextCheckBoxStatus=[document.getElementById(nextId).checked,document.getElementById(nextId).disabled]
+                    document.getElementById(nextId).checked=true;
+                    document.getElementById(nextId).disabled=false;
+                    document.getElementById(nextId+'cus_name').disabled=false;
+                    document.getElementById(nextId+'cus_name').value='';
+                }
                 return; // 输入框为空，不做处理
             }else{
                 resultList.style.display = "block";
+                console.log(inputId)
+                if(inputId.slice(0,4)!=='2130'){
+                    
+                    console.log(UpperSearchTerm)
+                    const nextId=generateNextId(inputId);
+                    document.getElementById(nextId).checked=true;
+                    document.getElementById(nextId).disabled=true;
+                    document.getElementById(nextId+'cus_name').disabled=true;
+                    document.getElementById(nextId+'cus_name').value=UpperSearchTerm;
+
+                }
+
             }
 
             
@@ -376,6 +419,10 @@
                         // 点击后将完整的姓名设置为输入框的值
                         const inputBox=document.getElementById(inputId);
                         inputBox.value = name;
+                        if(inputId.slice(0,4)!=='2130'){
+                            const nextId=generateNextId(inputId);
+                            document.getElementById(nextId+'cus_name').value=name
+                        }
                         // 点击后隐藏名字列表框
                         resultList.style.display = "none";  
                     });    
