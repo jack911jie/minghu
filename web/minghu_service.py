@@ -150,6 +150,7 @@ class MinghuService(Flask):
             if res:
                 #update的时候，加上这些参数
                 values.extend([data['ins_id'],data['insName'],data['date']])
+                # print(values)
                 print('old data,updating')     
                 sql=f'''
                         update ins_book_table
