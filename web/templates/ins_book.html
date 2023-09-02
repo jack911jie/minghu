@@ -536,6 +536,7 @@
             .then(response=>response.json())
             .then(data=>{
                 console.log(data.res);
+                alert('修改成功');
             })
             .catch(error=>{
                 console.log('write booking error:',error);
