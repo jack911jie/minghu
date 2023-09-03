@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>新客户生成</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body>
+    <h3>生成新的会员</h3>
+    <hr>
+    <h4>· 输入新会员的姓名
+    <input type="text" id="cusName" style="width: 80px;" >   
+    </h4>
+    <h4 style="color:brown;">· 关联的体验课客户  <input id='trialCusNameInput' style="width:100px;" oninput="handletrialCusNameInput()" onclick="handletrialCusNameInput()"></h4>            
+    <div id="trialResultList"></div>     
+    <div id="sex">
+        <h4>· 性别
+        <label>
+            <input type="radio"  name="gender" value="男">男
+        </label>
+        <label>
+            <input type="radio"  name="gender" value="女" checked>女
+        </label>
+        </h4>
+    </div>
+
+    <div>
+        <h4>· 出生年月  <input id="dateInput" type="date" ></h4>       
+    </div>
+    <div>
+        <h4>· 客户手机号 <input type="text" id="mobilePhone" style="width:120px;" oninput="checkMobileValid()"></h4>
+        <span id="mobileValidResult" style="display:inline; color:rgb(221, 126, 123)"></span>
+    </div>
+    <div>
+        <h4>· 客户来源  <select id="cusSource"> 
+            <option value="小红书">小红书</option>
+            <option value="转介绍">转介绍</option>
+            <option value="自行到店">自行到店</option>
+            <option value="其他媒体">其他媒体</option>
+        </select></h4>     
+
+    </div>
+    <div>
+               <h4>· 体验客户有效期
+            <input type="radio" name="trailPeriod" value="all">全部
+            <input type="radio" name="trailPeriod" value="latest2" checked>近2个月
+        </h4>
+        
+
+    </div>
+    <hr>
+    <div class="inline2" id="new_cus_res"></div>
+    <button onclick="generateFile()">生成会员资料</button>
+
+    <script>
+        let allTrialList;
+        document.addEventListener('DOMContentLoaded',function(){
+            selectToday();
+            fetch('/get_trial_list')
+            .then(response=>response.json())
+            .then(data=>{
+                // console.log(data)
+                allTrialList=data;
+                // generateTrialCusList(data);
+                
+            })
+            .catch(error=>{
+                console.log('获取体验课列表错误：',error)
+            });
+
+            hideTrialResultList();
+
+            const trialCusNameInput=document.getElementById("trialCusNameInput");
+            trialCusNameInput.addEventListener("click", function(event) {
+                event.stopPropagation();
+            });
+        })
+        
+        function checkMobileValid(){
+            const mobilePattern = /^1[3-9]\d{9}$/;
+            const mobile=document.getElementById('mobilePhone').value;
+            const mobileValidResult=document.getElementById('mobileValidResult');
+            mobileValidResult.innerText='';
+            if(mobile && mobile!==''){
+                if(!mobilePattern.test(mobile)){
+                    mobileValidResult.innerText='无效的手机号码'
+                }
+
+            }
+        }
+
+        function hideTrialResultList(){
+            document.addEventListener('click',function(){
+                const trialResultList=document.getElementById('trialResultList');
+                trialResultList.style.display='none';
+            });           
+        }
+
+        function handletrialCusNameInput() {
+            
+            
+            // 获取输入框中的值
+            const trialCusNameInput=document.getElementById("trialCusNameInput");
+            const searchTerm = document.getElementById("trialCusNameInput").value.trim();
+            const UpperSearchTerm=searchTerm.toUpperCase();
+            const resultList=document.getElementById('trialResultList')
+
+            trialCusNameInput.addEventListener("click", function(event) {
+                event.stopPropagation();
+            });
+
+            // 清空列表
+            resultList.style.display = "block";
+            resultList.innerHTML = "";
+            document.getElementById("cusSource").disabled=false;
+            
+            // if (UpperSearchTerm === "") {
+            //     // resultList.style.display = "none";
+            //     resultList.style.display = "block";
+            //     return; // 输入框为空，不做处理
+            // }else{
+            //     resultList.style.display = "block";
+
+            // }
+
+            const trialCusList=generateTrialCusList();
+            console.log(trialCusList)
+            
+            
+            // 遍历给定的数组，进行模糊匹配。倒序
+            trialCusList.reverse().forEach(function(item) {
+           
+                if (item['体验客户姓名'].includes(UpperSearchTerm)) {
+                    // 创建列表项元素，并设置其文本内容为匹配到的结果
+                    const listItem = document.createElement("li");
+                    listItem.innerText = item['体验客户姓名'];
+
+                    // 添加点击事件监听器
+                    listItem.addEventListener("click", function(event) {
+                        event.stopPropagation();
+                        // 点击后将完整的姓名设置为输入框的值
+                        document.getElementById("trialCusNameInput").value = item['体验客户姓名'];
+                        document.getElementById("cusName").value = item['体验客户姓名'];  
+                        if(item['客户来源'] && item['客户来源']!==''){
+                            document.getElementById("cusSource").value=item['客户来源'];
+                            document.getElementById("mobilePhone").value=item['体验客户手机'];
+                            document.getElementById("cusSource").disabled=true;
+                        }else{
+                            document.getElementById("cusSource").disabled=false;
+                        }
+                             
+
+                        resultList.style.display = "none";
+                        // getBuyList(item);
+                        
+                        // 手动触发change事件
+                        // itemInput.dispatchEvent(new Event('change'));
+                        // 清空结果列表
+
+                        resultList.innerHTML = "";
+                    });
+
+                    // 将列表项添加到结果列表中
+                    resultList.appendChild(listItem);
+                    resultList.classList.add('cus-list-trial');
+                }
+            });
+        
+            // resultList.classList.add("cus-list");
+            
+        }
+
+        function generateTrialCusList(){
+            // if(!data){
+            //     data=allTrialList;
+            // }
+            // console.log(data['all_trial'])
+            data=allTrialList;
+            const trialRecs=Object.values(data['all_trial'])
+            let latestTwoMonthList=[]
+            trialRecs.forEach(trialRec=>{
+                const compareDate=new Date()-new Date(trialRec['体验课日期']);
+                const daysDifference = Math.floor(compareDate / 86400000);
+                if(daysDifference<=60){
+                    latestTwoMonthList.push(trialRec);
+                }
+            })
+            // console.log('近2个月记录：',latestTwoMonthList)
+
+            const trialCusPeriodRadio=document.querySelector('input[name="trailPeriod"]:checked').value;
+            if(trialCusPeriodRadio==='latest2'){
+                return latestTwoMonthList;
+            }else{
+                return Object.keys(data['all_trial']).map(key => data['all_trial'][key]);
+            }
+
+            
+            
+
+        }
+
+        function selectToday(){
+            const today = new Date();
+            // 将日期格式化为 yyyy-mm-dd 的形式
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const date=String(today.getDate()).padStart(2, '0');
+
+            const formattedDate = `${year}-${month}-${date}`;
+            // console.log(formattedDate)
+
+            // 将日期设置为输入框的默认值
+            document.getElementById('dateInput').value = formattedDate;
+        }
+
+        function CheckAndGenerateFile() {            
+            document.getElementById("new_cus_res").innerText=''
+            const cusName=document.getElementById("cusName").value.trim();
+            const gender=document.querySelector('input[name="gender"]:checked').value;
+            const trailCusName=document.getElementById("trialCusNameInput").value.trim();
+            const cusSource=document.getElementById("cusSource").value.trim();
+            console.log('客户来源：',cusSource)
+
+            let birthMonth=document.getElementById("dateMonth").value
+            birthMonth=birthMonth.replace(/-/g,'');
+            // console.log(gender,birthMonth);
+            if(cusName){
+                fetch('/check_new', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain'
+                    },
+                    body: 'checking'
+                })
+                .then(response => response.text())
+                .then(Num => {
+                    // 在这里处理后端返回的数据，例如给出成功提示
+                    console.log('new_code:',Num)
+                    var confirmRes=confirm("现在的序号是 MH"+Num+cusName+' ，如需修改序号请按【取消】修改。')
+                    if (confirmRes){
+                        generateFile(Num+cusName,trailCusName,gender,birthMonth,cusSource);
+                    }else{
+                        var newNum = prompt("请输入序号（三位数字）：");
+                        const ptn=/^\d{3}$/;
+                        while (!ptn.test(newNum)){   
+                            if(newNum==='不输入' || newNum==='取消' ){
+                                throw new Error('工作人员取消输入');
+                                break;
+                            }else{
+                                newNum = prompt("输入的不是三位数字，请重新请输入。");   
+                            }                        
+                        }
+                        generateFile(cusName,trailCusName,gender,birthMonth,cusSource);  
+                        
+                    }
+                
+                })
+                .catch(error => {
+                    alert(error);
+                    console.error('Error:', error)});
+            }else{
+                alert('未输入姓名')
+            }
+
+        }
+
+        function generateFile(){
+            document.getElementById("new_cus_res").innerText=''
+            const cusName=document.getElementById("cusName").value.trim();
+            const gender=document.querySelector('input[name="gender"]:checked').value;
+            const trialCusName=document.getElementById("trialCusNameInput").value.trim();
+            const cusSource=document.getElementById("cusSource").value.trim();
+            const mobilePhone=document.getElementById("mobilePhone").value.trim();
+            console.log('客户来源：',cusSource)
+
+            let birthMonth=document.getElementById("dateInput").value
+            birthMonth=birthMonth.replace(/-/g,'');
+
+            if(cusName){
+                const isMo=isMobile();
+                dvc=isMo?"mobile":"pc";
+                document.getElementById("new_cus_res").innerHTML='<p>正在生成新会员文件……</p>'
+                fetch('/generate_new',{
+                    method:"POST",
+                    headers:{
+                        'Content-Type':'text/plain'
+                    },
+                    body:cusName+"|"+trialCusName+"|"+gender+"|"+mobilePhone+"|"+birthMonth+"|"+cusSource+"|"+dvc
+                })
+                .then(response=>response.text())
+                .then(data=>{
+                    console.log(data)
+                    // document.getElementById("new_cus_res").innerHTML='<p>生成文件名：</p><p>'+data+'</p>'
+                    alert(`新增客户 ${data} 成功`);
+                    window.location.replace('./');
+                    // alert(data)
+                })
+                .catch(error=>console.error('Error:',error));
+            }
+            
+        }
+
+        function isMobile(){
+            const userAgent = navigator.userAgent.toLowerCase();
+            return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+        }
+
+
+    </script>
+</body>
+</html>

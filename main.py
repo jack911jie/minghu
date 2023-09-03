@@ -1,13 +1,17 @@
 import os
 import sys
 import random
+from turtle import bgcolor
 # from openpyxl.reader.excel import load_workbook
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'modules'))
 import pic_transfer
+import xlwings as xw
 import days_cal
 import readconfig
 import composing
 import get_data
+import draw_pic
+import math
 import json
 import openpyxl
 # from openpyxl import load_workbook
@@ -22,14 +26,16 @@ from PIL import Image,ImageDraw,ImageFont
 import random
 import matplotlib.pyplot as plt 
 import matplotlib.font_manager as fm
+import matplotlib.ticker as mticker
 from tkinter import simpledialog
+
 # from matplotlib.backends.backend_agg import FigureCanvasAgg
 plt.rcParams['font.sans-serif']=['SimHei']  # 黑体
 
 class MingHu:
-    def __init__(self,adj_bfr='yes',adj_src='prg',gui=''):
+    def __init__(self,place='minghu',wecomid_replace='yes',wecomid_pair=['$wecomid$','1688850049985213'],adj_bfr='yes',adj_src='prg',gui=''):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'),wecomid_replace=wecomid_replace,wecomid_pair=wecomid_pair)
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -39,6 +45,21 @@ class MingHu:
         self.adj_bfr=adj_bfr
         self.adj_src=adj_src
         self.gui=gui
+        self.place=place
+        print(os.path.join(self.dir,'configs','main_'+place+'.config'),self.ins_dir,self.cus_file_dir)
+        self.df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'),sheet_name='教练信息')
+        self.color_config_fn=os.path.join(os.path.dirname(__file__),'configs','colors.config')
+        with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
+            self.txt_public=txt_pub.readlines()
+        self.cus_instance_name=self.txt_public[5].strip()[0:2]
+        self.prefix=self.cus_instance_name[0:2]
+        self.gym_name=self.txt_public[4]
+        self.gym_addr=self.txt_public[3]
+        if '%' in self.gym_addr:
+            self.gym_addr=''
+        self.txt_ins_word=self.txt_public[2]
+        self.txt_mini_title=self.txt_public[1]
+        self.txt_slogan=self.txt_public[0]
 
     def auto_cus_xls(self,cus_name_input='',mode='prgrm',gui=''):
         # cus_name_input=''
@@ -53,21 +74,20 @@ class MingHu:
         nums=[]
         for fn in os.listdir(self.cus_file_dir):
             if len(fn)<16:
-                if re.match(r'MH\d\d\d.*.xlsx',fn):
+                if re.match(self.prefix+r'\d\d\d.*.xlsm',fn):
                     num=int(fn[2:5])
                     if num not in nums:
                         nums.append(num)
 
         new_num=str(max(nums)+1).zfill(3)
         if mode=='prgrm':
-            verify=input('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format('MH'+new_num+cus_name_input))
+            verify=input('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format(self.prefix+new_num+cus_name_input))
         elif mode=='gui':
             gui.delete('1.0','end')
-            print('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format('MH'+new_num+cus_name_input))
+            print('\n新会员档案文件编号为：{}，确认直接按回车。\n如需自行修改编号，请输入编号后再回车。\n请选择——————'.format(self.prefix+new_num+cus_name_input))
             # verify=''
             while True:
-                verify = simpledialog.askstring(title="是否修改编号？",
-                                                    prompt="请输入新编号（三位数字）")
+                verify = simpledialog.askstring(title="是否修改编号？",prompt="请输入新编号（三位数字）")
                 if not verify:
                     break
                 else:
@@ -78,85 +98,58 @@ class MingHu:
                         print('编号格式错误，请输入三位数字。')          
             gui.delete('1.0','end')
         if verify:
-            xls_name='MH'+verify+cus_name_input
+            xls_name=self.prefix+verify+cus_name_input
         else:
-            xls_name='MH'+new_num+cus_name_input
-        
-        wb=openpyxl.load_workbook(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsx'))
-        sht=wb['基本情况']
-        sht['A2']=xls_name[0:5]
-        sht['B2']=cus_name_input
+            xls_name=self.prefix+new_num+cus_name_input
+
+        app=xw.App(visible=False)
+        wb=app.books.open(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsm'))
+        sht=wb.sheets['基本情况']
+        sht['A2'].value=xls_name[0:5]
+        sht['B2'].value=cus_name_input
         if len(cus_name_input)>1:
-            sht['C2']=cus_name_input[1:]
+            sht['C2'].value=cus_name_input[1:]
         else:
-            sht['C2']=cus_name_input
+            sht['C2'].value=cus_name_input
+
+        wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsm'))
+        wb.close()
+        app.quit()
         
-        wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsx'))
-        print('\n生成新的会员档案文件：{}'.format(self.cus_file_dir+'\\'+xls_name+'.xlsx'))
+        # wb=openpyxl.load_workbook(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsm'),keep_vba=True)
+        # sht=wb['基本情况']
+        # sht['A2']=xls_name[0:5]
+        # sht['B2']=cus_name_input
+        # if len(cus_name_input)>1:
+        #     sht['C2']=cus_name_input[1:]
+        # else:
+        #     sht['C2']=cus_name_input
+        
+        # wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsm'))        
+
+        print('\n生成新的会员档案文件：{}'.format(self.cus_file_dir+'\\'+xls_name+'.xlsm'))
 
         return xls_name
 
 
     def fonts(self,font_name,font_size):
-        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.minghu'))
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.'+self.place+'.config'))
         # print(fontList)
         return ImageFont.truetype(fontList[font_name],font_size)
 
     def color_list(self,sex='美女',color_name=''):
+        color_config=readconfig.exp_json(self.color_config_fn)
+        # print(color_config['light_pink'])
 
         if sex=='美女':
             if color_name=='':
-                color_name='light_pink'
-            if color_name=='light_orange':
-                colors={
-                    'comment_bg':'#fff4ee',
-                    'title_bg':'#fff4ee',
-                    'logo_bg':'#fff4ee',
-                    'train_content_bg':'#ffffff',
-                    'txt_person':'#ff6667',
-                    'txt_title':'#ff9c6c',
-                    'txt_date':'#ff9c6c',
-                    'txt_fix':'#898886',
-                    'txt_dimension':'#000000',
-                    'txt_train':'#ff9c6c',
-                    'txt_slogan':'#cd8c52',
-                    'gym_info':'#693607'
-                }
-            elif color_name=='light_pink':
-                colors={
-                    'comment_bg':'#fdf7f9',
-                    'title_bg':'#dfcbe4',
-                    'logo_bg':'#fbfbfb',
-                    'train_content_bg':'#ffffff',
-                    'txt_person':'#d584d0',
-                    'txt_title':'#ffffff',
-                    'txt_date':'#cf86cd',
-                    'txt_fix':'#717171',
-                    'txt_dimension':'#000000',
-                    'txt_train':'#cf86cd',
-                    'txt_slogan':'#b0b0b0',
-                    'gym_info':'#b0b0b0'
-                }
+                color_name='light_pink'           
         elif sex=='帅哥':
             if color_name=='':
                 color_name='strong_blue'
-            if color_name=='strong_blue':
-                colors={
-                    'comment_bg':'#e5f5fd',
-                    'title_bg':'#e5f5fd',
-                    'logo_bg':'#e5f5fd',
-                    'train_content_bg':'#ffffff',
-                    'txt_person':'#3c5ebb',
-                    'txt_title':'#3c5ebb',
-                    'txt_date':'#3c5ebb',
-                    'txt_fix':'#9c9fa0',
-                    'txt_dimension':'#000000',
-                    'txt_train':'#3c5ebb',
-                    'txt_slogan':'#8da8db',
-                    'gym_info':'#2c2e35'
-                }
         else:
             pass
+        colors=color_config['Summary'][color_name]
 
         return colors
 
@@ -395,7 +388,7 @@ class MingHu:
         def save_pic_name(cus):
             save_dir=os.path.join(self.save_dir,cus)
             if not os.path.exists(save_dir):
-                os.mkdir(save_dir)
+                os.makedirs(save_dir)
             _date=datetime.strftime(datetime.now(),"%Y%m%d_%H%M%S")
             save_name=os.path.join(save_dir,_date+'_'+cus+'.jpg')
             print('文件名：'+save_name)
@@ -442,7 +435,7 @@ class MingHu:
                 gap_train=0
 
             slogan_txt=slogan()
-            slogan_txt=slogan_txt+'\n期待您在铭湖健身遇见更好的自己。'
+            slogan_txt=slogan_txt+'\n'+self.txt_public[2]
             dis_line_slogan=15
             ft_size_slogan=36
             # print('327 line',slogan_txt)
@@ -611,8 +604,9 @@ class MingHu:
                         draw.text((x_days,y_train+85), t['intervals_train_1'], fill =color['txt_train'],font=self.fonts('aa楷体',ft_size_days))  #XX天里（居中）
                         draw.text((x_l+180,y_train+140), '完成了下面的训练内容', fill = color['txt_fix'],font=self.fonts('aa楷体',32))  #完成了下面的训练内容
                         self.put_txt_img(img,t=t['train_content'],total_dis=420,xy=[x_l+95,y_train+230],dis_line=16,fill=color['txt_train'],font_name='杨任东石竹体',font_size=38)
-                        percent=random.randint(70,93)
-                        draw.text((x_l+145,y_train_content_bottom+20), '击败了铭湖健身 {} 的会员!'.format(str(percent)+'%'), fill = color['txt_train'],font=self.fonts('aa楷体',32))  #击败了
+                        if self.place=='minghu':
+                            percent=random.randint(70,93)
+                            draw.text((x_l+145,y_train_content_bottom+20), '击败了铭湖健身 {} 的会员!'.format(str(percent)+'%'), fill = color['txt_train'],font=self.fonts('aa楷体',32))  #击败了
                     else:
                         draw.text((x_l+145,y_train+45), t['intervals_train_0'], fill = color['txt_fix'],font=self.fonts('aa楷体',40))  #您在。。。
                         draw.text((x_l+160,y_train+85), t['intervals_train_1'], fill = color['txt_train'],font=self.fonts('aa楷体',40))  #XX天里
@@ -624,8 +618,11 @@ class MingHu:
                 draw.text((x_l+20,y_slogan+15),slogan_txt,fill=color['txt_slogan'],font=self.fonts('优设标题黑',ft_size_slogan))
 
                 # addr
-                draw.text((x_l+10,y_logo+240),'南宁市青秀区民族大道88-1号铭湖经典A座802室',fill=color['gym_info'],font=self.fonts('微软雅黑',30))
-                draw.text((x_l+125,y_logo+310),'让健身变得有趣',fill=color['gym_info'],font=self.fonts('丁永康硬笔楷书',60))
+                #地址
+                x_add=x_l+(block_wid-composing.char_len(self.txt_public[3])*30)//2
+                draw.text((x_add,y_logo+240),self.gym_addr,fill=color['gym_info'],font=self.fonts('微软雅黑',30))
+                #slogan
+                draw.text((x_l+125,y_logo+310),self.txt_slogan,fill=color['gym_info'],font=self.fonts('丁永康硬笔楷书',60))
 
                 ins=ins_info()
                 draw.text((x_l+255,y_logo+570),ins['nickname'],fill=color['gym_info'],font=self.fonts('丁永康硬笔楷书',50))
@@ -647,9 +644,9 @@ class MingHu:
         # ins_info()
 
 class GroupDataInput:
-    def __init__(self):
+    def __init__(self,place):
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'))
         self.grp_dir=config['会员档案文件夹']
 
     def data_input(self):
@@ -718,9 +715,12 @@ class GroupDataInput:
         print('完成')
 
 class FeedBackAfterClass:
-    def __init__(self):
+    def __init__(self,place='minghu'):
+        self.place=place
         self.dir=os.path.dirname(os.path.abspath(__file__))
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','main.config'))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'))
+
+        # print(config)
         self.cus_file_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.ins_dir=config['教练文件夹']
@@ -728,8 +728,19 @@ class FeedBackAfterClass:
         self.save_dir=config['输出文件夹']
         self.public_dir=config['公共素材文件夹']
         self.exp_knlg_dir=config['专业资料文件夹']
-        self.save_dir=config['课后反馈文件夹']
+        self.save_dir_feedback=config['课后反馈文件夹']
         self.font_config=os.path.join(self.dir,'configs','fontList.minghu')
+        self.df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'),sheet_name='教练信息')
+        self.color_config_fn=os.path.join(os.path.dirname(__file__),'configs','colors.'+place+'.config')
+        with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
+            self.txt_public=txt_pub.readlines()
+        self.cus_instance_name=self.txt_public[5].strip()[0:2]
+        self.prefix=self.cus_instance_name[0:2]
+        self.gym_name=self.txt_public[4]
+        self.gym_addr=self.txt_public[3]
+        self.txt_ins_word=self.txt_public[2]
+        self.txt_mini_title=self.txt_public[1]
+        self.txt_slogan=self.txt_public[0]
 
 
     def export(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324'):
@@ -739,7 +750,15 @@ class FeedBackAfterClass:
         data=cus_data.exp_cus_prd(cus_file_dir=self.cus_file_dir,cus=cus,start_time=start_time,end_time=end_time)
         return data
 
+    def icon(self,ico,ico_size=(20,20)):
+        ico=ico.resize(ico_size)
+        return (ico,ico.split()[3])
+
     def draw(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324',open_dir='yes'):
+        #公共文字
+        # with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
+        #     txt_public=txt_pub.readlines()
+
         #文字内容
         data=self.export(cus=cus,ins=ins,date_input=date_input)
         # print(data)
@@ -757,13 +776,17 @@ class FeedBackAfterClass:
             sex=''
         
         #标题框文字
-        txt_title_box='看看今天你的汗水洒在哪里？'
+        # txt_title_box='看看今天你的汗水洒在哪里？'
+        txt_title_box=self.txt_mini_title
         
 
         #抗阻内容
         txt_train_muscle=''
         for mscl_item in data['train']['muscle_item']:
-            txt_train_muscle=txt_train_muscle+mscl_item[0]+'  '+str(int(mscl_item[2]))+'个'+'\n'
+            if mscl_item[2]>0:
+                txt_train_muscle=txt_train_muscle+mscl_item[0]+'  '+str(int(mscl_item[2]))+'个'+'\n'
+            else:
+                txt_train_muscle=txt_train_muscle+mscl_item[0]+'  '+str(int(mscl_item[3]))+'米'+'\n'
         txt_train_muscle.strip()
 
         #有氧内容
@@ -783,7 +806,9 @@ class FeedBackAfterClass:
         txt_burn='消耗热量 '+str(int(data['train']['calories']))+' 千卡'
         
         #教练
-        ins=ins[8:][0]+'教练'
+        # ins=ins[8:][0]+'教练'
+        # print(self.df_ins)
+        ins=self.df_ins.loc[self.df_ins['员工编号']==ins[0:8]]['昵称'].values[0]
 
         #建议
         txt_suggest_title=ins+'给你的饮食建议'
@@ -794,7 +819,8 @@ class FeedBackAfterClass:
         txt_suggest=random.choice(diet_suggests)
 
         #slogan
-        txt_slogan='让健身变得有趣'
+        # txt_slogan='让健身变得有趣'
+        txt_slogan= self.txt_slogan.strip()
 
         # print(nickname,sex,'\n',txt_date,'\n',txt_train,txt_calories,'\n',ins,txt_suggest,slogan)
 
@@ -828,7 +854,7 @@ class FeedBackAfterClass:
             #重写训练内容高度
             ht_train_cal=composing.split_txt_Chn_eng(wid=size['wid']['small']-40,font_size=ftsz_train,txt_input=txt_train,Indent='no')
             # ht_train=800
-            ht_train=int(ftsz_train*ht_train_cal[1]*1.8)
+            ht_train=int(ftsz_train*ht_train_cal[1]*1.9)
             if ht_train>=500:
                 ht_train=int(ftsz_train*ht_train_cal[1]*1.55)
             # print(ht_train)
@@ -846,33 +872,11 @@ class FeedBackAfterClass:
             return size 
         
         def color_list():
-            color={
-                'block':{
-                    'bg':'#fffcf9',
-                    'title':'#ff8ddf',
-                    'train':'#fee8ff',
-                    'train_bar':'#fecaff',
-                    'burn':'#ffffff',
-                    'suggest':'#f1fcff',
-                    'suggest_small_box':'#ffffff',
-                },
-                'edge':{
-                    'title_box':'#fac1f1',
-                    'burn':'#ef7f4e',
-                    'suggest_small_box':'#808081',
-                },
-                'font':{
-                    'title':'#ffffff',
-                    'train':'#ff8ddf',
-                    'burn':'#ef4700',
-                    'suggest_title':'#595757',
-                    'suggest':'#143f00',
-                    'slogan':'#ad5a28'
-                }
-
-
-            }
-
+            color_config=readconfig.exp_json(self.color_config_fn)
+            if data['sex']=='女':
+                color=color_config['AfterClass']['pink']
+            elif data['sex']=='男':
+                color=color_config['AfterClass']['blue']
             return color
 
         def draw_blocks():
@@ -951,7 +955,7 @@ class FeedBackAfterClass:
             bg.paste(logo,p_logo,mask=a_logo)
 
             #文字
-            font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.minghu')
+            font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.'+self.place+'.config')
             #姓名
             draw.text((p_title_box[0]+50,p_title_box[1]+30),
                         nickname+sex,
@@ -974,7 +978,7 @@ class FeedBackAfterClass:
                                     tt=txt_train,
                                     total_dis=int((p_train[2]-p_train_bar[0])*0.8),
                                     xy=p_train_txt,
-                                    dis_line=int(ftsz_train*0.4),
+                                    dis_line=int(ftsz_train*0.5),
                                     fill=color['font']['train'],
                                     font_name='汉仪糯米团',
                                     font_size=ftsz_train,
@@ -1001,7 +1005,7 @@ class FeedBackAfterClass:
                                     fill=color['font']['suggest'],
                                     font_name='汉仪字酷堂义山楷w',
                                     font_size=ftsz_train,
-                                    addSPC='add_2spaces',
+                                    addSPC='yes',
                                     font_config_file=font_config_file)
 
             #slogan
@@ -1011,7 +1015,395 @@ class FeedBackAfterClass:
             # bg.show()
             bg=bg.convert('RGB')
             save_name=date_input+'_'+cus+'.jpg'
-            save_dir=os.path.join(self.save_dir,cus)
+            save_dir=os.path.join(self.save_dir_feedback,cus)
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+            bg.save(os.path.join(save_dir,save_name),quality=90,subsampling=0)
+            
+            if open_dir=='yes':
+                os.startfile(save_dir)
+
+
+            print('完成\n')
+
+
+        draw_blocks()
+
+
+    def draw_new(self,cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210324',open_dir='yes'):
+        #公共文字
+        # with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
+        #     txt_public=txt_pub.readlines()
+
+        #文字内容
+        data=self.export(cus=cus,ins=ins,date_input=date_input)
+        # print(data)
+        #日期
+        txt_date=date_input[:4]+'年'+date_input[4:6]+'月'+date_input[6:]+'日'
+        #姓名
+        nickname=data['nickname']
+        #性别
+        sex=data['sex']
+        if sex=='女':
+            sex='女士'
+        elif sex=='男':
+            sex='先生'
+        else:
+            sex=''
+        
+        #标题框文字
+        # txt_title_box='看看今天你的汗水洒在哪里？'
+        txt_title_box=self.txt_mini_title
+        
+
+
+        #抗阻内容
+        txt_train_muscle=''
+        for mscl_item in data['train']['muscle_item']:
+            if mscl_item[2]>0:
+                txt_train_muscle=txt_train_muscle+mscl_item[0]+'  '+str(int(mscl_item[2]))+'个'+'\n'
+            else:
+                txt_train_muscle=txt_train_muscle+mscl_item[0]+'  '+str(int(mscl_item[3]))+'米'+'\n'
+        txt_train_muscle.strip()
+
+        #有氧内容
+        txt_train_oxy=''
+        for oxy_item in  data['train']['oxy_infos']:
+            if oxy_item[1]%60==0:
+                txt_train_oxy=txt_train_oxy+oxy_item[0]+'  '+str(int(oxy_item[1]//60))+'分'+'\n'
+            else:
+                # txt_train_oxy=txt_train_oxy+oxy_item[0]+'  '+str(int(oxy_item[1]//60))+'分'+'\n'
+                txt_train_oxy=txt_train_oxy+oxy_item[0]+'  '+str(int(oxy_item[1]//60))+'分'+str(int(oxy_item[1]%60))+'秒\n'
+        txt_train_oxy.strip()
+
+
+        txt_train=txt_train_muscle+txt_train_oxy
+
+        #消耗热量
+        txt_burn='消耗热量 '+str(int(data['train']['calories']))+' 千卡'
+        
+        #教练
+        # ins=ins[8:][0]+'教练'
+        # print(self.df_ins)
+        ins_nickname=self.df_ins.loc[self.df_ins['员工编号']==ins[0:8]]['昵称'].values[0]
+
+        #教练点评
+        ins_cmt=data['train']['ins_cmts']
+
+        if len(ins_cmt)!=0:
+            txt_ins_cmt=''
+            for t_cmt in ins_cmt:
+                txt_ins_cmt=txt_ins_cmt+'- '+t_cmt+'\n'
+            txt_ins_cmt.strip()
+        else:
+            txt_ins_cmt=''
+
+        # print(txt_ins_cmt)    
+        #建议
+        txt_cmt_title=ins_nickname+'对你的训练点评'
+        txt_suggest_title=ins_nickname+'给你的饮食建议'
+        # txt_suggest='补充足够的碳水化合物：健身训练时能量主要由糖原提供，摄入的碳水化合物可以补充糖原，供给能量，并防止训练造成的肌肉分解'
+        exp_knlg_fn=os.path.join(self.exp_knlg_dir,'减脂饮食建议表.xlsx')
+        _diet_suggests=get_data.ReadDiet(exp_knlg_fn)
+        diet_suggests=_diet_suggests.exp_diet_suggests()
+        txt_suggest=random.choice(diet_suggests)
+
+        #slogan
+        # txt_slogan='让健身变得有趣'
+        txt_slogan= self.txt_slogan.strip()
+
+        # print(nickname,sex,'\n',txt_date,'\n',txt_train,txt_calories,'\n',ins,txt_suggest,slogan)
+
+
+        ftsz_train=40
+        ftsz_suggest=40
+        ftsz_cmt=40
+
+        #背景
+
+        def cal_ht():
+
+            size={
+                'wid':{
+                    'total':720,
+                    'small':640,
+                    'third':600
+                },
+                'ht':{
+                    'total':1280,
+                    'title':300,
+                    'title_box':230,
+                    'train':350,
+                    'burn':200,
+                    'comment':300,
+                    'comment_title':120,
+                    'suggest':300,
+                    'suggest_title':120,
+                    'bottom':200,
+                    'gap':10
+                }
+            }
+            
+            #重写训练内容高度
+            ht_train_cal=composing.split_txt_Chn_eng(wid=size['wid']['small']-40,font_size=ftsz_train,txt_input=txt_train,Indent='no')
+            # ht_train=800
+            ht_train=int(ftsz_train*ht_train_cal[1]*2.2)
+            if ht_train>=500:
+                ht_train=int(ftsz_train*ht_train_cal[1]*1.8)
+            # print(ht_train)
+            size['ht']['train']=ht_train
+
+            #重写教练点评高度
+            if txt_ins_cmt:
+                ht_cmt_cal=composing.split_txt_Chn_eng(wid=size['wid']['small']-40,font_size=ftsz_train,txt_input=txt_ins_cmt,Indent='no')
+                ht_cmt=int(ftsz_cmt*ht_cmt_cal[1]*2)+size['ht']['comment_title']
+                size['ht']['cmt']=ht_cmt
+            else:
+                size['ht']['cmt']=0
+
+            #重写建议内容高度
+            ht_suggest_cal=composing.split_txt_Chn_eng(wid=size['wid']['third']-20,font_size=ftsz_suggest,txt_input=txt_suggest,Indent='yes')
+            ht_suggest=int(ftsz_suggest*ht_suggest_cal[1]*2)+size['ht']['suggest_title']
+            size['ht']['suggest']=ht_suggest
+
+            total_ht=size['ht']['title']+size['ht']['train']+size['ht']['burn']+size['ht']['cmt']+size['ht']['suggest']+size['ht']['bottom']+size['ht']['gap']*2*5
+            size['ht']['total']=total_ht
+ 
+            # print(size)
+            return size 
+        
+        def color_list():
+            color_config=readconfig.exp_json(self.color_config_fn)
+            if data['sex']=='女':
+                color=color_config['AfterClass']['grey']
+            elif data['sex']=='男':
+                color=color_config['AfterClass']['blue']
+            return color
+
+        def draw_blocks():
+            size=cal_ht()
+            color=color_list()
+
+            p_title_block=(0,0,size['wid']['total'],size['ht']['title'])
+            p_title_box=(p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2,
+                        p_title_block[1]+(size['ht']['title']-size['ht']['title_box'])//2,
+                        p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2+size['wid']['small'],
+                        p_title_block[1]+(size['ht']['title']-size['ht']['title'])//2+size['ht']['title_box'])
+
+
+            p_train=(p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2,
+                        p_title_block[3]+size['ht']['gap']*2,
+                        p_title_block[0]+(size['wid']['total']-size['wid']['small'])//2+size['wid']['small'],
+                        p_title_block[3]+size['ht']['train'])
+
+            p_train_bar=(p_train[0]+80,p_train[1]+26,p_train[0]+80+8,p_train[3]-18)
+
+            p_train_txt=[p_train_bar[0]+50,p_train_bar[1]+4]
+            p_burn=(p_train[0],
+                    p_train[3]+size['ht']['gap']*2,
+                    p_train[2],
+                    p_train[3]+size['ht']['burn'])
+            
+            p_flame=[p_burn[0]+30,p_burn[1]+50]
+
+                    
+            p_cmt=(p_burn[0],
+                    p_burn[3]+size['ht']['gap']*2,
+                    p_burn[2],
+                    p_burn[3]+size['ht']['gap']*2+size['ht']['cmt'])
+
+            p_cmt_small=(p_cmt[0]+(size['wid']['small']-size['wid']['third'])//2,
+                    p_cmt[1]+size['ht']['comment_title'],
+                    p_cmt[0]+(size['wid']['small']-size['wid']['third'])//2+size['wid']['third'],
+                    p_cmt[1]+size['ht']['comment_title']+(size['ht']['comment']-size['ht']['comment_title'])-20)
+
+            p_cmt_txt=[p_cmt_small[0]+18,p_cmt_small[1]+20]
+
+            p_suggest=(p_cmt[0],
+                    p_cmt[3]+size['ht']['gap']*2,
+                    p_cmt[2],
+                    p_cmt[3]+size['ht']['gap']*2+size['ht']['suggest'])
+
+            p_suggest_small=(p_suggest[0]+(size['wid']['small']-size['wid']['third'])//2,
+                    p_suggest[1]+size['ht']['suggest_title'],
+                    p_suggest[0]+(size['wid']['small']-size['wid']['third'])//2+size['wid']['third'],
+                    p_suggest[1]+size['ht']['suggest_title']+(size['ht']['suggest']-size['ht']['suggest_title'])-20)
+
+            p_suggest_txt=[p_suggest_small[0]+18,p_suggest_small[1]+20]
+
+
+            
+            p_logo=[p_suggest[0]+20,p_suggest[3]+size['ht']['gap']*2+(size['ht']['bottom']-120)//2]
+            p_qrcode=[p_suggest[0]+20,p_suggest[3]+size['ht']['gap']*2+(size['ht']['bottom']-120)//2]
+            
+
+            bg=Image.new('RGBA',(size['wid']['total'],size['ht']['total']),color=color['block']['bg'])
+            
+            draw=ImageDraw.Draw(bg)
+
+            #标题框
+            # draw.rectangle(p_title_block,fill=color['block']['title'])
+            draw.rounded_rectangle(xy=p_title_box,radius=10,fill=color['edge']['title_box'],width=3,outline=color['edge']['title_box'])
+
+
+            #训练内容框
+            draw.rounded_rectangle(xy=p_train,radius=10,fill=color['block']['train'],width=3,outline=None)
+            draw.rectangle(xy=p_train_bar,fill=color['block']['train_bar'])
+
+            #燃烧
+            draw.rounded_rectangle(xy=p_burn,radius=10,fill=color['block']['burn'],width=3,outline=color['edge']['burn'])
+
+            #教练点评
+            if size['ht']['cmt']>0:
+                draw.rectangle(xy=p_cmt,fill=color['block']['cmt'])
+                draw.rounded_rectangle(xy=p_cmt_small,radius=10,fill=color['block']['cmt_small_box'],
+                                        width=3,outline=color['edge']['cmt_small_box'])
+
+            #教练建议
+            draw.rectangle(xy=p_suggest,fill=color['block']['suggest'])
+            draw.rounded_rectangle(xy=p_suggest_small,radius=10,fill=color['block']['suggest_small_box'],
+                                    width=3,outline=color['edge']['suggest_small_box'])
+
+
+            #图片
+            #火焰图片
+            # _flame=Image.open(os.path.join(self.public_dir,'flame.png'))
+            # flame=_flame.resize((_flame.size[0]*120//_flame.size[1],120))
+            # a_flame=flame.split()[3]
+            # # bg.paste(a_flame,p_flame)
+            # bg.paste(flame,p_flame,mask=a_flame)
+            flame_ico=Image.open(os.path.join(self.public_dir,'UI图标','calory02.png'))
+            flame_ico=self.icon(flame_ico,ico_size=(60,60))
+            # flame_ico=Image.open(os.path.join(self.public_dir,'flame.png'))
+            # flame_ico=self.icon(flame_ico,ico_size=(flame_ico.size[0]*60//flame_ico.size[1],60))
+            bg.paste(flame_ico[0],p_flame,mask=flame_ico[1])
+
+            #头像    
+            if sex=='女士':
+                head_ico=Image.open(os.path.join(self.public_dir,'UI图标','head_female.png'))
+            else:
+                head_ico=Image.open(os.path.join(self.public_dir,'UI图标','head_male.png'))
+            head_ico=self.icon(head_ico,ico_size=(50,50))            
+            bg.paste(head_ico[0],(p_title_box[0]+36,p_title_box[1]+30),mask=head_ico[1])
+
+            #日记
+            diary_ico=Image.open(os.path.join(self.public_dir,'UI图标','calendar.png'))
+            diary_ico=self.icon(diary_ico,ico_size=(50,50))
+            bg.paste(diary_ico[0],(p_title_box[0]+36,p_title_box[1]+106),mask=diary_ico[1])
+
+
+            
+
+            #logo
+            # _logo=Image.open(os.path.join(self.public_dir,'logo及二维码','logo.png'))
+            # logo=_logo.resize((_logo.size[0]*160//_logo.size[1],160))
+            # a_logo=logo.split()[3]
+            # bg.paste(logo,p_logo,mask=a_logo)
+
+            
+            #教练二维码
+            _qrcode=Image.open(os.path.join(self.ins_dir,'教练二维码',ins+'二维码.jpg'))
+            qrcode=_qrcode.resize((_qrcode.size[0]*160//_qrcode.size[1],160))
+            bg.paste(qrcode,p_qrcode)
+
+
+
+            #文字
+            font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.'+self.place+'.config')
+            #姓名
+            draw.text((p_title_box[0]+116,p_title_box[1]+30),
+                        nickname,
+                        fill=color['font']['title'],
+                        font=composing.fonts('方正韵动粗黑',50,config=font_config_file))
+            draw.text((p_title_box[0]+116+180,p_title_box[1]+45),
+                        sex,
+                        fill=color['font']['title'],
+                        font=composing.fonts('思源黑体',30,config=font_config_file))
+            #日期
+            draw.text((p_title_box[0]+116,p_title_box[1]+110),
+                        txt_date+'   训练日记',
+                        fill=color['font']['title'],
+                        font=composing.fonts('思源黑体',40,config=font_config_file))
+            #标题栏内其他文字
+            draw.text((p_title_box[0]+90,p_title_box[1]+220),
+                        txt_title_box,
+                        fill=color['font']['mini_title'],
+                        font=composing.fonts('aa楷体',40,config=font_config_file))
+
+            #训练内容
+            print()
+            composing.put_txt_img(draw=draw,
+                                    tt=txt_train,
+                                    total_dis=int((p_train[2]-p_train_bar[0])*0.8),
+                                    xy=p_train_txt,
+                                    dis_line=int(ftsz_train*0.6),
+                                    fill=color['font']['train'],
+                                    font_name='字由文艺黑体',
+                                    font_size=ftsz_train,
+                                    addSPC='no',
+                                    font_config_file=font_config_file)
+
+            #燃烧热量
+            draw.text((p_burn[0]+130,p_burn[1]+52),
+                        txt_burn,
+                        fill=color['font']['burn'],
+                        font=composing.fonts('汉仪糯米团',54,config=font_config_file))
+
+
+            #教练点评
+            if size['ht']['cmt']>0:
+                _ico_dot=Image.open(os.path.join(self.public_dir,'UI图标','dot.png'))
+                ico_dot=self.icon(_ico_dot,ico_size=(40,40))
+                bg.paste(ico_dot[0],(p_cmt[0]+10,p_cmt[1]+56),mask=ico_dot[1])
+                draw.line((p_cmt[0]+70,p_cmt[1]+100,p_cmt[0]+40+540,p_cmt[1]+100),fill='#787878')
+                draw.text((p_cmt[0]+68,p_cmt[1]+38),
+                            txt_cmt_title,
+                            fill=color['font']['cmt_title'],
+                            font=composing.fonts('思源黑体',44,config=font_config_file))
+
+                composing.put_txt_img(draw=draw,
+                                        tt=txt_ins_cmt,
+                                        total_dis=int((p_cmt_small[2]-p_cmt_small[0])*0.9),
+                                        xy=p_cmt_txt,
+                                        dis_line=int(ftsz_cmt*0.5),
+                                        fill=color['font']['suggest'],
+                                        font_name='汉仪字酷堂义山楷w',
+                                        font_size=ftsz_cmt,
+                                        addSPC='yes',
+                                        font_config_file=font_config_file)
+
+            #教练建议
+            _ico_dot=Image.open(os.path.join(self.public_dir,'UI图标','dot.png'))
+            ico_dot=self.icon(_ico_dot,ico_size=(40,40))
+            bg.paste(ico_dot[0],(p_suggest[0]+10,p_suggest[1]+56),mask=ico_dot[1])
+            draw.line((p_suggest[0]+70,p_suggest[1]+100,p_suggest[0]+40+540,p_suggest[1]+100),fill='#787878')
+            draw.text((p_suggest[0]+68,p_suggest[1]+38),
+                        txt_suggest_title,
+                        fill=color['font']['suggest_title'],
+                        font=composing.fonts('思源黑体',44,config=font_config_file))
+
+            composing.put_txt_img(draw=draw,
+                                    tt=txt_suggest,
+                                    total_dis=int((p_suggest_small[2]-p_suggest_small[0])*0.9),
+                                    xy=p_suggest_txt,
+                                    dis_line=int(ftsz_suggest*0.5),
+                                    fill=color['font']['suggest'],
+                                    font_name='汉仪字酷堂义山楷w',
+                                    font_size=ftsz_train,
+                                    addSPC='yes',
+                                    font_config_file=font_config_file)
+
+            #slogan
+            draw.text((p_logo[0]+185,p_logo[1]+48),txt_slogan,
+                        fill=color['font']['slogan'],font=composing.fonts('华康海报体W12(p)',62,config=font_config_file))
+
+
+
+            # bg.show()
+            bg=bg.convert('RGB')
+            # bg.show()
+            save_name=date_input+'_'+cus+'.jpg'
+            save_dir=os.path.join(self.save_dir_feedback,cus)
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
             bg.save(os.path.join(save_dir,save_name),quality=90,subsampling=0)
@@ -1042,162 +1434,530 @@ class FeedBackAfterClass:
         for cus_name in cus_list:
             fn=os.path.join(self.cus_file_dir,cus_name)    
             print('正在生成 {} 的课后反馈……'.format(cus_name),end='')
-            self.draw(cus=cus_name,ins=ins,date_input=date_input,open_dir=open_dir)
-
-
-class FitData2Pic:
-    def __init__(self):
-        self.dir=os.path.dirname(os.path.abspath(__file__))
-        self.default_title='会员健身数据比较'
-        config=readconfig.exp_json(os.path.join(self.dir,'configs','config.minghu'))
-        self.fn=os.path.join(config['会员档案文件夹'],'MH000唐青剑.xlsx')
-        # self.fn='D:\\Documents\\WXWork\\1688851376227744\WeDrive\\铭湖健身工作室\\铭湖健身工作室\\会员MH000唐青剑.xlsx'
-        # self.font='/home/jack/data/健身项目/minghu/fonts/msyh.ttc'
-        self.font='E:\\铭湖健身\\fonts\\msyh.ttc'
-
-    def to_pic(self,title='',fn='',d_font=''):
-        if title=='':
-            title=self.default_title
-        if fn=='':
-            fn=self.fn
-        if d_font=='':
-            d_font=self.font
-        
-        myfont = fm.FontProperties(fname=d_font) # 设置字体
-
-        df=pd.read_excel(fn,sheet_name='身体数据')
-
-        x=[datetime.strftime(d,'%Y-%m-%d') for d in df['时间'].tolist()]
-        y_wt=df['体重'].tolist()
-        y_chest=df['胸围'].tolist()
-        y_waist=df['腰围'].tolist()
-        y_l_arm=df['左臂围'].tolist()
-        y_r_arm=df['右臂围'].tolist()
-        y_hip=df['臀围'].tolist()
-        y_l_leg=df['左腿围'].tolist()
-        y_r_leg=df['右腿围'].tolist()
-        y_l_calf=df['左小腿围'].tolist()
-        y_r_calf=df['右小腿围'].tolist()
-
-        fig=plt.figure(figsize=(9,20))
-
-        ax1=fig.add_axes([0.1, 0.08, 0.8, 0.12],facecolor='#FFF5FB')
-        ax1.plot(x,y_wt,'o-',color='#FF4747',label='体重')
-        ax1.set_ylabel('体重(Kg)',fontproperties=myfont,color='#FF4747')
-        ax1.tick_params(axis='y',colors='#FF4747')
-        ax1.tick_params(axis='x',colors='#A65817')
-        ax1.set_xticklabels(x,rotation=25)
-        # ax1.legend(prop=myfont)
-        ax1.set_ylim(min(y_wt)*0.98,max(y_wt)*1.02)
-        for xy in list(zip(x,y_wt)):
-            ax1.text(xy[0],xy[1]+0.5,xy[1],color='#FF4747')
-
-        ax2=fig.add_axes([0.1, 0.20, 0.8, 0.12],facecolor='#F5F6FF')
-        ax2.plot(x,y_r_calf,marker='s',color='#4D85A6',label='右小腿围')
-        ax2.plot(x,y_l_calf,marker='s',color='violet',label='左小腿围')
-        ax2.set_ylabel('小腿围(cm)',fontproperties=myfont,color='#4D85A6')
-        ax2.tick_params(axis='y',colors='#4D85A6')
-        ax2.set_xticks([])
-        ax2.legend(prop=myfont)
-        ax2.set_ylim(min(y_r_calf)*0.95,max(y_r_calf)*1.05)
-        for xy in list(zip(x,y_r_calf)):
-            ax2.text(xy[0],xy[1]+0.4,xy[1],color='#4D85A6')
-        for xy in list(zip(x,y_l_calf)):
-            ax2.text(xy[0],xy[1]-0.9,xy[1],color='violet')
-
-        ax3=fig.add_axes([0.1, 0.32, 0.8, 0.12],facecolor='#F5F6FF')
-        ax3.plot(x,y_r_leg,marker='s',color='#4D85A6',label='右大腿围')
-        ax3.plot(x,y_l_leg,marker='s',color='violet',label='左大腿围')
-        ax3.set_ylabel('大腿围(cm)',fontproperties=myfont,color='#4D85A6')
-        ax3.tick_params(axis='y',colors='#4D85A6')
-        ax3.set_xticks([])
-        ax3.legend(prop=myfont)
-        ax3.set_ylim(min(y_r_leg)*0.95,max(y_r_leg)*1.05)
-        for xy in list(zip(x,y_r_leg)):
-            ax3.text(xy[0],xy[1]+0.4,xy[1],color='#4D85A6')
-        for xy in list(zip(x,y_l_leg)):
-            ax3.text(xy[0],xy[1]-1.2,xy[1],color='violet')
-
-        ax4=fig.add_axes([0.1, 0.44, 0.8, 0.12],facecolor='#F5F6FF')
-        ax4.plot(x,y_r_arm,marker='s',color='#4D85A6',label='右臂围')
-        ax4.plot(x,y_l_arm,marker='s',color='violet',label='左臂围')
-        ax4.set_ylabel('臂围(cm)',fontproperties=myfont,color='#4D85A6')
-        ax4.tick_params(axis='y',colors='#4D85A6')
-        ax4.set_xticks([])
-        ax4.legend(prop=myfont)
-        ax4.set_ylim(min(y_r_arm)*0.95,max(y_r_arm)*1.05)
-        for xy in list(zip(x,y_r_arm)):
-            ax4.text(xy[0],xy[1]+0.3,xy[1],color='#4D85A6')
-        for xy in list(zip(x,y_l_arm)):
-            ax4.text(xy[0],xy[1]-0.8,xy[1],color='violet')
-
-
-        ax5=fig.add_axes([0.1, 0.56, 0.8, 0.12],facecolor='#FFFAF4')
-        ax5.plot(x,y_waist,marker='s',color='orange',label='腰围')
-        ax5.set_ylabel('腰围(cm)',fontproperties=myfont,color='orange')
-        ax5.tick_params(axis='y',colors='orange')
-        ax5.set_xticks([])
-        # ax5.legend(prop=myfont)
-        ax5.set_ylim(min(y_waist)*0.95,max(y_waist)*1.05)
-        for xy in list(zip(x,y_waist)):
-            ax5.text(xy[0],xy[1]+0.5,xy[1],color='orange')
-
-        ax6=fig.add_axes([0.1, 0.68, 0.8, 0.12],facecolor='#FFFAF4')
-        ax6.plot(x,y_hip,marker='s',color='orange',label='臀围')
-        ax6.set_ylabel('臀围(cm)',fontproperties=myfont,color='orange')
-        ax6.tick_params(axis='y',colors='orange')
-        ax6.set_xticks([])
-        # ax6.legend(prop=myfont)
-        ax6.set_ylim(min(y_hip)*0.95,max(y_hip)*1.05)
-        for xy in list(zip(x,y_hip)):
-            ax6.text(xy[0],xy[1]+0.5,xy[1],color='orange')
-
-
-
-        ax7=fig.add_axes([0.1, 0.80, 0.8, 0.12],facecolor='#FFFAF4')
-        ax7.plot(x,y_chest,marker='s',color='orange',label='胸围')
-        ax7.set_ylabel('胸围(cm)',fontproperties=myfont,color='orange')
-        ax7.tick_params(axis='y',colors='orange')
-        ax7.set_xticks([])
-        # ax4.legend(prop=myfont)
-        ax7.set_ylim(min(y_chest)*0.95,max(y_chest)*1.05)
-        for xy in list(zip(x,y_chest)):
-            ax7.text(xy[0],xy[1]+0.5,xy[1],color='orange')
-
-
-        ax7.set_title(title,fontproperties=myfont,y=1.1,fontsize=20,color='#BF8D30')
-
-        for ax in fig.axes:
-            clr='#BF8D30'
-            for bdr in ['left','right','bottom','top']:
-                ax.spines[bdr].set_color(clr)
-
-
-        # plt.savefig('/home/jack/data/temp/mhdata.jpg')
-        plt.show()
-        return plt
-            
-
+            self.draw_new(cus=cus_name,ins=ins,date_input=date_input,open_dir=open_dir)
+  
 class Vividict(dict):
     def __missing__(self, key):
         value = self[key] = type(self)()
         return value
 
+class PeroidSummary:
+    def __init__(self,place='minghu',adj_bfr='yes',adj_src='prg',gui=''):
+        self.dir=os.path.dirname(os.path.abspath(__file__))
+        config=readconfig.exp_json(os.path.join(self.dir,'configs','main_'+place+'.config'))
+        self.cus_file_dir=config['会员档案文件夹']
+        self.material_dir=config['素材文件夹']
+        self.ins_dir=config['教练文件夹']
+        self.slogan_dir=config['文案文件夹']
+        self.save_dir=config['输出文件夹']
+        self.public_dir=config['公共素材文件夹']
+        self.font_dir=config['字体文件夹']
+        self.pro_dir=config['专业资料文件夹']
+        self.cus_period_dir=config['会员阶段记录文件夹']
+        self.adj_bfr=adj_bfr
+        self.adj_src=adj_src
+        self.gui=gui
+        self.place=place
+        # print(os.path.join(self.dir,'configs','main_'+place+'.config'),self.ins_dir,self.cus_file_dir)
+        self.df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'),sheet_name='教练信息')
+        self.color_config_fn=os.path.join(os.path.dirname(__file__),'configs','colors.'+place+'.config')
+        with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
+            self.txt_public=txt_pub.readlines()
+        self.cus_instance_name=self.txt_public[5].strip()[0:2]
+        self.prefix=self.cus_instance_name[0:2]
+        self.gym_name=self.txt_public[4]
+        self.gym_addr=self.txt_public[3]
+        if '%' in self.gym_addr:
+            self.gym_addr=''
+        self.txt_ins_word=self.txt_public[2]
+        self.txt_mini_title=self.txt_public[1]
+        self.txt_slogan=self.txt_public[0]
+
+    def fonts(self,font_name,font_size):
+        fontList=readconfig.exp_json(os.path.join(self.dir,'configs','FontList.'+self.place+'.config'))
+        # print(fontList)
+        return ImageFont.truetype(fontList[font_name],font_size)
+
+    def color_bg(self,theme='lightgrey'):
+        color=readconfig.exp_json(self.color_config_fn)
+        return color['PeriodSummary'][theme]
+
+    def cal_data(self,cus_name_input='MH003吕雅颖',start_date='20210729',end_date='20220201',bmi_bg='#ffffff',bfr_bg="#ffffff",radar_bg='#ffffff',msr_chart_bg='#ffffff'):
+        df_basic=pd.read_excel(os.path.join(self.cus_file_dir,cus_name_input+'.xlsx'),sheet_name='基本情况')
+        cus_name=df_basic['姓名'].tolist()[0]
+        cus_nickname=df_basic['昵称'].tolist()[0]
+        cus_sex=df_basic['性别'].tolist()[0]
+        #称呼
+        if cus_sex=='女':
+            txt_cus_sex='女士'
+        else:
+            txt_cus_sex='先生'
+        cus_birthday=df_basic['出生年月'].tolist()[0]
+        #起止日期
+        txt_period=start_date[:4]+'年'+start_date[4:6]+'月'+start_date[6:]+'日 — '+end_date[:4]+'年'+end_date[4:6]+'月'+end_date[6:]+'日'
+
+        #标准化生日
+        if len(str(cus_birthday))==4:
+            cus_birthday=int(str(cus_birthday)+'0101')
+        elif len(str(cus_birthday))==6:
+            cus_birthday=int(str(cus_birthday)+'01')
+
+        e_date=datetime(int(end_date[0:4]),int(end_date[4:6]),int(end_date[6:8]))
+        s_date=datetime(int(start_date[0:4]),int(start_date[4:6]),int(start_date[6:8]))
+        interval=e_date-s_date
+        prd=interval.days
+
+        dif_y,dif_m,dif_d=days_cal.Dates().dif_y_m_d(s=start_date,e=end_date)
+        if dif_y!=0:
+            txt_dif_y=str(dif_y)+'年'            
+        else:
+            txt_dif_y=''
+
+        if dif_m!=0:
+            txt_dif_m=str(dif_m)+'个月'
+        else:
+            txt_dif_m=''
+
+        if dif_d!=0:
+            txt_dif_d=str(dif_d)+'天'
+        else:
+            txt_dif_d=''
+
+        _txt_dif=[txt_dif_y,txt_dif_m,txt_dif_d]
+        _txt_dif=list(filter(None,_txt_dif))
+        if len(_txt_dif)>1:
+            _txt_dif[-1]='零'+_txt_dif[-1]
+        txt_prd_0=''.join(_txt_dif)
+
+
+        df_train=pd.read_excel(os.path.join(self.cus_file_dir,cus_name_input+'.xlsx'),sheet_name='训练情况',skiprows=1)
+        df_train.columns=['时间','形式','目标肌群','有氧项目','有氧时长','抗阻内容','重量','距离','次数','消耗热量','教练姓名','教练评语']
+        df_train_interval=df_train[(df_train['时间']>=s_date) & (df_train['时间']<=e_date) ]
+        df_ym=pd.DataFrame()
+        df_ym['year']=df_train_interval['时间'].dt.year
+        df_ym['month']=df_train_interval['时间'].dt.month
+        df_ym['date']=df_train_interval['时间']
+        df_ym_count=df_ym.drop_duplicates('month')
+        df_ym_cal=df_ym_count.groupby('year').count().reset_index()
+        months=df_ym_cal['month'].sum()
+
+        if months>12:
+            txt_prd=str(months//12)+'年零'+str(months//12)+'个月'
+        else:
+            txt_prd=str(months)+'个月'
+        
+        
+        #训练次数（唯一的日期计数）
+        train_counts=len(list(df_train_interval['时间'].unique()))
+
+        #平均训练频率        
+        # if train_counts//months>=1:
+        #     avr_train_counts=str(train_counts//months)+'次'
+        # else:
+        #     avr_train_counts='每月不到1次'
+        try:
+            if train_counts//(prd//30)>=1:
+                txt_avr_train_counts='你平均每个月运动 '+str(train_counts//(prd//30))+'次。'
+            else:
+                txt_avr_train_counts='你每个月运动不到1次。'
+        except:
+            txt_avr_train_counts='每个月运动'+str(train_counts)+'次。'
+
+            # '在过去的 '+contents['train_time']+' 里，你平均每个月运动 '+str(contents['train_frqcy'])+'。'
+
+        #最高训练频率及对应月份
+        df_ym_trainmax=df_ym.drop_duplicates('date')
+        df_trainmax=df_ym_trainmax.groupby(['year','month']).count().reset_index()
+        trainmax=df_trainmax[df_trainmax['date']==df_trainmax['date'].max()]
+        if trainmax.shape[0]>1:
+            t_month=''
+            for index,row in trainmax.iterrows():
+                t_month=t_month+str(row['year'])+'年'+str(row['month'])+'月、'
+            _txt_trainmax=t_month[:-1]+'，这'+str(trainmax.shape[0])+'个月里每个月都运动了'+str(trainmax['date'].max())+'次。'
+        else:
+            _txt_trainmax='表现最优秀是在 '+str(trainmax['year'].tolist()[0])+'年'+str(trainmax['month'].tolist()[0])+'月，运动了'+str(trainmax['date'].max())+'次。'
+        
+        #最高训练文字太长则分段
+        if len(_txt_trainmax)>33:
+            txt_trainmax=_txt_trainmax[:33]+'\n\n'+_txt_trainmax[33:]
+        else:
+            txt_trainmax=_txt_trainmax
+
+
+        #最后一次体测日期
+        
+        df_measure=pd.read_excel(os.path.join(self.cus_file_dir,cus_name_input+'.xlsx'),sheet_name='身体数据',skiprows=0)
+        txt_latest_msr_date=str(df_measure['时间'].max())[0:4]+'年'+str(df_measure['时间'].max())[5:7]+'月'+str(df_measure['时间'].max())[8:10]+'日'
+
+        #体重
+        wt=df_measure[df_measure['时间']==df_measure['时间'].max()]['体重'].tolist()[0]
+        txt_wt=str(wt)+' Kg'
+        ht=df_measure[df_measure['时间']==df_measure['时间'].max()]['身高'].tolist()[0]
+
+        if np.isnan(ht) or np.isnan(wt) :
+            print('身体数据有未填写项，请核实。')
+            # exit(0)
+            return
+            
+        #BMI        
+        txt_bmi=str(round(wt/((ht/100)*(ht/100)),2))
+        bmi_chart=draw_pic.Scale(scale_name='BMI',stage=[10,18.5,24,28,40],stage_name=['','','超重','肥胖',''],colors=('#9ED6D6','#CEE9E9','#CEE9E9','#9ED6D6','#9ED6D6'))
+        pic_bmi=bmi_chart.draw(val=round(wt/((ht/100)*(ht/100)),2),color_val='#84B6B9',scale_adj=200,color_bg=bmi_bg,back_transparent_color='',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_blue.png'))
+
+        
+        cals=get_data.cals()
+        age=days_cal.calculate_age(str(cus_birthday))
+
+        #BMR
+        txt_bmr=str(round(cals.bmr(sex=cus_sex,ht=ht,wt=wt,age=age),2))+' 千卡'
+
+
+        #BFR
+        cus_waist=df_measure[df_measure['时间']==df_measure['时间'].max()]['腰围'].tolist()[0]
+        val_bfr=round(cals.bfr(age=age,sex=cus_sex,ht=ht,wt=wt,waist=cus_waist,adj_bfr=self.adj_bfr,adj_src=self.adj_src,gui=self.gui,formula=1)*100,2)
+        txt_bfr=str(val_bfr)+' %'
+        if cus_sex=='女':
+            bfr_stage=[10,25,28,32,40]
+            stage_name=['','','丰满','肥胖','']
+            scale_stage=300
+        else:
+            bfr_stage=[0,15,18,25,30]
+            stage_name=['','腹肌\n清晰','腹肌\n隐约','肥胖','']
+            scale_stage=100
+        bfr_chart=draw_pic.Scale(scale_name='BFR',stage=bfr_stage,stage_name=stage_name,colors=('#FBF2DA','#FBF2DA','#FBF2DA','#FBF2DA','#EDD9A5','#EDD9A5'))
+        pic_bfr=bfr_chart.draw(val=val_bfr,color_val='#CEC09C',scale_adj=scale_stage,color_bg=bfr_bg,back_transparent_color='',arrow_fn=os.path.join(self.public_dir,'UI图标','倒三角_yellow.png'))
+
+
+
+        #训练数据
+        train_data=get_data.ReadAndExportDataNew(adj_bfr='no',adj_src='prg',gui='').exp_cus_prd(self.cus_file_dir,cus=cus_name_input,start_time=start_date,end_time=end_date)
+
+
+        #有氧训练时长
+        oxy_time=train_data['train']['oxy_time']
+        if oxy_time>86400:
+            txt_oxy_time=str(int(oxy_time//86400))+'天'+str(int(oxy_time%86400//3600))+'小时'
+        elif oxy_time>3600:
+            txt_oxy_time=str(int(oxy_time//3600))+'小时'+str(int(oxy_time%3600//60))+'分'
+        else:
+            txt_oxy_time=str(int(oxy_time//60))+'分'
+
+        #抗阻训练总重量
+        txt_muscle_wt=str(int(train_data['train']['muscle_total_wt']))+' Kg'
+
+        #各部位训练次数
+        each_part=train_data['train']['muscle']
+        txt_each_part=''
+        for itm in each_part:
+            txt_each_part=txt_each_part+'     -  '+itm+':  '+str(each_part[itm])+' 次'+'\n\n'
+    
+        #运动消耗
+        txt_calories=str(int(train_data['train']['calories']))+' Kcal'
+
+        #体适能指标
+        # print(train_data['body']['ht_lung'])
+        physical_fitness_data={'心肺':train_data['body']['ht_lung'],
+                                '平衡':train_data['body']['balance'],
+                                '力量':train_data['body']['power'],
+                                '柔韧性':train_data['body']['flexibility'],
+                                '核心':train_data['body']['core']}
+        
+        radar=draw_pic.DrawRadar()
+        pic_radar=radar.draw(physical_fitness_data,bgcolor=radar_bg)
+        # pic_radar.show()
+
+
+        #围度变化曲线
+    
+        body_measure_data=draw_pic.PeriodChart(font_fn=os.path.join(self.font_dir,'msyh.ttc'))
+        body_measure_chart=body_measure_data.to_pic(cus_dir=self.cus_file_dir,cus_fn=cus_name_input+'.xlsx',start_time=start_date,end_time=end_date,d_font='',title='',bgcolor=msr_chart_bg,items=['waist','hip','chest'])
+        # body_measure_chart.show()
+                                
+
+        # print(latest_msr_date,txt_wt,txt_bmi,txt_bmr,txt_bfr)
+        # print(txt_calories)
+        contents={'nickname':cus_nickname,'sex':cus_sex,'s-e_date':txt_period,
+                    'train_time':txt_prd_0,'train_frqcy':txt_avr_train_counts,
+                    'train_max_frqcy':txt_trainmax,'latest_msr':txt_latest_msr_date,
+                    'wt':txt_wt,'bmi':txt_bmi,'bmr':txt_bmr,'bfr':txt_bfr,
+                    'oxy_time':txt_oxy_time,'muscle_wt':txt_muscle_wt,'each_part':txt_each_part,
+                    'calories':txt_calories,'pic_radar':pic_radar,'pic_msr_chart':body_measure_chart,
+                    'pic_bmi':pic_bmi,'pic_bfr':pic_bfr}
+
+        return contents
+
+    def read_diet(self):
+        df=pd.read_excel(os.path.join(self.pro_dir,'减脂饮食建议表.xlsx'),sheet_name='饮食建议')
+        # df_sgst=df['饮食建议'].tolist()
+        df.dropna(axis=0,how='any',inplace=True)
+        df_sgst=df['饮食建议'].sample(1).tolist()[0]
+        return df_sgst
+
+    def diet_txts(self,wid=680,font_size=28):
+        txt_input=self.read_diet()
+        para_txt=composing.split_txt_Chn_eng(wid=wid,font_size=font_size,txt_input=txt_input,Indent='yes')
+        # print('main文字段数',para_txt[1])
+        return para_txt
+
+    def block_ht(self,contents_input,diet_para_num,diary_font_size=28,diet_font_size=28):
+        title=120
+        basic_info=330
+        basic_body=1540
+        t_diary=contents_input['each_part'].split('\n')
+        t_diary.append(contents_input['muscle_wt'].split('\n'))
+        t_diary.append(contents_input['oxy_time'].split('\n'))
+        #根据运动日记长短调整色块高度
+        if len(t_diary)*diary_font_size>=200:
+            diary=len(t_diary)*diary_font_size*2
+        else:
+            diary=len(t_diary)*diary_font_size*2-int((4*len(t_diary)*diary_font_size*2)/3)+440
+        # print(-int((4*len(t_diary)*diary_font_size*2)/3)+440,len(t_diary)*diary_font_size*2)
+        msr_change=900
+        diet=math.ceil(diet_para_num*2.4*diet_font_size)+90
+        bottom=150
+        content=[title,basic_info,basic_body,diary,msr_change,diet,bottom]        
+        gap=20
+        total_ht=sum(content)+gap*(len(content)-1)
+
+        return {'b_title':title,'b_info':basic_info,'b_body':basic_body,
+                'b_diary':diary,'b_msr':msr_change,'b_diet':diet,'b_bottom':bottom,
+                'gap':gap,'total_ht':total_ht}
+
+    def icon(self,ico,ico_size):
+        ico=ico.resize(ico_size)
+        return (ico,ico.split()[3])
+
+    def exp_chart(self,cus_name_input='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210729',end_date='20220201',
+                                theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=52):
+        colors=self.color_bg(theme=theme)
+        contents=self.cal_data(cus_name_input=cus_name_input,start_date=start_date,end_date=end_date,bmi_bg=colors['bmi_bg'],bfr_bg=colors['bfr_bg'],radar_bg=colors['radar_bg'],msr_chart_bg=colors['msr_chart_bg'])
+        diet_para_nums=self.diet_txts(wid=diet_boxwid,font_size=diet_font_size)[1]
+        
+        # print(self.diet_txts(wid=680,font_size=diet_font_size)[0],diet_para_nums,math.ceil(diet_para_nums*2.4*diet_font_size)+90)
+        
+        block_ht=self.block_ht(contents_input=contents,diet_para_num=diet_para_nums,diary_font_size=diary_font_size,diet_font_size=diet_font_size)
+        bg=Image.new('RGBA',(720,block_ht['total_ht']),color=colors['bg'])
+        gap=block_ht['gap']
+
+        #坐标计算
+        w_block=bg.size[0]
+
+        y_title=0
+        y_info=y_title+block_ht['b_title']+gap
+        y_body=y_info+block_ht['b_info']+gap
+        y_diary=y_body+block_ht['b_body']+gap
+        y_msr=y_diary+block_ht['b_diary']+gap
+        y_diet=y_msr+block_ht['b_msr']+gap
+        y_bottom=y_diet+block_ht['b_diet']+gap
+
+        # print(y_diet,y_bottom,y_msr,block_ht['b_diet'],block_ht['b_bottom'],block_ht['total_ht'])
+
+        draw=ImageDraw.Draw(bg)
+        #标题----------------------------------------------------------------------------
+        bg_title=Image.new('RGBA',(720,block_ht['b_title']),color=colors['title'])
+        bg.paste(bg_title,(0,y_title))        
+
+        logo=Image.open(os.path.join(self.material_dir,'logo及二维码','logo.png'))
+        logo=logo.resize((logo.size[0]*logo_ht//logo.size[1],logo_ht))
+        m_logo=logo.split()[3]
+        bg.paste(logo,(50,30),mask=m_logo)
+        draw.text((152,40),self.gym_name.strip()+'会员运动记录',fill='#969696',font=self.fonts('字由文艺黑体',40))
+
+        #基本信息---------------------------------------------------------------
+        bg_info=Image.new('RGBA',(720,block_ht['b_info']),color=colors['basic_info'])
+        bg.paste(bg_info,(0,y_info))
+        #姓名
+        if contents['sex']=='女':
+            ico_head=Image.open(os.path.join(self.material_dir,'UI图标','head_female.png'))
+            txt_sex='女士'
+        else:
+            ico_head=Image.open(os.path.join(self.material_dir,'UI图标','head_male.png'))
+            txt_sex='先生'
+        ico_head=self.icon(ico_head,ico_size)
+        bg.paste(ico_head[0],(50,180),mask=ico_head[1])
+        draw.text((120,178),contents['nickname']+' '+txt_sex,fill='#787878',font=self.fonts('思源黑体',44))
+
+        #训练时间段
+        _ico_prd=Image.open(os.path.join(self.material_dir,'UI图标','calendar.png'))
+        ico_prd=self.icon(_ico_prd,ico_size)
+        bg.paste(ico_prd[0],(50,260),mask=ico_prd[1])
+        draw.text((120,270),contents['s-e_date'],fill='#787878',font=self.fonts('思源黑体',22))
+
+        #训练频率
+        _ico_frqcy=Image.open(os.path.join(self.material_dir,'UI图标','frequency.png'))
+        ico_frqcy=self.icon(_ico_frqcy,ico_size)
+        bg.paste(ico_frqcy[0],(50,320),mask=ico_frqcy[1])
+        txt_avr_frqcy='在过去的 '+contents['train_time']+' 里，'+str(contents['train_frqcy'])
+        draw.text((120,330),txt_avr_frqcy,fill='#787878',font=self.fonts('思源黑体',22))
+
+        #最大训练频率
+        _ico_frqcy_max=Image.open(os.path.join(self.material_dir,'UI图标','frequency_max.png'))
+        ico_frqcy_max=self.icon(_ico_frqcy_max,ico_size)
+        bg.paste(ico_frqcy_max[0],(50,380),mask=ico_frqcy_max[1])
+        draw.text((120,390),contents['train_max_frqcy'],fill='#787878',font=self.fonts('思源黑体',22))
+
+        #最大训练频率
+        _ico_frqcy_max=Image.open(os.path.join(self.material_dir,'UI图标','frequency_max.png'))
+        ico_frqcy_max=self.icon(_ico_frqcy_max,ico_size)
+        bg.paste(ico_frqcy_max[0],(50,380),mask=ico_frqcy_max[1])
+        draw.text((120,390),contents['train_max_frqcy'],fill='#787878',font=self.fonts('思源黑体',22))
+
+        #基本体格------------------------------------------------------------------------------------------
+        bg_body=Image.new('RGBA',(720,block_ht['b_body']),color=colors['basic_body'])
+        bg.paste(bg_body,(0,y_body))
+
+        #基本体格标题
+        _ico_dot=Image.open(os.path.join(self.material_dir,'UI图标','dot.png'))
+        ico_dot=self.icon(_ico_dot,ico_size)
+        bg.paste(ico_dot[0],(50,540),mask=ico_dot[1])
+        draw.text((100,540),'基本体格',fill='#787878',font=self.fonts('思源黑体',36))
+        draw.line((50,590,680,590),fill='#787878')
+
+        #最后测量日期
+        _ico_msr=Image.open(os.path.join(self.material_dir,'UI图标','clock.png'))
+        ico_msr=self.icon(_ico_msr,ico_size)
+        bg.paste(ico_msr[0],(50,620),mask=ico_msr[1])
+        draw.text((120,630),'最近测量日期：'+contents['latest_msr'],fill='#787878',font=self.fonts('思源黑体',26))
+
+        #基础代谢率
+        _ico_bfr=Image.open(os.path.join(self.material_dir,'UI图标','calory.png'))
+        ico_bfr=self.icon(_ico_bfr,ico_size)
+        bg.paste(ico_bfr[0],(50,680),mask=ico_bfr[1])
+        draw.text((120,690),'基础代谢率：'+contents['bmr'],fill='#787878',font=self.fonts('思源黑体',26))
+
+        #体重/BMI
+        _ico_wt=Image.open(os.path.join(self.material_dir,'UI图标','weight.png'))
+        ico_wt=self.icon(_ico_wt,ico_size)
+        bg.paste(ico_wt[0],(50,760),mask=ico_wt[1])
+        draw.text((120,765),'体重：'+contents['wt'],fill='#787878',font=self.fonts('思源黑体',26))
+        draw.text((400,765),'BMI：'+contents['bmi'],fill='#787878',font=self.fonts('思源黑体',26))
+        #BMI图
+        pic_bmi=contents['pic_bmi']
+        pic_bmi=pic_bmi.resize((600,600*pic_bmi.size[1]//pic_bmi.size[0]))
+        pic_bmi=pic_bmi.crop((0,int(600*pic_bmi.size[1]//pic_bmi.size[0]//3),pic_bmi.size[0],pic_bmi.size[1]))
+        bg.paste(pic_bmi,(60,820))
+        #体脂率
+        _ico_bfr=Image.open(os.path.join(self.material_dir,'UI图标','bfr.png'))
+        ico_bfr=self.icon(_ico_bfr,ico_size)
+        bg.paste(ico_bfr[0],(50,1070),mask=ico_bfr[1])
+        draw.text((120,1080),'体脂率：'+contents['bfr'],fill='#787878',font=self.fonts('思源黑体',26))
+        #BFR图
+        pic_bfr=contents['pic_bfr']
+        pic_bfr=pic_bfr.resize((600,600*pic_bfr.size[1]//pic_bfr.size[0]))
+        pic_bfr=pic_bfr.crop((0,int(600*pic_bfr.size[1]//pic_bfr.size[0]//3),pic_bfr.size[0],pic_bfr.size[1]))
+        bg.paste(pic_bfr,(60,1140))
+        #体适能雷达图
+        _ico_radar=Image.open(os.path.join(self.material_dir,'UI图标','radar.png'))
+        ico_radar=self.icon(_ico_radar,ico_size)
+        bg.paste(ico_radar[0],(50,1400),mask=ico_radar[1])
+        draw.text((120,1410),'体适能',fill='#787878',font=self.fonts('思源黑体',26))
+        pic_radar=contents['pic_radar']
+        pic_radar=pic_radar.resize((600,600*pic_radar.size[1]//pic_radar.size[0]))
+        # pic_radar=pic_radar.crop((0,int(600*pic_radar.size[1]//pic_radar.size[0]//3),pic_radar.size[0],pic_radar.size[1]))
+        bg.paste(pic_radar,(60,1460))
+
+        #运动记录----------------------------------------------------
+        bg_diary=Image.new('RGBA',(720,block_ht['b_diary']),color=colors['train_rec'])
+        bg.paste(bg_diary,(0,y_diary))
+
+        #训练日记标题
+        _ico_dot=Image.open(os.path.join(self.material_dir,'UI图标','dot.png'))
+        ico_dot=self.icon(_ico_dot,ico_size)
+        y_diary_title=y_diary+40
+        bg.paste(ico_dot[0],(50,y_diary_title),mask=ico_dot[1])
+        draw.text((100,y_diary_title),'运动记录',fill='#787878',font=self.fonts('思源黑体',36))
+        draw.line((50,y_diary_title+50,680,y_diary_title+50),fill='#787878')
+        #有氧时长
+        _ico_oxy=Image.open(os.path.join(self.material_dir,'UI图标','oxy_sport.png'))
+        ico_oxy=self.icon(_ico_oxy,ico_size)
+        bg.paste(ico_oxy[0],(100,y_diary_title+80),mask=ico_oxy[1])
+        draw.text((160,y_diary_title+90),'有氧运动时长：'+contents['oxy_time'],fill='#787878',font=self.fonts('思源黑体',26))
+        #总抗阻重量
+        _ico_wt=Image.open(os.path.join(self.material_dir,'UI图标','dumbbell.png'))
+        ico_wt=self.icon(_ico_wt,ico_size)
+        bg.paste(ico_wt[0],(100,y_diary_title+145),mask=ico_wt[1])        
+        draw.text((160,y_diary_title+150),'抗阻总重量：'+contents['muscle_wt'],fill='#787878',font=self.fonts('思源黑体',26))
+        #各部位训练次数
+        _ico_body=Image.open(os.path.join(self.material_dir,'UI图标','body.png'))
+        ico_body=self.icon(_ico_body,ico_size)
+        bg.paste(ico_body[0],(100,y_diary_title+205),mask=ico_body[1])   
+        draw.text((160,y_diary_title+210),'各部位训练次数\n\n'+contents['each_part'],fill='#787878',font=self.fonts('思源黑体',26))
+
+        #围度变化--------------------------------------------------------------------------------
+        bg_msr=Image.new('RGBA',(720,block_ht['b_msr']),color=colors['msr_change'])
+        bg.paste(bg_msr,(0,y_msr))
+        y_msr_title=y_msr+40
+        _ico_dot=Image.open(os.path.join(self.material_dir,'UI图标','dot.png'))
+        ico_dot=self.icon(_ico_dot,ico_size)
+        bg.paste(ico_dot[0],(50,y_msr_title),mask=ico_dot[1])
+        draw.text((100,y_msr_title),'围度变化',fill='#787878',font=self.fonts('思源黑体',36))
+        draw.line((50,y_msr_title+50,680,y_msr_title+50),fill='#787878')
+        pic_msr_chart=contents['pic_msr_chart']
+        pic_msr_chart=pic_msr_chart.resize((600,600*pic_msr_chart.size[1]//pic_msr_chart.size[0]))
+        # pic_radar=pic_radar.crop((0,int(600*pic_radar.size[1]//pic_radar.size[0]//3),pic_radar.size[0],pic_radar.size[1]))
+        bg.paste(pic_msr_chart,(60,y_msr_title+80))
+
+        #饮食建议----------------------------------------------------------------------
+        bg_diet=Image.new('RGBA',(720,block_ht['b_diet']),color=colors['diet'])
+        bg.paste(bg_diet,(0,y_diet))
+        y_diet_title=y_diet+40
+        _ico_dot=Image.open(os.path.join(self.material_dir,'UI图标','dot.png'))
+        ico_dot=self.icon(_ico_dot,ico_size)
+        bg.paste(ico_dot[0],(50,y_diet_title),mask=ico_dot[1])
+        draw.text((100,y_diet_title),'饮食建议',fill='#787878',font=self.fonts('思源黑体',36))
+        draw.line((50,y_diet_title+50,680,y_diet_title+50),fill='#787878')
+        composing.put_txt_img(draw=draw,tt=self.read_diet(),total_dis=diet_boxwid,xy=(70,y_diet_title+80),dis_line=diet_font_size*1.3,fill='#787878',font_name='思源黑体',font_size=diet_font_size,addSPC='yes',font_config_file=os.path.join(os.path.dirname(__file__),'configs','FontList.'+self.place+'.config'))
+
+        #底部---------------------------------------------------
+        bg_bottom=Image.new('RGBA',(720,block_ht['b_bottom']),color=colors['bottom'])
+        bg.paste(bg_bottom,(0,y_bottom))
+        qrcode=Image.open(os.path.join(self.ins_dir,'教练二维码',ins+'二维码.jpg'))
+        qrcode=qrcode.resize((100,100))
+        bg.paste(qrcode,(50,y_bottom+25))
+
+        slogan=Image.open(os.path.join(self.material_dir,'UI图标','slogan.png'))
+        slogan=slogan.resize((330,slogan.size[1]*330//slogan.size[0]))
+        m_slogan=slogan.split()[3]
+        bg.paste(slogan,(225,y_bottom+30),mask=m_slogan)
+ 
+        # bg.show()
+        outimg=bg.convert('RGB')
+        # outimg.show()
+        savedir=os.path.join(self.cus_period_dir,cus_name_input)
+        if not os.path.exists(savedir):
+            os.makedirs(savedir)
+        savefn=os.path.join(savedir,datetime.now().strftime('%Y%m%d%H%M%S')+'_'+cus_name_input+'阶段记录.jpg')
+        print(savefn)
+        os.startfile(savedir)
+        outimg.save(savefn,quality=90,subsampling=0)
+
+        print('完成')
+
 if __name__=='__main__':
     #根据训练数据生成阶段报告
-    # p=MingHu()
-    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',start_time='20200115',end_time='20210820')
-    # p.auto_cus_xls()
+
+    p=PeroidSummary(place='minghu')
+    p.exp_chart(cus_name_input='MH016徐颖丽',ins='MHINS001陆伟杰',
+                start_date='20210101',end_date='20220523',theme='lightgrey',
+                ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,logo_ht=72)
+
+    # p.draw(cus='SV001测试',ins='SVINS001周颖鑫',start_time='20200115',end_time='20210820')
+    # res=p.cal_data()
+    # print(res)
+    # # res['pic_bmi'].show()
+    # res['pic_bfr'].show()
 
     #当天报告
-    p=FeedBackAfterClass()
-    # p.draw(cus='MH031梁丽峰',ins='MHINS002韦越棋',date_input='20210623')
-    # p.draw(cus='MH024刘婵桢',ins='MHINS002韦越棋',date_input='20210323')
-    p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
+
+    # p=FeedBackAfterClass(place='minghu')
+    # p.draw_new(cus='MH049王丹',ins='MHINS001陆伟杰',date_input='20210814')
+
+    # p.draw(cus='MH037廖程',ins='MHINS002韦越棋',date_input='20210824')
+    # p.group_afterclass(ins='MHINS002韦越棋',date_input='20210727',open_dir='no')
 
     # 根据多次体测数据生成折线图
     # fitdata=FitData2Pic()
-    # fitdata.to_pic()
+    # fitdata.to_pic(items=['chest','waist','hip'])
 
     #分组录入数据
     # p=GroupDataInput()
@@ -1206,3 +1966,18 @@ if __name__=='__main__':
     #计算体脂率
     # my=cals()
     # print(my.bfr(age=40,sex='男',ht=170,wt=63.8,waist=82,formula=1))
+
+
+    # s='20211101'
+    # e='20221222'
+    # vsy=datetime.strptime(s,'%Y%m%d').year
+    # vey=datetime.strptime(e,'%Y%m%d').year
+    # vsm=datetime.strptime(s,'%Y%m%d').month
+    # vem=datetime.strptime(e,'%Y%m%d').month
+    # vsd=datetime.strptime(s,'%Y%m%d').day
+    # ved=datetime.strptime(e,'%Y%m%d').day
+
+    # delta_m=(vey-vsy)*12+(vem-vsm)
+
+    # print(delta_m)    
+

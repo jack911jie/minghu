@@ -19,8 +19,9 @@ class PullDownBox:
         else:
             current += current_value
         # print('current 2=',current)
-        if current.strip()!= "":
-            self.handlerResult(current,result)
+        if current.strip()!= "": 
+            #输入小写字母的时候转为大写
+            self.handlerResult(current.upper(),result)
         else:
             # place_forget隐藏控件
             self.pull_down_box.place_forget()
@@ -31,6 +32,7 @@ class PullDownBox:
         # print("-----------------------------")
         # print(result)
         self.pull_down_box.delete(0, tk.END)
+        # print(result)
         for res in result:
             # 总数据中包含输入框中的内容
             if len(re.findall(current,res))>0:

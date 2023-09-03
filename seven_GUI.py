@@ -1,5 +1,6 @@
 import os
 import sys
+import numpy as np
 from tkinter.constants import CENTER
 sys.path.append(os.path.join(os.path.dirname(__file__),'modules'))
 import readconfig
@@ -17,39 +18,33 @@ import warnings
 warnings.filterwarnings('ignore')
 
 class GUI:
-    def __init__(self,place='minghu'):
-        config=readconfig.exp_json(os.path.join(os.path.dirname(__file__),'configs','main_'+place+'.config'))
+    def __init__(self,place='seven',wecomid_replace='yes',wecomid_pair=['$wecomid$','1688850049985213']):
+        config=readconfig.exp_json(os.path.join(os.path.dirname(__file__),'configs','main_'+place+'.config'),
+                                    wecomid_replace=wecomid_replace,wecomid_pair=wecomid_pair)
         self.cus_dir=config['会员档案文件夹']
         self.material_dir=config['素材文件夹']
         self.public_dir=config['公共素材文件夹']
         self.ins_dir=config['教练文件夹']
+        self.output_dir=config['课后反馈文件夹']
         self.df_ins=pd.read_excel(os.path.join(self.ins_dir,'教练信息.xlsx'),sheet_name='教练信息')
         self.place=place
         with open(os.path.join(self.material_dir,'txt_public.txt'),'r',encoding='utf-8') as txt_pub:
             self.txt_public=txt_pub.readlines()
-        self.cus_instance_name=self.txt_public[5].strip()[0:2]
+        self.cus_instance_name=self.txt_public[5].strip()
         self.prefix=self.cus_instance_name[0:2]
         self.gym_name=self.txt_public[4]
         self.gym_addr=self.txt_public[3]
+        if '%' in self.gym_addr:
+            self.gym_addr=''
         self.txt_ins_word=self.txt_public[2]
         self.txt_mini_title=self.txt_public[1]
         self.txt_slogan=self.txt_public[0]
 
-        if place=='seven':
-            self.place=place
-            self.prefix='SV'
-        elif place=='minghu':
-            self.place=place
-            self.prefix='MH'
-        else:
-            pass
-        
         
     def creat_gui(self):
         global fr_grp
         window =tk.Tk()
-        window.title('铭湖健身会员管理及反馈小程序 v1.1')
-        # window.title(self.ins_dir)
+        window.title(self.gym_name+' | 会员管理及反馈小程序 v1.1')
         window.geometry('500x600')
         window.attributes("-toolwindow", 2)
         window.resizable(0,0)
@@ -62,17 +57,16 @@ class GUI:
         cover_label=tk.Label(fr_grp,image=cover_img)
         # cover_label.place(x=150,y=200,width=300,height=300,anchor=CENTER)
         cover_label.pack(pady=30)
-        cover_txt=tk.Label(fr_grp,text='让健身变得有趣',font=('幼圆',18),fg='#665B2C')
+        cover_txt=tk.Label(fr_grp,text=self.txt_slogan,font=('幼圆',18),fg='#665B2C')
         cover_txt.pack()
 
 
         menubar=tk.Menu(window)
         after_class_menu=tk.Menu(menubar,tearoff=0)
-        menubar.add_cascade(label='课后反馈生成',menu=after_class_menu)
-        after_class_menu.add_cascade(label='个人',command=self.after_individual)
-        after_class_menu.add_cascade(label='批量',command=self.after_batch)        
-                
-
+        menubar.add_cascade(label='课后反馈生成',menu=after_class_menu)              
+        after_class_menu.add_cascade(label='个人',command=self.after_individual)        
+        after_class_menu.add_cascade(label='批量',command=self.after_batch)  
+        
         menubar.add_cascade(label='生成会员总结',command=self.cus_summary_menu)
         menubar.add_cascade(label='批量录入会员训练信息',command=self.gp_input_train_menu)
         menubar.add_cascade(label='生成新的会员资料表',command=self.new_cus_excel)
@@ -133,6 +127,7 @@ class GUI:
         lb_ins=tk.Label(window,text='选择教练',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
         lb_ins.pack()
 
+       
         ins_list=self.get_ins_list()
 
         ins = tk.StringVar()    # 定义一个var用来将radiobutton的值和Label的值联系在一起.
@@ -143,7 +138,7 @@ class GUI:
 
         if group!='yes':
             # print('individual')
-            lb_cus=tk.Label(window,text='录入会员姓名（MH000李铭湖）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
+            lb_cus=tk.Label(window,text='录入会员姓名（'+self.cus_instance_name+'）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
             lb_cus.pack()
             var_cus_name=tk.StringVar()
             cus_name_input=tk.Entry(window,textvariable=var_cus_name,show=None,font=('宋体', 14),width=15)
@@ -153,7 +148,6 @@ class GUI:
             # print(cus_list)
             LB1 = tk.Listbox(window, height=4)
             y_pdbox=169+(len(ins_list)-1)*27
-            # print(y_pdbox)
             cus_listbox=menu_style.PullDownBox(LB1,cus_name_input,x=328,y=y_pdbox)
             cus_name_input.bind('<Key>', cus_listbox.handlerAdaptor(cus_listbox.text_entry_box_change,cus_list))    
             LB1.bind('<Double-Button-1>', cus_listbox.send)
@@ -162,14 +156,7 @@ class GUI:
             def open_cus_file():
                 cus_name=var_cus_name.get().upper()
                 if cus_name in cus_list:
-                    try:
-                        os.startfile(os.path.join(self.cus_dir,cus_name+'.xlsm'))
-                    except FileNotFoundError:
-                        os.startfile(os.path.join(self.cus_dir,cus_name+'.xlsx'))
-                    except:
-                        feed_back.delete('1.0','end')
-                        feed_back.insert('insert','会员ID不在列表内，请检查。')
-                    
+                    os.startfile(os.path.join(self.cus_dir,cus_name+'.xlsm'))
                 else:
                     feed_back.delete('1.0','end')
                     feed_back.insert('insert','会员ID不在列表内，请检查。')
@@ -195,12 +182,14 @@ class GUI:
                 mystd = myStdout(feed_back)	# 实例化重定向类
                 ac=AfterClass.FeedBack()
                 if group=='yes':
-                    ac.today_feedback_group(ins=ins.get(),date_input=date_txt,open_dir='no')
+                    ac.today_feedback_group(place=self.place,ins=ins.get(),date_input=date_txt,open_dir='no')
+                    os.startfile(self.output_dir)
                 else:
                     cus_name=var_cus_name.get().upper()
                     cus_list=self.get_cus_list()
                     if cus_name in cus_list:
-                        ac.today_feedback(cus=cus_name,ins=ins.get(),date_input=date_txt)
+                        ac.today_feedback(place=self.place,cus=cus_name,ins=ins.get(),date_input=date_txt)
+                        os.startfile(os.path.join(self.output_dir,cus_name))
                     else:
                         print('会员ID不在列表内，请检查。')
                 mystd.restoreStd()
@@ -224,15 +213,17 @@ class GUI:
 
         feed_back=tk.Text(window)
         # today_feedback(cus='MH024刘婵桢',ins='MHINS001陆伟杰',date_input='20210623')
-
+        
         ins_list=self.get_ins_list()
+
         ins = tk.StringVar()    # 定义一个var用来将radiobutton的值和Label的值联系在一起.
         for ins_name in ins_list:        
-            ins.set(ins_list[0])
-            ins1= tk.Radiobutton(window, text=ins_name[8:], variable=ins, value=ins_name)
-            ins1.pack()
+            if ins_name!=np.nan:   
+                ins.set(ins_list[0])
+                ins1= tk.Radiobutton(window, text=ins_name[8:], variable=ins, value=ins_name)
+                ins1.pack()
 
-        lb_cus=tk.Label(window,text='输入会员编号及姓名（MH000李铭湖）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
+        lb_cus=tk.Label(window,text='输入会员编号及姓名（'+self.cus_instance_name+'）',bg='#FFFFEE',font=('楷体',12),width=500,height=2)
         lb_cus.pack()
         var_cus_name=tk.StringVar()
         cus_name=tk.Entry(window,textvariable=var_cus_name,font=('宋体',12),width=18)
@@ -240,8 +231,8 @@ class GUI:
 
         
         cus_list=self.get_cus_list()
+        # print(cus_list)
         LB1 = tk.Listbox(window, height=4)
-        #根据教练人数计算弹出框
         y_pdbox=169+(len(ins_list)-1)*27
         cus_listbox=menu_style.PullDownBox(LB1,cus_name,x=328,y=y_pdbox)
         cus_name.bind('<Key>', cus_listbox.handlerAdaptor(cus_listbox.text_entry_box_change,cus_list))    
@@ -275,7 +266,7 @@ class GUI:
 
         
 
-        def exp_cus_summary(deal='period_summary'):
+        def exp_cus_summary():
             date_s=date_start.get()
             date_e=date_end.get()
             if len(date_s)==8 and len(date_e)==8 and self.isValidDate(int(date_s[0:4]),int(date_s[4:6]),int(date_s[6:])) and \
@@ -286,15 +277,19 @@ class GUI:
                 # cus_feedback(cus='MH017李俊娴',ins='MHINS001陆伟杰',start_time='20210526',end_time='20210701')
                 cus_name=var_cus_name.get().upper()
                 if cus_name in cus_list:
-                    if deal=='after_class':
-                        feed_back.delete('1.0','end')
-                        print('正在生成会员训练总结')
-                        run.cus_feedback(cus=cus_name,ins=ins.get(),start_time=date_s,end_time=date_e,adj_bfr='yes',adj_src='gui',gui=window)
-                    elif deal=='period_summary':
-                        feed_back.delete('1.0','end')
-                        print('正在生成会员阶段训练日记')
-                        run.period_summary(cus=cus_name,ins=ins.get(),start_time=date_s,end_time=date_e,adj_bfr='yes',adj_src='gui',gui=window)
-                        #place='minghu',cus_name_input='MH003吕雅颖',ins='MHINS001陆伟杰',start_date='20210401',end_date='20220201',theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580
+                    feed_back.delete('1.0','end')
+                    print('正在生成会员训练总结')
+                    # run.cus_feedback(place=self.place,cus=cus_name,ins=ins.get(),start_time=date_s,end_time=date_e,adj_bfr='yes',adj_src='gui',gui=window)
+                    # 根据不同的场所设置小结logo的高度
+                    if self.place=='minghu':
+                        logo_ht=52
+                    elif self.place=='seven':
+                        logo_ht=72
+                    else:
+                        logo_ht=52
+                    run.period_summary(place=self.place,cus_name_input=cus_name,ins=ins.get(),start_date=date_s,end_date=date_e,
+                                theme='lightgrey',ico_size=(40,40),diary_font_size=26,diet_font_size=26,diet_boxwid=580,
+                                adj_bfr='yes',adj_src='gui',gui=window,logo_ht=logo_ht)
                 else:
                     feed_back.delete('1.0','end')
                     print('会员ID不在列表内，请检查。')
@@ -302,14 +297,9 @@ class GUI:
             else:
                 feed_back.delete('1.0','end')
                 feed_back.insert('insert','日期错误：'+date_s+','+date_e)
-
-        
-
-
-        btn=tk.Button(window,text='生成会员训练总结',font=('幼圆',12),width=18,command=exp_cus_summary(deal='period_summary'))
+        btn=tk.Button(window,text='生成会员训练总结',font=('幼圆',12),width=18,command=exp_cus_summary)
         btn.pack(pady=10)
         feed_back.pack()
-
 
     #批量录入团课训练信息
     def group_train_input(self,window):
@@ -319,7 +309,7 @@ class GUI:
         def gp_input_train():            
             feed_back_gp_input.delete('1.0','end')
             fd_screen=myStdout(feed_back_gp_input)
-            run.group_input()
+            run.group_input(place=self.place)
             fd_screen.restoreStd()     
 
         def open_gp_list():
@@ -351,7 +341,7 @@ class GUI:
                     print(new_cus_fn)
                     if new_cus_fn:
                         print('正在打开文件……')
-                        os.startfile(os.path.join(self.cus_dir,new_cus_fn+'.xlsx'))
+                        os.startfile(os.path.join(self.cus_dir,new_cus_fn+'.xlsm'))
                     new_msg.restoreStd()                    
                 else:
                     msg_box.insert('insert','请输入姓名')            
@@ -362,6 +352,7 @@ class GUI:
             
     def get_ins_list(self):        
         df_ins_list=self.df_ins['员工编号']+self.df_ins['姓名']
+        df_ins_list.dropna(how=any,axis=0,inplace=True)
         ins_list=df_ins_list.tolist()
         return ins_list
 
@@ -376,7 +367,7 @@ class GUI:
     def get_cus_list(self):
         cus_list=[]
         for fn in os.listdir(os.path.join(self.cus_dir)):
-            if re.match(r'MH.*.xlsx$',fn):
+            if re.match(self.prefix+'.*.xlsm$',fn):
                cus_list.append(fn[0:-5]) 
         return cus_list
 

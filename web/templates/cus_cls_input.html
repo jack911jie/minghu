@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>客户训练内容录入</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body>
+    <h2>铭湖健身工作室会员训练日志</h2>        
+        <h3><image src="../static/ico/客户.svg" class="ico"></image> 会员编码及姓名</h3>
+            <input type="text" id="nameInput" placeholder="请输入客户姓名" oninput="handleInput()" style="margin-bottom: 8px;width:100px;">
+        <div id="cusNameList" class="cus-list-cls-input" style="display:none;"></div>
+        <div id="cusClsTkn" class="cusClsTkn"></div>   
+        <hr>   
+    <div id="BasicInfo" style="padding:10px;">   
+        <h2>上课基本信息</h2>  
+        <!-- <div>        
+            <h3><image src="../static/ico/性别.svg" class="ico"></image> 客户性别</h3>
+            <label>
+                <input type="radio" id="gender" name='gender' value='男'>
+                男
+            </label>
+            <label>
+            <input type="radio" id="gender" name='gender' value='女'checked>
+                女
+            </label>
+        </div> -->
+        <div id="insRadio">
+            <h3>上课教练</h3>
+            <div id="insNameRadio"></div>
+        </div>        
+
+        <h3>上课的课程类型</h3>
+        <select id="buyType" onchange="getValidClass()">
+        </select>
+        <div id="validClassEndTime"></div>
+        <div id="errBuyType" class="inline2"></div>
+
+        <div id="date">
+            <h3> 上课日期和时间</h3>
+                <form>
+                    <label for="datetime"></label>
+                    <input type="datetime-local" id="datetime" name="datetime" onchange="getValidClass()">
+                    <br>
+                </form>
+        </div>    
+
+        <div>
+            <h3>上课时长</h3>
+            <label for="clsLong"></label>
+            <select id="clsLong" style="width:50px;">
+                <option value=1>1</option>
+                <option value=1>2</option>
+            </select>
+            小时
+        </div>
+        <h3>备注</h3>
+        <input type="text" id="basic_cls_comment">
+    </div>
+
+
+    <div id="allTrainContents" style="display:none;">
+        <div style="margin-bottom:10px;"></div>
+        <hr>
+        <h2>训练内容</h2>    
+
+        <div id="trainItems">
+            <div id="trainItemDetail-0" name="trainItemDetail">
+                <h3 id="trainRecCount-0" class="train-reccount">训练记录  第1条</h3>
+                <div></div>
+                <!-- <h4>训练项目</h4> -->
+                <div id="itemSelectRadio-0" class="inline" >
+                    <label for="selectTrainForm-0"></label>
+                    <select id="selectTrainForm-0" onchange="generateTrainFormRadio(this)" style="margin-bottom:5px;">        
+                        <option value="部位" selected>按部位筛选</option>
+                        <option value="动作大类">按动作大类筛选</option>
+                    </select>
+                    <span style="width:5px;"></span>
+                    <br>
+                    <div id="radioContainer-0" class="dynamic-radio"></div>
+                    <!-- <h4>动作名称</h4>
+                    <input id="actionName-0" oninput="handleInputAction()">        -->
+                </div>
+
+
+                <div id="nonOxy-0" style="display: none;" class="nonOxy">
+                    <h4>力量训练</h4>
+                    <input id="nonOxyName-0" oninput="handleNonOxyNameInput(this)" onclick="handleNonOxyNameInput(this)" style="font-size:18px;color:brown;">
+                    <div id="nonOxyTrainList-0" class="train-list3" style="display:none"></div>
+                        <h4>重量
+                        <label for="nonOxyWt-0"></label>
+                        <select id="nonOxyWt-0">
+                            <option value=0>0</option>
+                            <option value=0.5>0.5</option>
+                            <option value=1>1</option>
+                            <option value=1.5>1.5</option>
+                            <option value=2>2</option>
+                            <option value=2.5>2.5</option>                    
+                            <option value=5>5</option>                    
+                            <option value=7.5>7.5</option>
+                            <option value=10>10</option>
+                            <option value=12.5>12.5</option>
+                            <option value=15>15</option>
+                            <option value=17.5>17.5</option>
+                            <option value=20>20</option>
+                            <option value=22.5>22.5</option>
+                            <option value=25>25</option>
+                            <option value=30>30</option>
+                        </select>
+                        Kg</h4>
+                        
+                        <h4>次数
+                        <label for="nonOxyNum-0"></label>
+                        <select id="nonOxyNum-0">
+                            <option value=1>1</option>
+                            <option value=2>2</option>
+                            <option value=3>3</option>
+                            <option value=4>4</option>
+                            <option value=5>5</option>                    
+                            <option value=6>6</option>                    
+                            <option value=7>7</option>
+                            <option value=8>8</option>
+                            <option value=9>9</option>
+                            <option value=10>10</option>
+                            <option value=11>11</option>
+                            <option value=12>12</option>
+                            <option value=13>13</option>
+                            <option value=14>14</option>
+                            <option value=15>15</option>
+                            <option value=16>16</option>
+                            <option value=17>17</option>
+                            <option value=18>18</option>
+                            <option value=19>19</option>
+                            <option value=20>20</option>
+                            <option value=21>21</option>
+                            <option value=22>22</option>
+                            <option value=23>23</option>
+                            <option value=24>24</option>
+                            <option value=25>25</option>
+                            <option value=26>26</option>
+                            <option value=27>27</option>
+                            <option value=28>28</option>
+                            <option value=29>29</option>
+                            <option value=30>30</option>
+                        </select>次
+                        </h4>
+
+                        <h4>距离
+                            <input id="nonOxyDis-0" style="width: 40px;" type="number" min="0">米</h4>
+
+                        <h4>组数
+                        <select id="nonOxyGroup-0">
+                            <option value=1>1</option>
+                            <option value=2>2</option>
+                            <option value=3>3</option>
+                            <option value=4>4</option>
+                            <option value=5>5</option>                    
+                            <option value=6>6</option>                    
+                            <option value=7>7</option>
+                            <option value=8>8</option>
+                            <option value=9>9</option>
+                            <option value=10>10</option>
+                        </select>
+                        组</h4>
+                    </div>   
+                
+                <div id="oxy-0" style="display: none;" class="oxy">
+                    <h4>有氧训练</h4>
+                    <input id="oxyName-0" oninput="handleOxyNameInput(this)" onclick="handleOxyNameInput(this)" style="font-size:18px;color:rgb(26, 122, 58);">
+                    <div id="oxyTrainList-0" class="train-list4" style="display:none"></div>
+                        <h4>有氧时间 
+                        <input id="oxyTime-0" style="width: 50px;" type="number" min="0"> 分</h4>
+
+                    <h4>组数<span style="width:10px;"></span>
+                    <select id="oxyGroup-0">
+                        <option value=1>1</option>
+                        <option value=2>2</option>
+                        <option value=3>3</option>
+                        <option value=4>4</option>
+                        <option value=5>5</option>                    
+                        <option value=6>6</option>                    
+                        <option value=7>7</option>
+                        <option value=8>8</option>
+                        <option value=9>9</option>
+                        <option value=10>10</option>
+                    </select>
+                    <span style="width:20px;"></span>组
+                    </h4>
+                </div>                
+                <hr>
+            </div>
+            
+        </div>
+
+        <button id="appendTrainButton" onclick="copyTrain()">添加一条训练记录</button>
+        <div>
+            <h4>热量消耗
+            <input  type="number" id="calories" style="width:50px;" min="0"> Kcal</h4>
+            <h4>上课点评</h4>
+            <input type="text" id="trainComment" style="height:80px;">
+            <div></div>
+        </div>
+        <hr>
+        <div id="processingModel" style="display: none;">
+            <!-- 这里是弹出框的内容 -->
+            <p style="color:rgb(40, 57, 78);font-size:30px;">正在处理中，请稍候...</p>
+        </div>
+        <button id="tempSaveButton" onclick="tempSave()">暂存</button>
+        <button id="editButton" onclick="enableEdit()">返回修改</button>
+        <button id="submit" onclick="submit()">提交</button>
+    </div>
+    
+    <!-- <button id="submit" onclick="getTrainItems()">获取训练数据</button> -->
+    <script src="../static/js/common.js"></script> 
+    <script>
+        let cus_list;
+        let ins_list;
+        let train_list;
+        let valid_class;
+        let classAndBodyHistory;
+        let copyCount=0;
+        let deleteCount=0;
+        let blockOrder=1;
+        // 在页面加载完成后，将返回修改按钮和性别输入框设置为不可见
+        document.addEventListener("DOMContentLoaded", function(){
+            document.getElementById("editButton").style.display = "none";
+            document.getElementById("submit").setAttribute("disabled", true);
+            selectToday(id='datetime',format='dateTime');
+
+            fetch('/get_template_info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log('get data from template file:',data);
+                generateBuyTypeList(data);
+                  })
+                .catch(error => console.error('Error:', error));
+
+            fetch('/get_cus_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                // console.log(data);
+                cus_list=data;
+                  })
+                .catch(error => console.error('Error:', error));
+
+
+            fetch('/get_ins_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log('ins list:',data);
+                ins_radios(data['ins_list']);
+                 })
+                .catch(error => console.error('Error:', error));
+
+                fetch('/get_train_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log('all train items:',data);
+                train_list=data;
+                const initSelectElement=document.getElementById('selectTrainForm-0');                
+                generateTrainFormRadio(initSelectElement);
+                const initRadioElement=document.getElementsByName('trainItem-0')[0];
+                generateTrainItem(initRadioElement);
+                 })
+                .catch(error => console.error('Error:', error));
+
+           
+
+        })
+
+        function handleInput() {
+            // 获取输入框中的值
+            const searchTerm = document.getElementById("nameInput").value.trim();
+            const UpperSearchTerm=searchTerm.toUpperCase();
+            // 获取展示结果的列表元素
+            const resultList = document.getElementById("cusNameList");
+            const cusClsTkn=document.getElementById('cusClsTkn')
+
+            // 清空列表
+            resultList.innerHTML = "";
+
+            if (UpperSearchTerm === "") {
+                resultList.style.display = "none";
+                return; // 输入框为空，不做处理
+            }else{
+                resultList.style.display = "block";
+
+            }
+
+            // 遍历给定的数组，进行模糊匹配
+            cus_list.reverse().forEach(function(name) {
+                if (name.includes(UpperSearchTerm)) {
+                    // 创建列表项元素，并设置其文本内容为匹配到的结果
+                    const listItem = document.createElement("li");
+                    listItem.innerText = name;
+
+                    // 添加点击事件监听器,点击名字时执行。
+                    listItem.addEventListener("click", function() {
+                        // 点击后将完整的姓名设置为输入框的值
+                        document.getElementById("nameInput").value = name;
+
+                        // 点击后隐藏名字列表框
+                        resultList.style.display = "none";
+                        // 点击后隐藏上课及围度信息
+                        cusClsTkn.style.display='none';
+
+                        fetch('/get_cus_info',{
+                            method:'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body:JSON.stringify({'selected_name':name})
+                            })
+                        .then(response=>response.json())
+                        .then(class_histrory_body_data=>{
+                            console.log('classAndBodyHistory:',class_histrory_body_data);
+                            classAndBodyHistory=class_histrory_body_data;
+                            reportClassTaken();                    
+                            getValidClass(name);
+                        })
+                        .catch(error=>{
+                            console.log('获取既往上课错误：',error)
+                        });                       
+                        
+                        
+                        // 读取暂存的信息
+                        const tempSavePage=localStorage.getItem(name+'-html');
+                        if(tempSavePage){
+                            const isConfirmed=confirm('该客户有一条暂存信息，是否需要读取？');
+                            if(isConfirmed){
+                                const allTrainContents=document.getElementById('allTrainContents');
+                                allTrainContents.style.display='block';
+                                document.documentElement.innerHTML=tempSavePage;
+                                // console.log(localStorage.getItem(name+'-cls_recs'));
+                                reFillTempSave(localStorage.getItem(name+'-cls_recs'));
+                                selectToday('datetime','dateTime'); 
+                                tempSave(show='no');
+                            }                            
+                        }
+                        resultList.innerHTML = "";
+                    });
+
+                    // 将列表项添加到结果列表中
+                    resultList.appendChild(listItem);
+                }
+            });        
+
+            
+        }
+
+
+        function getValidClass(cusName){
+            const allTrainContents=document.getElementById('allTrainContents');
+            const errBuyType=document.getElementById('errBuyType');
+            errBuyType.innerText='';
+            allTrainContents.style.display='none';
+            if(!cusName || cusName===''){
+                cusName=document.getElementById('nameInput').value;
+            }
+            const validClassEndTime=document.getElementById('validClassEndTime');
+            validClassEndTime.innerText='';
+            fetch('/deal_start_limit_page', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                    },
+                body:cusName
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('cus buy and limit class infos:', data)
+                    maxdate_limit_class_rec=data['maxdate_limit_class_rec'];
+                    const clsType=document.getElementById('buyType').value;
+                    
+                    if (clsType==='限时私教课' || clsType==='限时团课'){
+                        if(maxdate_limit_class_rec[0]['限时课程结束日']){
+                            if(maxdate_limit_class_rec[0]['限时课程结束日']!==''){
+                                //获取的datetime有时间2023-08-06T14:32，只需前面的日期，否则会引起上课日期和结束日是同一天时，不算入有效期内。
+                                const classDate=document.getElementById('datetime').value.split('T')[0];
+                                // const classDate=new Date('2023-08-06')
+                                // console.log(classDate)
+                                const compareDate=new Date(classDate)-new Date(maxdate_limit_class_rec[0]['限时课程结束日']);
+                                validClassEndTime.innerText=`目前限时课程结束日：${dateToString(maxdate_limit_class_rec[0]['限时课程结束日'],'date')}`
+                                console.log('对比选择日及最后生效课程结束日：',compareDate);
+                                allTrainContents.style.display='block';
+                                if(compareDate>0){
+                                    allTrainContents.style.display='none';
+                                    validClassEndTime.innerText='';
+                                    errBuyType.innerText='无有效的限时课程';
+                                    // alert('无有效的限时私教课')
+                                }
+                            }
+                        }else{
+                            allTrainContents.style.display='none';
+                            validClassEndTime.innerText='';
+                            errBuyType.innerText='无有效的限时课程';
+                            // alert('无有效的限时私教课')
+                        }
+                    }else if(clsType==='常规私教课' ){
+                        const normalClassRemain=classAndBodyHistory['剩余节数-常规私教课'];                        
+                        if(normalClassRemain && normalClassRemain>0){
+                            errBuyType.innerText='';
+                            allTrainContents.style.display='block';
+                        }else{
+                            errBuyType.innerText='无常规私教课';
+                            allTrainContents.style.display='none';
+                        }
+                        
+                    }else if(clsType==='常规团课' ){
+                        const normalClassGroupRemain=classAndBodyHistory['剩余节数-常规团课'];
+                        if(normalClassGroupRemain && normalClassGroupRemain>0){
+                            errBuyType.innerText='';
+                            allTrainContents.style.display='block';
+                        }else{
+                            errBuyType.innerText='无常规团课';
+                            allTrainContents.style.display='none';
+                        }
+                    }
+                })
+                .catch(error=>{                    
+                    errBuyType.innerText='客户无有效的限时课程';
+                    validClassEndTime.innerText='';
+                    console.error('获取目前有效限时课程错误：',error)
+                });
+        }
+
+        // 递归替换Undefined值为-
+        function replaceUndefinedWithDash(obj) {
+            for (let key in obj) {
+                if (typeof obj[key] === 'object') {
+                // 如果值是嵌套的字典，递归调用函数处理内部的字典
+                obj[key] = replaceUndefinedWithDash(obj[key]);
+                } else if (obj[key] === undefined) {
+                // 如果值是 undefined，替换为 '-'
+                obj[key] = '-';
+                }
+            }
+            return obj;
+            }
+
+        function reportClassTaken(){
+            data=classAndBodyHistory;
+            // 递归替换Undefined值为-
+            data=replaceUndefinedWithDash(data);
+            console.log('cus buy and body data',data);
+            let normalClassRemain;
+            const cusName=document.getElementById('nameInput').value;
+            const classTakenInfo=document.getElementById('cusClsTkn');
+            classTakenInfo.style.display='block';
+            classTakenInfo.innerHTML=''
+            console.log('reported by Name:',cusName);
+            
+            
+            try{
+                if(data['会员编码及姓名']===''){
+                    classTakenInfo.innerHTML='<div style="margin-top:10px;">客户有未完善的信息或没有以往上课及体测信息。</div>';
+                }else{
+                    if(normalClassRemain===''){
+                    normalClassRemain=0;
+                    }
+                    let bfr
+                    if(!data['msr_num']){
+                        data['msr_num']='-';
+                        data['lst_msr_date']='-';
+                        data['wt']='-';
+                        data['waist']='-';
+                        data['l_leg']='-';
+                        data['r_leg']='-';
+                        data['hip']='-';
+                        bfr='0'
+                        
+                    }else{
+                        bfr=(parseFloat(data['bfr'])*100).toFixed(2)
+                    }
+                    classTakenInfo.innerHTML=`
+                            <h2 style="color:#fafafa;">以往上课及体测情况</h2>
+                            <div >
+                            <p><span>· 上次上课日期：</span>${dateFormat(new Date(data['最后一次上课日期']),'date')}</p>
+                            <p><span>· 最近一次限时课程到期日：</span>${dateFormat(new Date(data['限时课程到期日']),'date')?dateFormat(new Date(data['限时课程到期日']),'date'):'-'}</p>
+                            </div>
+                            <div >
+                            <p><span style="display: inline;">· 常规私教课剩余节数：</span>${data['剩余节数-常规私教课']} </p>
+                            </div>
+                            <hr>
+                            <div >
+                            <p><span>· 上课总节数： </span>${data['上课总次数']}  节</p>
+                            <p style="margin-left: 25px; font-size:12px;"><span>- 常规私教课： </span>${data['上课次数-常规私教课']}  节</p>
+                            <p style="margin-left: 25px;font-size:12px;"><span>- 限时私教课： </span>${data['上课次数-限时私教课']}  节</p>
+                            </div>
+                            <hr>
+                            <div >
+                            <p><span>· 围度测量次数 </span>${data['msr_num']}  </p>
+                            <p><span>· 上次围度测量时间： </span>${data['lst_msr_date']}  </p>
+                            <p><span>· 上次围度测量结果</span></p>
+                            <!-- <p style="margin-left: 25px;"><span>体重： </span>xxx Kg <span  style="margin-left: 10px;">估算体脂率： </span>xxx %</p>
+                            <p style="margin-left: 25px;"><span>腰围： </span>xxx cm <span  style="margin-left: 10px;">臀围： </span>xxx cm</p>
+                            <p style="margin-left: 25px;"><span>左大腿围： </span>xxx cm <span  style="margin-left: 10px;">右大腿围： </span>xxx cm</p> -->
+                            <table style="font-size:12px;">
+                                <tr>
+                                <td width="5px"><span>体重： </span>${data['wt']}  Kg</td>
+                                <td ><span>估算体脂率： </span>${bfr} %</td>
+                                </tr>
+                                <tr>
+                                <td width="5px"><span>腰围： </span>${data['waist']}   cm</td>
+                                <td ><span>臀围： </span>${data['hip']}   cm</td>
+                                </tr>
+                                <tr>
+                                <td width="5px"><span>左大腿围： </span>${data['l_leg']}   cm</td>
+                                <td ><span>右大腿围： </span>${data['r_leg']}   cm</td>
+                                </tr>
+                            </table>
+                            </div>
+                            `       
+                        classTakenInfo.style.padding="20px";    
+                }
+                 
+            }catch(error){
+                classTakenInfo.innerHTML='<div style="margin-top:10px;">客户有未完善的信息或没有以往上课及体测信息。</div>'
+                console.error('Error:',error);
+            }         
+            
+        }
+
+
+        function getTrainItems(){
+            const trainItemsDiv=document.getElementById('trainItems');
+            const trainItemsDetailDiv=document.querySelectorAll('[id*="trainItemDetail-"]');
+            const trainNonOxys=trainItemsDiv.querySelectorAll('[id*="nonOxy-"]');
+            const trainOxys=trainItemsDiv.querySelectorAll('[id*="Oxy-"]');
+
+            let trainItemsAll={}
+            let trainItems=[]
+            trainItemsAll['trainDate']=document.getElementById('datetime').value.split("T")[0];
+            trainItemsAll['calories']=document.getElementById('calories').value;
+            trainItemsAll['trainComment']=document.getElementById('trainComment').value;
+            for(i=0;i<trainItemsDetailDiv.length;i++){
+                let trainItem={};
+                const id_num=trainItemsDetailDiv[i].id.split('-')[1];  
+                const trainType=document.querySelector('input[name="trainItem-'+i+'"]:checked').value;
+                
+                trainItem['nonOxyName']=document.getElementById('nonOxyName-'+id_num).value;
+                trainItem['nonOxyWt']=document.getElementById('nonOxyWt-'+id_num).value;
+                trainItem['nonOxyDis']=document.getElementById('nonOxyDis-'+id_num).value;
+                trainItem['nonOxyNum']=document.getElementById('nonOxyNum-'+id_num).value;
+                trainItem['nonOxyGroup']=document.getElementById('nonOxyGroup-'+id_num).value;
+
+                trainItem['oxyName']=document.getElementById('oxyName-'+id_num).value;
+                trainItem['oxyTime']=document.getElementById('oxyTime-'+id_num).value;
+                trainItem['oxyGroup']=document.getElementById('oxyGroup-'+id_num).value;
+
+                if(trainType==="有氧训练"){
+                    trainItem['nonOxyName']="";
+                    trainItem['nonOxyWt']="";
+                    trainItem['nonOxyDis']="";
+                    trainItem['nonOxyNum']="";
+                    trainItem['nonOxyGroup']="";
+
+                }else{
+                    trainItem['oxyName']="";
+                    trainItem['oxyTime']="";
+                    trainItem['oxyGroup']="";
+                }
+                
+                trainItems.push(trainItem);
+            };
+            trainItemsAll['train_recs']=trainItems;
+
+            console.log(trainItemsAll);
+            return trainItemsAll;
+
+
+
+        }
+
+         // 保存数据
+         function tempSave(show='yes') {   
+            // 将客户信息保存到本地
+            cls_tkn = {
+                'cus_name':document.getElementById('nameInput').value,
+                // 'sex':document.querySelector('input[name="gender"]:checked').value,
+                'cls_tkn_date':document.getElementById('datetime').value.split("T")[0],
+                'cls_tkn_time':document.getElementById('datetime').value.split("T")[1]+':00',
+                'cls_long':document.getElementById('clsLong').value,
+                'cls_type':document.getElementById('buyType').value,
+                'ins_name':document.querySelector('input[name="insName"]:checked').value,
+                'basic_cls_comment':document.getElementById('basic_cls_comment').value
+            
+            };
+
+            allTrainItems=getTrainItems()
+
+            cls_recs={
+                "cls_tkn":cls_tkn,
+                "train_rec":allTrainItems
+            }
+
+            console.log(cls_recs);
+
+            localStorage.setItem(document.getElementById('nameInput').value+'-cls_recs', JSON.stringify(cls_recs));
+            localStorage.setItem(document.getElementById('nameInput').value+'-html',document.documentElement.outerHTML);
+            localStorage.setItem(document.getElementById('nameInput').value+'-copyCount',copyCount);
+            localStorage.setItem(document.getElementById('nameInput').value+'-deleteCount',deleteCount);
+            localStorage.setItem(document.getElementById('nameInput').value+'-blockOrder',blockOrder);
+            // let copyCount=0;
+            // let deleteCount=0;
+            // let blockOrder=1;
+            
+            
+            // 保存完成后，遍历结果，如没有空项，禁用输入框，并显示返回修改按钮。如有，提示，不进行操作。
+            let checkValueEmpty=0;
+            let emptyItem='';
+            for(const key in cls_recs['cls_tkn']){
+                //不是备注的基础信息不能为空
+                if(key!=='basic_cls_comment' && cls_recs['cls_tkn'][key]===''){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'上课基本信息';
+                }
+            }
+
+            for(const key in cls_recs['train_rec']){
+                //不是备注的基础信息不能为空
+                if(key==='calories' && cls_recs['train_rec'][key]===''){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+'消耗热量未填写';
+                }
+
+                //热量消耗必须为正数
+                if(key==='calories' && parseInt(cls_recs['train_rec'][key])<0){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+'消耗热量为负数';
+                }
+            }
+            
+
+            let num=1;
+            for(const key in cls_recs['train_rec']['train_recs']){
+                //不是备注的基础信息不能为空
+                
+                if(cls_recs['train_rec']['train_recs'][key]['nonOxyName']==='' && 
+                    cls_recs['train_rec']['train_recs'][key]['oxyName']==='' ){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+`第${num}条：训练项目名称`;
+                }
+
+                // 有氧训练必须有时间
+                if(cls_recs['train_rec']['train_recs'][key]['oxyName']!=='' && cls_recs['train_rec']['train_recs'][key]['oxyTime']==='' ){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+`第${num}条：有氧训练时间`;
+                }
+
+                //有氧训练时间必须为正数
+                if(cls_recs['train_rec']['train_recs'][key]['oxyName']!=='' && parseInt(cls_recs['train_rec']['train_recs'][key]['oxyTime'])<0){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+`第${num}条：有氧训练时间为负数`;
+                }
+
+                //抗阻训练距离必须为正数
+                if(cls_recs['train_rec']['train_recs'][key]['nonOxyDis']!=='' && parseInt(cls_recs['train_rec']['train_recs'][key]['nonOxyDis'])<0){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+`第${num}条：抗阻训练距离为负数`;
+                }
+
+                
+
+
+                num+=1;
+
+                
+                
+            }
+
+            //检查的项目不为空时，则执行。
+            if(checkValueEmpty===0){
+            
+                document.getElementById("nameInput").setAttribute("disabled", true);
+
+                const inputItems = document.querySelectorAll('input');
+                inputItems.forEach(function(inputItem){
+                    inputItem.disabled=true;
+                })
+
+                const deleteButtons=document.querySelectorAll('[id*="deleteTrain-"]')
+                deleteButtons.forEach(deleteButton=>{
+                    deleteButton.style.display='none';
+                })
+
+                const selects1 = document.querySelectorAll('[id*="itemSelectRadio-"]');
+                selects1.forEach(function(select){
+                    select.style.display='none';
+                })
+
+                const selects2 = document.querySelectorAll('[id*="oxyGroup-"]');
+                selects2.forEach(function(select){
+                    select.disabled=true;
+                })
+
+                const selects3 = document.querySelectorAll('[id*="nonOxyGroup-"]');
+                selects3.forEach(function(select){
+                    select.disabled=true;
+                })
+
+                const selects4 = document.querySelectorAll('[id*="nonOxyWt-"]');
+                selects4.forEach(function(select){
+                    select.disabled=true;
+                })
+
+                const selects5 = document.querySelectorAll('[id*="nonOxyNum-"]');
+                selects5.forEach(function(select){
+                    select.disabled=true;
+                })
+
+                const deleteTrainButtons=document.querySelectorAll('[id*="deleteTrain-"]');
+                deleteButtons.forEach(deleteButton=>{
+                    deleteButton.disabled=true;
+                })
+
+                document.getElementById('appendTrainButton').disabled=true;
+
+                document.getElementById('buyType').disabled=true;
+                document.getElementById('clsLong').disabled=true;
+
+                document.getElementById("tempSaveButton").style.display = "none";
+                document.getElementById("editButton").style.display = "inline";
+                document.getElementById("submit").style.display = "inline";
+                document.getElementById("submit").disabled=false;
+
+                if(show==='yes'){
+                    alert("客户信息已暂存");
+                }
+            }else{
+                document.getElementById("submit").style.display = "none";
+                document.getElementById("submit").disabled=true;
+                alert(`有些信息未填写或填写错误，请检查: ${emptyItem.slice(1,)}`);
+            }
+
+        }
+   
+        // 允许修改数据
+        function enableEdit() {
+            // 移除禁用属性，并显示保存按钮
+            // document.getElementById("nameInput").removeAttribute("disabled");
+            const inputItems = document.querySelectorAll('input');
+            inputItems.forEach(function(inputItem){
+                inputItem.disabled=false;
+            })
+
+            const deleteButtons=document.querySelectorAll('[id*="deleteTrain-"]')
+            deleteButtons.forEach(deleteButton=>{
+                deleteButton.style.display='block';
+            })
+
+            const selects1 = document.querySelectorAll('[id*="itemSelectRadio-"]');
+            selects1.forEach(function(select){
+                select.style.display='block';
+            })
+
+            const selects2 = document.querySelectorAll('[id*="oxyGroup-"]');
+            selects2.forEach(function(select){
+                select.disabled=false;
+            })
+
+            const selects3 = document.querySelectorAll('[id*="nonOxyGroup-"]');
+            selects3.forEach(function(select){
+                select.disabled=false;
+            })
+
+            const selects4 = document.querySelectorAll('[id*="nonOxyWt-"]');
+            selects4.forEach(function(select){
+                select.disabled=false;
+            })
+
+            const selects5 = document.querySelectorAll('[id*="nonOxyNum-"]');
+            selects5.forEach(function(select){
+                select.disabled=false;
+            })
+
+
+            const deleteTrainButtons=document.querySelectorAll('[id*="deleteTrain-"]');
+            deleteButtons.forEach(deleteButton=>{
+                deleteButton.disabled=false;
+            })
+
+            document.getElementById('appendTrainButton').disabled=false;
+
+
+            document.getElementById('buyType').disabled=false;
+            document.getElementById('clsLong').disabled=false;
+
+            document.getElementById("tempSaveButton").style.display = "inline";
+            document.getElementById("editButton").style.display = "none";
+            document.getElementById("submit").style.display = "none";
+        }
+        
+
+        function hideProcessingModel() {
+            document.getElementById('processingModel').style.display = 'none';
+        }
+
+        function showProcessingModel() {
+            document.getElementById('processingModel').style.display = 'block';
+        }
+
+        function submit(){
+            const cusName=document.getElementById('nameInput').value;
+            const storedClassInfo = localStorage.getItem(cusName+"-cls_recs");
+            console.log(storedClassInfo);
+            if (storedClassInfo) {
+                dat = JSON.parse(storedClassInfo);   
+                showProcessingModel();                
+
+                
+                fetch('/deal_cls', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body:JSON.stringify(dat)
+                    })
+                  .then(response => response.text())
+                  .then(data => {
+                      console.log(data);                      
+                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-html');
+                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-cls_recs');
+                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-copyCount');
+                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-deleteCount');
+                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-blockOrder');
+                      hideProcessingModel();
+                      alert("客户信息提交成功");
+                      window.location.replace('./');
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);
+                      alert("提交失败，请稍后再试");
+                  });
+
+            } else {
+                alert("暂无客户信息，请先暂存信息再提交");
+            }
+        }
+
+        //递归函数，用于多层遍历
+        function traverseElementsRename(element,num) {
+        // 遍历当前元素的子节点
+            for (let child of element.children) {
+   
+                ptn=/.*-\d{0,1}/;        
+                if(ptn.test(child.id)){
+                    child.id=child.id.slice(0,-1)+num;
+                    
+                }
+                if(ptn.test(child.name)){
+                    child.name=child.name.slice(0,-1)+num;
+                }
+
+                const labelFor=child.getAttribute('for');
+                if(ptn.test(labelFor)){
+                    child.htmlFor=child.htmlFor.slice(0,-1)+num;
+                }
+                // console.log('new',child.id);
+
+                // 如果当前元素有子元素，则递归调用 traverseElements 函数
+                if (child.children.length > 0) {
+                    traverseElementsRename(child,num);
+                }
+                }
+        }
+
+        function hideTrainList(d){
+            const showBlock=d.nextElementSibling;
+            showBlock.innerHTML='';
+        }
+
+        function handleNonOxyNameInput(d){
+            // 点击抗阻时，清除有氧的内容，避免同一块下有氧和无氧项目名称的拼接
+            const order=d.id.split('-')[1];
+            document.getElementById('oxyName-'+order).value='';
+            document.getElementById('oxyTime-'+order).value='';
+            document.getElementById('oxyGroup-'+order).value=1;
+
+            const filterType=d.parentNode.previousElementSibling;
+            const selectValue=filterType.querySelectorAll('[id*="selectTrainForm-"]')[0].value;
+            // console.log(selectValue);
+            const radioContainer=filterType.querySelectorAll('[id*="radioContainer-"]')[0];
+            const radioBlock=radioContainer.querySelectorAll('.dynamic-radio');
+            let radioChecked=null;
+            radioBlock.forEach(radioItem=>{
+                if(radioItem.checked){
+                    radioChecked=radioItem.value;
+                }
+            });            
+            // selectValue——按肌肉、按动作大类
+            // radioValue——肌肉：胸、背、腿、有氧等，动作大类：推、拉、举、有氧等
+
+            const showBox=d.nextElementSibling;
+            // console.log(train_list)
+            if(selectValue==='部位'){
+                nonOxyTrainListSource=train_list['by_muscle'];                
+            }else{
+                nonOxyTrainListSource=train_list['by_category'];
+            }
+
+            const nonOxyTrainListAll=nonOxyTrainListSource[radioChecked];
+            let nonOxyTrainList=[]
+            nonOxyTrainListAll.forEach(function(item){
+                nonOxyTrainList.push(item);
+            });
+            // console.log(showBox.id);
+            generateTrainList(nonOxyTrainList,d.id,showBox.id);
+        }
+            
+        function handleOxyNameInput(d){
+             // 点击有氧时，重置抗阻训练的内容，避免同一块下有氧和无氧项目名称的拼接
+            const order=d.id.split('-')[1];
+            document.getElementById('nonOxyName-'+order).value='';
+            document.getElementById('nonOxyWt-'+order).value=0;
+            document.getElementById('nonOxyNum-'+order).value=1;
+            document.getElementById('nonOxyDis-'+order).value='';
+            document.getElementById('nonOxyGroup-'+order).value=1;
+
+            const filterType=d.parentNode.previousElementSibling.previousElementSibling;
+            const selectValue=filterType.querySelectorAll('[id*="selectTrainForm-"]')[0].value;
+            // console.log(selectValue);
+            const radioContainer=filterType.querySelectorAll('[id*="radioContainer-"]')[0];
+            const radioBlock=radioContainer.querySelectorAll('.dynamic-radio');
+            let radioChecked=null;
+            radioBlock.forEach(radioItem=>{
+                if(radioItem.checked){
+                    radioChecked=radioItem.value;
+                }
+            });            
+            // selectValue——按肌肉、按动作大类
+            // radioValue——肌肉：胸、背、腿、有氧等，动作大类：推、拉、举、有氧等
+            const showBox=d.nextElementSibling;
+            console.log(train_list)
+            if(selectValue==='部位'){
+                nonOxyTrainListSource=train_list['by_muscle'];                
+            }else{
+                nonOxyTrainListSource=train_list['by_category'];
+            }
+
+            const nonOxyTrainListAll=nonOxyTrainListSource[radioChecked];
+            let nonOxyTrainList=[]
+            nonOxyTrainListAll.forEach(function(item){
+                nonOxyTrainList.push(item);
+            });
+            console.log(showBox.id);
+            generateTrainList(nonOxyTrainList,d.id,showBox.id);
+        }
+
+        function handleInputAction(){
+            console.log('input action');
+        }
+
+        function copyTrain(){
+            copyCount+=1;
+            blockOrder=blockOrder+1;
+            const originalDiv=document.getElementById('trainItemDetail-0');
+            const copiedDiv=originalDiv.cloneNode(true);
+
+            // 递归函数实现id及name以及label的for标签的改名    
+            traverseElementsRename(copiedDiv,(blockOrder-1));
+            // copiedDiv本身的id改名
+            copiedDiv.id='trainItemDetail-'+(blockOrder-1);
+
+
+            copiedDiv.querySelector('#trainRecCount-'+(blockOrder-1)).innerText='训练记录 第'+(blockOrder)+'条';
+         
+            // 增加删除按钮
+            const deleteTrain=document.createElement('button');
+            deleteTrain.setAttribute('id','deleteTrain-'+(blockOrder-1)); 
+            deleteTrain.innerText='删除';
+            deleteTrain.addEventListener('click',function(){
+                deleteTrainBlock(this,parent='y');
+            })
+
+            // 从第3条开始，删除上一个输入块的删除按钮
+            if(blockOrder>=3){
+                const deleteTrainPrevious=document.getElementById('deleteTrain-'+(blockOrder-2));
+                deleteTrainPrevious.remove();
+            }
+
+            // 调整原来的分隔线到删除按钮下
+            const hrElement=copiedDiv.querySelector('hr');
+            hrElement.remove();
+            copiedDiv.appendChild(deleteTrain);
+            const hr=document.createElement('hr');
+            copiedDiv.appendChild(hr);
+
+            // 新的copiedDiv加到下面
+            originalDiv.parentNode.appendChild(copiedDiv);
+
+            // 将值初始化
+            document.getElementById('selectTrainForm'+'-'+(blockOrder-1)).selectedIndex=0;
+            document.getElementById('radioContainer'+'-'+(blockOrder-1)).value='有氧训练';
+            document.getElementById('nonOxyName'+'-'+(blockOrder-1)).value='';
+            document.getElementById('oxyName'+'-'+(blockOrder-1)).value='';
+        }
+
+        function deleteTrainBlock(blk,parent){
+            let deleteBlock;
+            deleteCount+=1;
+            blockOrder=blockOrder-1;
+            if(parent==='y'){
+                deleteBlock=blk.parentNode;
+            }else{
+                deleteBlock=blk;
+            }
+            
+            // const previousTrainBlock=buttonDeleteTrain.previousElementSibling;
+            const previousTrainBlock=document.getElementById('trainItemDetail-'+(parseInt(blk.id.slice(-1))-1))
+            
+
+            if(blockOrder>=2){
+                
+                const deleteTrain=document.createElement('button');
+                deleteTrain.setAttribute('id','deleteTrain-'+(blockOrder-1)); 
+                deleteTrain.innerText='删除';
+                deleteTrain.addEventListener('click',function(){
+                    deleteTrainBlock(previousTrainBlock,parent='n');
+                })
+                const hrElement=previousTrainBlock.querySelector('hr');
+                hrElement.remove();
+                previousTrainBlock.appendChild(deleteTrain);
+                const hr=document.createElement('hr');
+                previousTrainBlock.appendChild(hr);
+            }
+
+            deleteBlock.remove();
+            
+            
+        }
+
+        function generateTrainFormRadio(selectElement){
+            // const TrainFormRadio=document.querySelectorAll('[id*="radioContainer-"]')[0];
+            const TrainFormRadio=selectElement.parentNode.querySelectorAll('[id*="radioContainer-"]')[0];
+            TrainFormRadio.innerHTML='';
+            const filterType=selectElement.value;
+            // const container=document.getElementById('radioContainer');
+            let trainList;
+            
+            if(filterType==='部位'){
+                trainList=Object.keys(train_list.by_muscle);
+            }else if(filterType==='动作大类'){
+                trainList=Object.keys(train_list.by_category);
+            }
+
+            // 将有氧训练排队在第一位
+            let indexOfOxy = trainList.indexOf("有氧训练");
+            // 将元素 "有氧训练" 插入到数组的开头
+            if (indexOfOxy !== -1) {
+                trainList.splice(indexOfOxy, 1); // 先将 "有氧训练" 从原来位置移除
+                trainList.unshift("有氧训练"); // 再将 "有氧训练" 插入到数组的开头
+            }
+
+            let firstRadio=true;
+            // 遍历数组，为每个选项生成radio，并添加到容器中
+            trainList.forEach(function(option) {
+                // console.log(option);
+                // 创建一个radio元素
+                const radioInput = document.createElement("input");
+                radioInput.setAttribute("type", "radio");
+                radioInput.setAttribute("name", "trainItem-0");
+                radioInput.setAttribute("value", option);
+                radioInput.setAttribute("class","dynamic-radio");
+                radioInput.setAttribute("onchange", "generateTrainItem(this)");
+                
+
+                if(firstRadio){
+                    radioInput.checked=true;
+                    firstRadio=false;
+                }
+                
+                // 创建一个label元素，并设置其内容为选项文字
+                const label = document.createElement("label");
+                label.innerText = option;
+
+                if(option==='有氧训练'){
+                    label.style.color='#1e4129';
+                    const br = document.createElement("br"); // 创建一个 <br> 元素,在有氧训练后换行
+                    label.appendChild(br); // 将 <br> 元素添加到 label 中 
+                }else{
+                    label.style.color='#752320';
+                }
+                
+                // 将radio和label元素添加到容器中
+                TrainFormRadio.appendChild(radioInput);
+                TrainFormRadio.appendChild(label);
+            });
+        }
+
+        //点选部位radio时的动作
+        function generateTrainItem(dd){
+            const radioValue=dd.value;
+            // console.log(radioValue)
+            if(radioValue==="有氧训练"){
+                dd.parentNode.parentNode.nextElementSibling.style.display='none';
+                dd.parentNode.parentNode.nextElementSibling.nextElementSibling.style.display='block';
+            }else{
+                dd.parentNode.parentNode.nextElementSibling.style.display='block';
+                dd.parentNode.parentNode.nextElementSibling.nextElementSibling.style.display='none';
+            }
+            
+        }
+
+        function clearTrainItemHistory(input_id,conserve_train_name){
+            const trainItemBlock=document.getElementById(input_id);
+            const trainItemParent=document.getElementById(input_id).parentNode;
+            const trainItemInputs=trainItemParent.querySelectorAll('input');
+            const trainItemSelects=trainItemParent.querySelectorAll('select');
+            //避免在同一个项目中切换有氧及无氧时，会发生名称拼接的情况，导致反查肌肉或动作大类错误！！
+            if(input_id.split('-')[0]==='oxyName'){
+                document.getElementById('nonOxyName-'+input_id.split('-')[1]).value='';
+            }else if(input_id.split('-')[0]==='nonOxyName'){
+                document.getElementById('oxyName-'+input_id.split('-')[1]).value='';
+            }
+            // trainItemSelects.forEach(selectItem=>{
+            //     selectItem.value='';
+            // });         
+        }
+
+        function generateTrainList(arr,input_id,show_id){
+            // console.log(input_id,show_id);
+            const searchTerm = document.getElementById(input_id).value.trim();
+            const UpperSearchTerm=searchTerm.toUpperCase();
+            // 获取展示结果的列表元素
+            const resultList = document.getElementById(show_id);
+            resultList.style.display='block';
+            // 清空列表
+            resultList.innerHTML = "";
+            
+            if(UpperSearchTerm===""){
+                resultList.innerHTML = "";  
+                arr.forEach(function(name) {                
+                // 创建列表项元素，并设置其文本内容为匹配到的结果
+                const listItem = document.createElement("li");
+                listItem.innerText = name[2]; 
+                // 添加点击事件监听器
+                listItem.addEventListener("click", function() {
+                    // 点击后将完整的姓名设置为输入框的值         
+                    document.getElementById(input_id).value = name[2];
+                    //清除之前的选项，避免先选有氧又再选无氧时训练名称的拼接！！！！
+                    // clearTrainItemHistory(input_id,document.getElementById(input_id).value);
+
+                    resultList.style.display='none';
+                    // 清空结果列表
+                    resultList.innerHTML = "";  
+                    
+                });
+
+                // 将列表项添加到结果列表中
+                resultList.appendChild(listItem);
+            
+                });
+            }else{
+                arr.forEach(function(name) {
+                if (name[2].includes(UpperSearchTerm)) {
+                    // 创建列表项元素，并设置其文本内容为匹配到的结果
+                    const listItem = document.createElement("li");
+                    listItem.innerText = name[2];
+
+                    // 添加点击事件监听器
+                    listItem.addEventListener("click", function() {
+                        resultList.style.display='block';
+                        // 点击后将完整的姓名设置为输入框的值
+                        document.getElementById(input_id).value = name[2];
+                        // 填写进购课编号
+                        resultList.innerHTML = "";  
+                    });
+
+                    // 将列表项添加到结果列表中
+                    resultList.appendChild(listItem);
+                }
+                });
+            }
+        }        
+
+        function generateBuyTypeList(data){
+            let buyTypeSelect=document.getElementById('buyType')
+            const buyTypes=data.cls_types;
+            buyTypes.forEach(function(buyType){
+                let option=document.createElement('option');
+                option.value=buyType;
+                option.innerText=buyType;
+                buyTypeSelect.appendChild(option);
+            })
+        }
+
+ 
+
+        function reFillTempSave(dataString){
+            
+            const data=JSON.parse(dataString);
+            const cusName=document.getElementById('nameInput').value = data['cls_tkn']['cus_name'];
+            copyCount=parseInt(localStorage.getItem(cusName+'-copyCount'));
+            deleteCount=parseInt(localStorage.getItem(cusName+'-deleteCount'));
+            blockOrder=parseInt(localStorage.getItem(cusName+'-blockOrder'));
+
+
+            document.getElementById('datetime').value = data['cls_tkn']['cls_tkn_date'] + 'T' + data['cls_tkn']['cls_tkn_time'];
+            document.getElementById('clsLong').value = data['cls_tkn']['cls_long'];
+
+            const insRadios = document.querySelectorAll('input[name="insName"]');
+            for (const radio of insRadios) {
+                if (radio.value === data['cls_tkn']['ins_name']) {
+                    radio.checked = true;
+                    break;
+                }
+            }
+
+            document.getElementById('basic_cls_comment').value = data['cls_tkn']['basic_cls_comment'];
+            document.getElementById('buyType').value = data['cls_tkn']['cls_type'];
+
+            // 回写之前的训练选项
+            // train_list
+            document.getElementById('calories').value = data['train_rec']['calories'];
+            document.getElementById('trainComment').value = data['train_rec']['trainComment'];
+
+            
+            const trainRecs = data['train_rec']['train_recs'];
+
+            for (let i = 0; i < trainRecs.length; i++) {
+                const trainRec = trainRecs[i];
+                document.getElementById('nonOxyName-'+i).value=trainRec['nonOxyName'];
+                document.getElementById('nonOxyWt-'+i).value=trainRec['nonOxyWt'];
+                document.getElementById('nonOxyDis-'+i).value=trainRec['nonOxyDis'];
+                document.getElementById('nonOxyNum-'+i).value=trainRec['nonOxyNum'];
+                document.getElementById('nonOxyGroup-'+i).value=trainRec['nonOxyGroup'];
+                document.getElementById('oxyName-'+i).value=trainRec['oxyName'];
+                document.getElementById('oxyTime-'+i).value=trainRec['oxyTime'];
+                document.getElementById('oxyGroup-'+i).value=trainRec['oxyGroup'];
+
+                //处理回写时，抗阻训练的重量、次数、组数为空的情况
+                if(document.getElementById('nonOxyName-'+i).value===''){
+                    document.getElementById('nonOxyWt-'+i).value=0;
+                    document.getElementById('nonOxyNum-'+i).value=1;
+                    document.getElementById('nonOxyGroup-'+i).value=1;
+                }
+                //处理回写时，抗阻训练的重量、次数、组数为空的情况
+                if(document.getElementById('oxyName-'+i).value===''){
+                    document.getElementById('oxyGroup-'+i).value=1;
+                }
+
+                //通过训练名称映射训练部位或名称并选择
+                if (trainRec['nonOxyName']) {
+                    const trainItemRadios = document.querySelectorAll('input[name="trainItem-'+i+'"]'); 
+                    for (const radio of trainItemRadios) {
+                        console.log(radio.value);
+                        if (radio.value === train_list['by_action_name'][trainRec['nonOxyName']][1] || radio.value === train_list['by_action_name'][trainRec['nonOxyName']][2]) {
+                            radio.checked = true;
+                            break;
+                        }
+                    }
+                } else if (trainRec['oxyName']) {                    
+                    const trainItemRadios = document.querySelectorAll('input[name="trainItem-'+i+'"]'); 
+                    for (const radio of trainItemRadios) {
+                        console.log(radio.value);
+                        if (radio.value === train_list['by_action_name'][trainRec['oxyName']][1] || radio.value === train_list['by_action_name'][trainRec['oxyName']][2]) {
+                            radio.checked = true;
+                            break;
+                        }
+                    }
+                }
+
+            }
+        
+
+        }
+
+        function ins_radios(ins_list){
+            const radioOptionsContainer = document.getElementById("insNameRadio");
+            let firstRadio=true;
+
+            // 遍历数组，为每个选项生成radio，并添加到容器中
+            ins_list.forEach(function(option) {
+                // console.log(option);
+                // 创建一个radio元素
+                const radioInput = document.createElement("input");
+                radioInput.setAttribute("type", "radio");
+                radioInput.setAttribute("name", "insName");
+                radioInput.setAttribute("id", "insName");
+                radioInput.setAttribute("value", option);
+
+                if(firstRadio){
+                    radioInput.checked=true;
+                    firstRadio=false;
+                }
+                
+                // 创建一个label元素，并设置其内容为选项文字
+                const label = document.createElement("label");
+                label.innerText = option;
+                
+                // 将radio和label元素添加到容器中
+                radioOptionsContainer.appendChild(radioInput);
+                radioOptionsContainer.appendChild(label);
+
+
+
+                
+                // 添加换行，使每个选项占一行
+                // radioOptionsContainer.appendChild(document.createElement("br"));
+            });
+        }
+
+       
+    </script>
+</body>
+</html>

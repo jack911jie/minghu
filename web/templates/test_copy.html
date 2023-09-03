@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>铭湖健身客户信息查询</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+ 
+    <div id="show">显示</div>
+
+    <script src="../static/js/echarts.min.js"></script>
+    <script> 
+        document.addEventListener('DOMContentLoaded',function(){
+            fetch('/welcome',{
+                method:"GET"
+
+            })
+            .then(response=>response.json())
+            .then(data=>{
+                console.log(data);
+            })
+            .catch(error=>{
+                console.log('error',error);
+            })
+        })
+       
+    </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>铭湖健身客户信息查询</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <!-- 用于显示图表的容器 -->
+    <div id="chartContainer" style="width: 600px; height: 400px;"></div>
+    <div id="radar" style="width: 600px; height: 400px;"></div>
+
+    <!-- <script src="../static/js/moment.min.js"></script> -->
+    <script src="../static/js/common.js"></script>
+    <script src="../static/js/echarts.min.js"></script>
+    <script> 
+        let cus_list
+        let selectedName
+        let tmplt_info
+        const allError={'dateError':0,'buyNumError':0};
+        // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
+        // document.addEventListener("DOMContentLoaded", function() {   
+
+        //     selectToday(id='dateInput',format='date');
+
+        //     fetch('/get_template_info', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'text/plain'
+        //             }
+        //         })
+        //         .then(response => response.json())
+        //         .then(data => {
+        //     //将data赋值给块变量cus_list，供后面的handleInput使用
+        //         tmplt_info=data;         
+        //           })
+        //         .catch(error => console.error('Error:', error));
+
+        //     fetch('/get_cus_list', {
+        //         method: 'GET',
+        //         headers: {
+        //             'Content-Type': 'application/json'
+        //             }
+        //         })
+        //         .then(response => response.json())
+        //         .then(data => {
+        //     //将data赋值给块变量cus_list，供后面的handleInput使用
+        //         cus_list=data
+        //           })
+        //         .catch(error => console.error('Error:', error));
+            
+        // });
+
+        var chartContainer = document.getElementById('chartContainer');
+        
+        // 创建一个ECharts实例
+        var myChart = echarts.init(chartContainer);
+
+        // 配置图表的数据和样式
+        var option = {
+            title: {
+                text: '折线图示例'
+            },
+            xAxis: {
+                type: 'category',
+                data: ['一月', '二月', '三月', '四月', '五月', '六月']
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [{
+                name: '销量',
+                type: 'line',
+                data: [150, 200, 300, 450, 320, 250]
+            }]
+        };
+
+        myChart.setOption(option);
+
+
+        var chartContainerRadar = document.getElementById('radar');
+        
+        // 创建一个ECharts实例
+        var chartContainerRadar = echarts.init(chartContainerRadar);
+
+        // 配置图表的数据和样式
+        var option = {
+            title: {
+                text: '雷达图示例'
+            },
+            radar: {
+                indicator: [
+                    { name: '外向', max: 100 },
+                    { name: '内向', max: 100 },
+                    { name: '开放', max: 100 },
+                    { name: '稳定', max: 100 },
+                    { name: '适应', max: 100 }
+                ]
+            },
+            series: [{
+                name: '个人素质',
+                type: 'radar',
+                data: [
+                    { value: [90, 80, 70, 85, 95], name: '我的素质' }
+                ]
+            }]
+        };
+
+        // 使用配置项设置图表
+        chartContainerRadar.setOption(option);
+
+    </script>
+</body>
+</html>
