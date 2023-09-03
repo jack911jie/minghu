@@ -12,8 +12,8 @@
     <h4>· 输入新会员的姓名
     <input type="text" id="cusName" style="width: 80px;" >   
     </h4>
-    <div class="inline2" id="new_cus_res"></div>
-
+    <h4 style="color:brown;">· 关联的体验课客户  <input id='trialCusNameInput' style="width:100px;" oninput="handletrialCusNameInput()" onclick="handletrialCusNameInput()"></h4>            
+    <div id="trialResultList"></div>     
     <div id="sex">
         <h4>· 性别
         <label>
@@ -26,7 +26,7 @@
     </div>
 
     <div>
-        <h4>· 出生年月  <input id="dateMonth" type="month" ></h4>       
+        <h4>· 出生年月  <input id="dateInput" type="date" ></h4>       
     </div>
     <div>
         <h4>· 客户手机号 <input type="text" id="mobilePhone" style="width:120px;" oninput="checkMobileValid()"></h4>
@@ -42,15 +42,15 @@
 
     </div>
     <div>
-        <h4 style="color:brown;">· 关联的体验课客户  <input id='trialCusNameInput' style="width:100px;" oninput="handletrialCusNameInput()" onclick="handletrialCusNameInput()"></h4>            
-        <h4>· 体验客户有效期
+               <h4>· 体验客户有效期
             <input type="radio" name="trailPeriod" value="all">全部
             <input type="radio" name="trailPeriod" value="latest2" checked>近2个月
         </h4>
-        <div id="trialResultList"></div> 
+        
 
     </div>
     <hr>
+    <div class="inline2" id="new_cus_res"></div>
     <button onclick="generateFile()">生成会员资料</button>
 
     <script>
@@ -205,12 +205,13 @@
             // 将日期格式化为 yyyy-mm-dd 的形式
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
+            const date=String(today.getDate()).padStart(2, '0');
 
-            const formattedDate = `${year}-${month}`;
+            const formattedDate = `${year}-${month}-${date}`;
             // console.log(formattedDate)
 
             // 将日期设置为输入框的默认值
-            document.getElementById('dateMonth').value = formattedDate;
+            document.getElementById('dateInput').value = formattedDate;
         }
 
         function CheckAndGenerateFile() {            
@@ -273,7 +274,7 @@
             const mobilePhone=document.getElementById("mobilePhone").value.trim();
             console.log('客户来源：',cusSource)
 
-            let birthMonth=document.getElementById("dateMonth").value
+            let birthMonth=document.getElementById("dateInput").value
             birthMonth=birthMonth.replace(/-/g,'');
 
             if(cusName){
