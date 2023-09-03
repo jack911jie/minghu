@@ -2097,8 +2097,10 @@ class MinghuService(Flask):
                 data['cus_id']=data['cus_id_name'][:7]
                 data['cus_name']=data['cus_id_name'][7:]
                 data['nick_name']=data['cus_name'] if len(data['cus_name'])<2 else data['cus_name'][1:]
-                data['birthday']=data['birth_month'][:4]+'-'+data['birth_month'][4:]+'-'+'01'
-                data['birthday_type']='ym'
+                data['birthday']=data['birth_month'][:4]+'-'+data['birth_month'][4:6]+'-'+data['birth_month'][6:8]
+                # data['birthday']=data['birth_month'][:4]+'-'+data['birth_month'][4:]+'-'+'01'
+                data['birthday_type']='ymd'
+                # data['birthday_type']='ym'
                 trial_cus_name=data['trial_cus_name']
                 cus_id_name=data['cus_id_name']
                 del data['cus_id_name']
