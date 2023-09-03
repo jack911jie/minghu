@@ -64,7 +64,7 @@ class CusData:
         # df_this_month.rename(columns={'购课编码':'编码','收入类别':'购课类别'},inplace=True)
         
         df_out=pd.concat([df_old,df_this_month])
-        df_out.to_excel(os.path.join(output_dir,'会员购课数据-'+str(year_month)+'月.xlsx'),index=False)
+        df_out.to_excel(os.path.join(output_dir,'会员购课数据-'+str(year_month)+'月.xlsx'),sheet_name='购课表',index=False)
        
         print('完成')
         return df_out
