@@ -7,6 +7,7 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
+    {% include 'show_ins_info.html' %}
     <div >
         <h2>铭湖健身体验课记录</h2>
         <h4>体验课上课时间 <input type="datetime-local" id="dateInput" style="width:150px;" ></h4>
@@ -15,7 +16,7 @@
             <h4>客户手机号 <input type="text" id="mobilePhone" style="width:120px;" oninput="checkMobileValid()"></h4>
             <span id="mobileValidResult" style="display:inline; color:rgb(221, 126, 123)"></span>
         </div>
-        <h4>上课教练 <select id="insSelect"></select></h4>
+        <div id="insSelectBlock"><h4>上课教练 <select id="insSelect"></select></h4></div>
         <h4>客户来源 <select id="cusSource">
             <option value="小红书">小红书</option>
             <option value="转介绍">转介绍</option>
@@ -32,12 +33,17 @@
     <script src="../static/js/moment.min.js"></script>
     <script src="../static/js/common.js"></script>
     <script> 
-        let cus_list
-        let selectedName
-        let tmplt_info
+        let cus_list;
+        let selectedName;
+        let tmplt_info;
+        let insName;
+        let insId;
+        let insRole;
+
         const allError={'dateError':0,'buyNumError':0};
         // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
         document.addEventListener("DOMContentLoaded", function() {   
+            loginCheck();
 
             selectToday(id='dateInput',format='dateTime');
 
@@ -81,8 +87,14 @@
                  })
                 .catch(error => console.error('Error:', error));
 
-            
+                insInfo=hideInsSelectBlockAndGetInsInfo('insSelectBlock');
+                insId=insInfo.sessionInsId;
+                insName=insInfo.sessionInsName;
+                insRole=insInfo.sessionInsRole;
+
         });
+
+        
 
         function submit(){
             if(submitCheck()){
@@ -91,11 +103,17 @@
                 const timeString=dateToString(dateInput,'time');
                 const cusNameInput=document.getElementById('cusNameInput').value;
                 const mobilePhone=document.getElementById('mobilePhone').value;
-                const ins=document.getElementById('insSelect').value;
+                // const insName=document.getElementById('insSelect').value;
                 const cusSource=document.getElementById('cusSource').value;
                 const comment=document.getElementById('comment').value;
                 const dealProcessing=document.getElementById('dealProcessing')
                 dealProcessing.style.display='block';
+
+                if(insRole==='admin'){
+                    insName=document.getElementById('insSelect').value;                    
+                }else if(insRole==='ins'){
+                    
+                }
 
                 
                 data={
@@ -103,7 +121,9 @@
                     'timeString':timeString,
                     'cusNameInput':cusNameInput,
                     'mobilePhone':mobilePhone,
-                    'ins':ins,
+                    'insName':insName,
+                    'insId':insId,
+                    'insRole':insRole,
                     'cusSource':cusSource,
                     'comment':comment
                 }
@@ -118,7 +138,7 @@
                 .then(writeResult=>{
                     console.log(writeResult);
                     alert(writeResult);
-                    window.location.replace('./');
+                    window.location.replace('./index');
                 })
                 .catch(error=>{
                     console.error('写入体验课错误：',e);

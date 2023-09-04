@@ -7,6 +7,7 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
+    {% include 'show_ins_info.html' %}
     <div >
         <h1>录入客户体测结果</h1>
         <hr>
@@ -53,6 +54,7 @@
         let train_list;
 
         document.addEventListener("DOMContentLoaded",function(){
+            loginCheck();
             
             selectToday(id='date',format='date');
 

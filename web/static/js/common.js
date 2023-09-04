@@ -1,3 +1,27 @@
+function loginCheck(){
+    const sessionInfo=document.getElementById('sessionInsName').innerText;
+            if(sessionInfo.includes('None')){
+                window.location.href='/';
+            }
+}
+
+function logout(){
+    window.location.href='/logout';
+}
+
+function hideInsSelectBlockAndGetInsInfo(id){
+    const sessionInsId=document.getElementById('sessionInsId').textContent;
+    const sessionInsName=document.getElementById('sessionInsName').textContent;
+    const sessionInsRole=document.getElementById('sessionInsRole').textContent;
+    const insSelectBlock=document.getElementById(id);
+    if(sessionInsRole==='admin'){
+        insSelectBlock.style.display='block';
+    }else if(sessionInsRole==='ins'){
+        insSelectBlock.style.display='none';
+    }
+    return ({'sessionInsId':sessionInsId,'sessionInsName':sessionInsName,'sessionInsRole':sessionInsRole})
+}
+
 function selectToday(id,format){
     const today = new Date();
     let formattedDate;

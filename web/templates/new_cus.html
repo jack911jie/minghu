@@ -7,13 +7,15 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
+    {% include 'show_ins_info.html' %}
     <h3>生成新的会员</h3>
     <hr>
     <h4>· 输入新会员的姓名
     <input type="text" id="cusName" style="width: 80px;" >   
     </h4>
     <h4 style="color:brown;">· 关联的体验课客户  <input id='trialCusNameInput' style="width:100px;" oninput="handletrialCusNameInput()" onclick="handletrialCusNameInput()"></h4>            
-    <div id="trialResultList"></div>     
+    <div id="trialResultList"></div>    
+    <div id="insCheckBlock"><h4>主管教练</h4> <div id="insCheckBox"></div></div> 
     <div id="sex">
         <h4>· 性别
         <label>
@@ -51,11 +53,17 @@
     </div>
     <hr>
     <div class="inline2" id="new_cus_res"></div>
-    <button onclick="generateFile()">生成会员资料</button>
+    <div style="margin-top:8px;"><button onclick="generateFile()">生成会员资料</button></div>
 
+    <script src="../static/js/common.js"></script>
     <script>
         let allTrialList;
+        let insName;
+        let insId;
+        let insRole;
+
         document.addEventListener('DOMContentLoaded',function(){
+            loginCheck();
             selectToday();
             fetch('/get_trial_list')
             .then(response=>response.json())
@@ -69,13 +77,73 @@
                 console.log('获取体验课列表错误：',error)
             });
 
+            fetch('/get_ins_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log('ins list:',data);
+                generateInsCheckBoxes(data['ins_list']);
+   
+                 })
+                .catch(error => console.error('Error:', error));
+
             hideTrialResultList();
 
             const trialCusNameInput=document.getElementById("trialCusNameInput");
             trialCusNameInput.addEventListener("click", function(event) {
                 event.stopPropagation();
             });
+
+            insInfo=hideInsSelectBlockAndGetInsInfo('insCheckBlock');
+            insId=insInfo.sessionInsId;
+            insName=insInfo.sessionInsName;
+            insRole=insInfo.sessionInsRole;
+            console.log(insName)
+
+
         })
+
+        function generateInsCheckBoxes(insData){
+            const insCheckBox=document.getElementById('insCheckBox');
+            insData.forEach(ins=>{
+                if(ins!=='管理员'){
+                    console.log(ins,insName)
+                    const checkbox=document.createElement('input')
+                    checkbox.type='checkbox';
+                    checkbox.name='check-option';
+                    checkbox.id='checkBox-'+ins;
+                    checkbox.value=ins;
+                    if(ins===insName){
+                        checkbox.checked=true;                
+                    }   
+                    const label=document.createElement('label');
+                    label.htmlFor='checkBox-'+ins;
+                    label.appendChild(checkbox);                 
+                    label.appendChild(document.createTextNode(ins));       
+                    insCheckBox.append(label);   
+                }
+            });                
+                
+            }
+
+            //在此页面重写该方法 
+            function hideInsSelectBlockAndGetInsInfo(id){
+                const sessionInsId=document.getElementById('sessionInsId').textContent;
+                const sessionInsName=document.getElementById('sessionInsName').textContent;
+                const sessionInsRole=document.getElementById('sessionInsRole').textContent;
+                const insSelectBlock=document.getElementById(id);
+                // if(sessionInsRole==='admin'){
+                //     insSelectBlock.style.display='block';
+                // }else if(sessionInsRole==='ins'){
+                //     insSelectBlock.style.display='none';
+                // }
+                return ({'sessionInsId':sessionInsId,'sessionInsName':sessionInsName,'sessionInsRole':sessionInsRole})
+            }
         
         function checkMobileValid(){
             const mobilePattern = /^1[3-9]\d{9}$/;
@@ -272,31 +340,57 @@
             const trialCusName=document.getElementById("trialCusNameInput").value.trim();
             const cusSource=document.getElementById("cusSource").value.trim();
             const mobilePhone=document.getElementById("mobilePhone").value.trim();
-            console.log('客户来源：',cusSource)
+            const insNamesChecked=document.querySelectorAll('input[name="check-option"]:checked');
 
-            let birthMonth=document.getElementById("dateInput").value
-            birthMonth=birthMonth.replace(/-/g,'');
+            insNameList=[]
+            insNamesChecked.forEach(checkedName=>{
+                insNameList.push(checkedName.value);
+            })
+            insNamesStr=insNameList.join(',')        
+            // console.log(insNamesStr)  
 
-            if(cusName){
+            let birthDay=document.getElementById("dateInput").value
+            birthDay=birthDay.replace(/-/g,'');
+
+            if(cusName && insNamesStr){
                 const isMo=isMobile();
                 dvc=isMo?"mobile":"pc";
                 document.getElementById("new_cus_res").innerHTML='<p>正在生成新会员文件……</p>'
+                data={
+                    'cusName':cusName,
+                    'trialCusName':trialCusName,
+                    'gender':gender,
+                    'mobilePhone':mobilePhone,
+                    'birthDay':birthDay,
+                    'cusSource':cusSource,
+                    'dvc':dvc,
+                    'insNames':insNamesStr
+                }
+                console.log(data)
                 fetch('/generate_new',{
                     method:"POST",
                     headers:{
-                        'Content-Type':'text/plain'
+                        'Content-Type': 'application/json',
                     },
-                    body:cusName+"|"+trialCusName+"|"+gender+"|"+mobilePhone+"|"+birthMonth+"|"+cusSource+"|"+dvc
+                    body:JSON.stringify(data)
                 })
-                .then(response=>response.text())
+                .then(response=>response.json())
                 .then(data=>{
                     console.log(data)
                     // document.getElementById("new_cus_res").innerHTML='<p>生成文件名：</p><p>'+data+'</p>'
-                    alert(`新增客户 ${data} 成功`);
-                    window.location.replace('./');
+                    if(data.res==='ok'){
+                        alert(`新增客户 ${data.cus_name} 成功`);
+                    }else{
+                        console.log(res.error);
+                        alert(`新增客户 ${data.error} 错误`);                        
+                    }
+                    
+                    window.location.replace('./index');
                     // alert(data)
                 })
                 .catch(error=>console.error('Error:',error));
+            }else{
+                document.getElementById('new_cus_res').innerText='有空项'
             }
             
         }

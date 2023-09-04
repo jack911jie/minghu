@@ -15,7 +15,7 @@ import xlwings as xw
 import pandas as pd
 pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
 # pd.set_option('display.max_columns', None) #显示所有列
-from flask import Flask, request, jsonify,render_template
+from flask import Flask, request, jsonify,render_template,session,redirect,url_for
 import pymysql
 import datetime
 from decimal import Decimal
@@ -33,9 +33,11 @@ class MinghuService(Flask):
 
         #路由
         #渲染页面
-        #首页
-        self.add_url_rule('/',view_func=self.index)
-        #获取客户信息页面
+        #首页/登录页
+        self.add_url_rule('/',view_func=self.login)
+        
+        #菜单页
+        self.add_url_rule('/index',view_func=self.index)        #获取客户信息页面
         self.add_url_rule('/cus_infos',view_func=self.cus_infos)
         #欢迎页面
         self.add_url_rule('/welcome',view_func=self.welcome)
@@ -62,6 +64,8 @@ class MinghuService(Flask):
                
 
         #功能
+        #登出处理
+        self.add_url_rule('/logout',view_func=self.logout)
         #从模板.xlsm获取基本信息，如教练姓名、课程种类等
         self.add_url_rule('/get_template_info', view_func=self.get_template_info_db,methods=['GET','POST'])
         #遍历会员资料文件夹获取所有 客户列表
@@ -109,6 +113,8 @@ class MinghuService(Flask):
         self.add_url_rule('/get_book_data',view_func=self.get_book_data_db,methods=['GET','POST'])
         #写入约课记录表
         self.add_url_rule('/write_ins_book',view_func=self.write_ins_book_db,methods=['GET','POST'])
+        #处理login
+        self.add_url_rule('/deal_login',view_func=self.deal_login,methods=['GET','POST'])
 
     def connect_mysql(self):
         # 连接数据库
@@ -122,21 +128,62 @@ class MinghuService(Flask):
 
         return conn
 
+    def login(self):
+        return render_template('./login.html')
+
+    def deal_login(self):
+        data=request.json
+        conn=self.connect_mysql()
+        ins_id,pwd=data['user'],data['pwd']
+        if ins_id[:2]=='01':
+            ins_id='MHINS'+ins_id[2:]
+
+        with conn.cursor(cursor=pymysql.cursors.DictCursor) as cursor:
+            try:
+                sql='select ins_name,role from ins_table where ins_id=%s and pwd=%s'
+            
+                cursor.execute(sql,(ins_id,pwd))
+                res=cursor.fetchone()
+                session['user']=res['ins_name']
+                session['role']=res['role']
+                session['ins_id']=ins_id
+
+                # print(res['ins_name'],res['role'])
+
+                return jsonify({'res':'ok','url':url_for('index')})
+            except Exception as e:
+                print(e)
+                return jsonify({'res':'failed'})
+            
+
+    def logout(self):
+        session.pop('user',None)
+        session.pop('role',None)
+        session.pop('ins_id',None)
+        return redirect(url_for('login'))
+
     def write_ins_book_db(self):
         try:
             data=request.json
             conn=self.connect_mysql()
             cursor=conn.cursor()
 
-            #通过教练姓名获取ins_id
-            sql=f'''
-                SELECT ins_id FROM ins_table WHERE ins_name=%s ;
-            '''
-            cursor.execute(sql,data['insName'])
-            ins_id=cursor.fetchall()[0][0]
+            # print(data)
 
-            data['ins_id']=ins_id
-            col_names=['date','ins_id','insName','0600','0630','0700','0730','0800','0830','0900','0930','1000','1030','1100','1130','1200','1230','1300','1330','1400','1430','1500','1530','1600','1630','1700','1730','1800','1830','1900','1930','2000','2030','2100','2130','comment']
+            #通过教练姓名获取ins_id
+            if data['insRole']=='admin' :
+                sql=f'''
+                    SELECT ins_id FROM ins_table WHERE ins_name=%s ;
+                '''
+                cursor.execute(sql,data['insName'])
+                ins_id=cursor.fetchall()[0][0]
+                data['insId']=ins_id
+            elif  data['insRole']=='ins':
+                #教练角色传入有insId
+                pass
+
+            
+            col_names=['date','insId','insName','0600','0630','0700','0730','0800','0830','0900','0930','1000','1030','1100','1130','1200','1230','1300','1330','1400','1430','1500','1530','1600','1630','1700','1730','1800','1830','1900','1930','2000','2030','2100','2130','comment']
             sorted_data={key:data[key] for key in col_names}
             values=list(sorted_data.values())
             # print(values)
@@ -149,7 +196,7 @@ class MinghuService(Flask):
             #如已有教练、日期 数据，更新
             if res:
                 #update的时候，加上这些参数
-                values.extend([data['ins_id'],data['insName'],data['date']])
+                values.extend([data['insId'],data['insName'],data['date']])
                 # print(values)
                 print('old data,updating')     
                 sql=f'''
@@ -220,7 +267,10 @@ class MinghuService(Flask):
         return jsonify({'ins_book_data':ins_book_dic})
 
     def ins_book_page(self):
-        return render_template('./ins_book.html')
+        session_name=session.get('user')
+        session_role=session.get('role')
+        session_id=session.get('ins_id')
+        return render_template('./ins_book.html',session_ins_name=session_name,session_role=session_role,session_ins_id=session_id)
 
     def test_copy(self):
         return render_template('./test_copy.html')
@@ -267,7 +317,7 @@ class MinghuService(Flask):
             data['formal_cus_id_name']=None
             del data['dateString']
             del data['timeString']
-            data_cols=['datetime','trial_cls_long','cusNameInput','mobilePhone','ins','finish_yn','cusSource','comment','deal_yn','deal_date','formal_cus_id_name']
+            data_cols=['datetime','trial_cls_long','cusNameInput','mobilePhone','insName','finish_yn','cusSource','comment','deal_yn','deal_date','formal_cus_id_name']
             sorted_data={key:data[key] for key in data_cols}
             values=tuple(sorted_data.values())
             # values = ', '.join(f'"{data[key]}"' if sorted_data[key] is not None else 'NULL' for key in data_cols)
@@ -292,7 +342,10 @@ class MinghuService(Flask):
 
 
     def trial_class(self):
-        return render_template('./trial_class.html')
+        session_name=session.get('user')
+        session_role=session.get('role')
+        session_id=session.get('ins_id')
+        return render_template('./trial_class.html',session_ins_name=session_name,session_role=session_role,session_ins_id=session_id)
          
     def date_to_string(self,obj,format='date'):
         try:
@@ -462,7 +515,10 @@ class MinghuService(Flask):
     
         
     def index(self):
-        return render_template('index.html')
+        session_name=session.get('user')
+        session_role=session.get('role')
+        session_id=session.get('ins_id')
+        return render_template('index.html',session_ins_name=session_name,session_role=session_role,session_ins_id=session_id)
 
     def start_limit_class(self):
         return render_template('./start_limit_class.html')
@@ -649,7 +705,10 @@ class MinghuService(Flask):
         return jsonify(dic_body_history)
     
     def input_body(self):
-        return render_template('./input_body.html')
+        session_name=session.get('user')
+        session_role=session.get('role')
+        session_id=session.get('ins_id')
+        return render_template('./input_body.html',session_ins_name=session_name,session_role=session_role,session_ins_id=session_id)
 
     def deal_cls(self):
         cls_data=request.json
@@ -1645,7 +1704,10 @@ class MinghuService(Flask):
         return render_template('input_buy.html')
 
     def new_cus(self):
-        return render_template('new_cus.html')
+        session_name=session.get('user')
+        session_role=session.get('role')
+        session_id=session.get('ins_id') 
+        return render_template('new_cus.html',session_ins_name=session_name,session_role=session_role,session_ins_id=session_id)
 
     def cus_cls_input(self):
         return render_template('cus_cls_input.html')
@@ -2084,60 +2146,109 @@ class MinghuService(Flask):
             sql=f"SELECT max(cast(substring(cus_id,3) as UNSIGNED)) FROM basic_info_table;"
             cursor.execute(sql)
             max_id=cursor.fetchall()[0][0]
-            cursor.close()
-            conn.close()
+            
             txt_num=str(max_id+1).zfill(5)
             try:
-                fn_in=request.data
-                fn='MH'+txt_num+fn_in.decode('utf-8')
+                dataRequest=request.json
+     
+                fn='MH'+txt_num+dataRequest['cusName']
                 # fn='MH00220王测试|王测试|女|199008|小红书|pc'
-                data={}
-  
-                data['cus_id_name'],data['trial_cus_name'],data['sex'],data['mobile_phone'],data['birth_month'],data['source'],data['dvc']=fn.split('|')
-                data['cus_id']=data['cus_id_name'][:7]
-                data['cus_name']=data['cus_id_name'][7:]
+                data={}  
+                data['trial_cus_name']=dataRequest['trialCusName']
+                data['sex']=dataRequest['gender']
+                data['mobile_phone']=dataRequest['mobilePhone']
+                data['birthday']=dataRequest['birthDay']
+                data['source']=dataRequest['cusSource']
+                data['dvc']=dataRequest['dvc']
+                data['cus_id']='MH'+txt_num
+                data['cus_name']=dataRequest['cusName']
                 data['nick_name']=data['cus_name'] if len(data['cus_name'])<2 else data['cus_name'][1:]
-                data['birthday']=data['birth_month'][:4]+'-'+data['birth_month'][4:6]+'-'+data['birth_month'][6:8]
-                # data['birthday']=data['birth_month'][:4]+'-'+data['birth_month'][4:]+'-'+'01'
                 data['birthday_type']='ymd'
+                ins_names=dataRequest['insNames']
                 # data['birthday_type']='ym'
-                trial_cus_name=data['trial_cus_name']
-                cus_id_name=data['cus_id_name']
-                del data['cus_id_name']
-                del data['birth_month']
-                del data['trial_cus_name']
+                # trial_cus_name=data['trial_cus_name']
+                cus_id_name=data['cus_id']+data['cus_name']
+
                 data_col=['cus_id','cus_name','nick_name','sex','mobile_phone','birthday','birthday_type','source']
                 sorted_data={key: data[key].strip() for key in data_col}
                 values=tuple(sorted_data.values())
                 today=datetime.datetime.now().strftime('%Y-%m-%d')
+
+                #生成主管教练的姓名及教练ID
+                ins_name_arr=[]
+                ins_id_arr=[]
+                with conn.cursor(cursor=pymysql.cursors.DictCursor) as cursor:
+                    try:
+                        for ins_name in ins_names.split(','):
+                            sql='''
+                                select ins_id,ins_name from ins_table 
+                                where ins_name=%s
+                            '''
+                            cursor.execute(sql,(ins_name,))
+                            fetch_ins=cursor.fetchone()
+                            ins_name_arr.append(fetch_ins['ins_name'])
+                            ins_id_arr.append(fetch_ins['ins_id'])
+                        ins_names_str=','.join(ins_name_arr)
+                        ins_ids_str=','.join(ins_id_arr)                        
+                    except Exception as e:
+                        print(e) 
+                        return jsonify({'res':'failed','error':f'error:{e}'})
+                # except Exception as e:
+                #     print(e)
+                #     return jsonify({'res':'failed','error':f'error:{e}'})
+                # finally:
+                #     cursor.close()
+                #     conn.close()
                 
-                conn=self.connect_mysql()
-                cursor=conn.cursor()
-                sql=f'''
-                        insert into  basic_info_table (cus_id,cus_name,nick_name,sex,mobile_phone,birthday,birthday_type,source) 
-                        values
-                        (%s,%s,%s,%s,%s,%s,%s,%s)
-                    '''
-                cursor.execute(sql,values)
-
-                if trial_cus_name:
+                
+                try:
+                    cursor=conn.cursor()
+                    #新增会员
                     sql=f'''
-                        update trial_cls_table 
-                        set deal_yn='是',deal_date=%s,formal_cus_id_name=%s                        
-                        where trial_cus_name=%s order by 'id' Desc LIMIT 1
+                            insert into  basic_info_table (cus_id,cus_name,nick_name,sex,mobile_phone,birthday,birthday_type,source) 
+                            values
+                            (%s,%s,%s,%s,%s,%s,%s,%s)
                         '''
-                    cursor.execute(sql,[today,cus_id_name,trial_cus_name])
+                    cursor.execute(sql,values)
 
-                conn.commit()
-                cursor.close()
-                conn.close()
 
-                return f'{cus_id_name} 已成为会员'
+                    #写入教练主管会员表
+                    sql=f'''
+                            insert into ins_control_cus_table (cus_id,cus_name,ins_ids,ins_names) 
+                            values
+                            (%s,%s,%s,%s)
+                        '''
+                    cursor.execute(sql,(data['cus_id'],data['cus_name'],ins_ids_str,ins_names_str))
+
+                    #在体验课表写入体验课出单会员信息
+                    if data['trial_cus_name']:
+                        sql=f'''
+                            update trial_cls_table 
+                            set deal_yn='是',deal_date=%s,formal_cus_id_name=%s                        
+                            where trial_cus_name=%s order by 'id' Desc LIMIT 1
+                            '''
+                        cursor.execute(sql,[today,cus_id_name,data['trial_cus_name']])
+
+                        sql='''
+                            insert into ins_control_cus_table 
+                            
+                        '''
+
+                    conn.commit()  
+                except Exception as e:
+                    print(e)
+                    return jsonify({'res':'failed','error':f'error:{e}'})
+                
+
             except Exception as e:
-                print(e)
-                return e
+                print('write into new cus error:',e)
+                return jsonify({'res':'failed','error':f'error:{e}'})
+            finally:
+                cursor.close()
+                conn.close()                
+            
         
-
+            return jsonify({'res':'ok','cus_name':f'{cus_id_name}'})
 
     def write_deal_cus_name_to_trial_table(self,formal_cus_name,trial_cus_name):
         try:
@@ -2172,6 +2283,7 @@ class Vividict(dict):
 
 if __name__ == '__main__':
     app = MinghuService(__name__)
+    app.secret_key='minghu8888 '
     if len(sys.argv)>1:
         print(f'服务器为：{sys.argv[1]}:5000')
         app.run(debug=True,host=sys.argv[1],port=5000)

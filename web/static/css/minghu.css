@@ -14,6 +14,15 @@ h2{
 h3{
   color:#685a3f;
 }
+#sessionInfoBox{
+  margin-bottom: 22px;
+}
+#logout{
+  font-size: 8px;
+}
+.session-name{
+  font-size: 10px;
+}
 
 #BasicInfo{
   background: rgb(211, 211, 196);

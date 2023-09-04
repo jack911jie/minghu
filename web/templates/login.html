@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>铭湖健身工作室教练工作台</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="background-color:#fffbf6">
+<div>
+    <div>教练账号登录</div>
+    <div id="userBox"><input id="user"></div>
+    <div id="pwdBox"><input id="pwd" type="password" ></div>
+    <div id="loginInfo"></div>
+    <hr>
+    <button id="login" onclick="login()">登录</button>
+</div>
+    
+    <script>
+        function login(){
+            const user=document.getElementById('user').value;
+            const pwd=document.getElementById('pwd').value;
+            console.log(user,pwd)
+        body:
+            fetch('/deal_login',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                    },
+                body:JSON.stringify({'user':user,'pwd':pwd})                
+            })
+            .then(response=>response.json())
+            .then(data=>{
+                const loginInfo=document.getElementById('loginInfo');
+                console.log(data.res);
+                if(data.res==='ok'){
+                    console.log(data.url)
+                    loginInfo.innerText='';
+                    window.location.href = data.url;
+                }else{
+                    loginInfo.innerText='用户名或密码错误';
+                }
+                const sessionInsName=data.session_ins_name;
+            }
+            )
+            .catch(error=>{
+                console.log(error);
+            })
+        }
+        
+
+    </script>
+</body>

@@ -8,8 +8,10 @@
 </head>
 <body style="background-color:#fffbf6">
     <p></p>
+    {% include 'show_ins_info.html' %}
+
     <div id="container" style="display:flex;background-color:#fffbf6 ;text-align: center; justify-content: center; width: 400px;flex-wrap: wrap; ">
-        <div id="date" style="color:rgb(171, 176, 179); font-size:20px; margin-bottom: 50px;"></div>
+        <div id="date" style="color:rgb(171, 176, 179); font-size:20px; margin-bottom: 20px;"></div>
 
         <div class='cover-button' style="border:1px solid #abc98a; border-radius:4px;background-color:#a9d594;">
             <a href="./ins_book" style="color:rgb(108, 109, 90);font-size:34px;text-decoration: none;">会员预约排课</a>
@@ -46,8 +48,10 @@
         <img src="{{ url_for('static', filename='pics/logo.png') }}" alt="minghulogo" style="width:200px;height:auto;opacity: 0.86;">
         </div>
     </div>
+    <script src="../static/js/common.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded',function(){
+            loginCheck();
             const dateBlock=document.getElementById('date');
             const today=new Date();
             const year = today.getFullYear();
@@ -86,6 +90,8 @@
                         ${weekDayChinese}`; 
             dateBlock.innerText=dateDisplay;
         })
+
+        
 
     </script>
 </body>
