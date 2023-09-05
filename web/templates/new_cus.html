@@ -106,7 +106,7 @@
             console.log(insName)
 
 
-        })
+        });
 
         function generateInsCheckBoxes(insData){
             const insCheckBox=document.getElementById('insCheckBox');
@@ -142,6 +142,18 @@
                 // }else if(sessionInsRole==='ins'){
                 //     insSelectBlock.style.display='none';
                 // }
+  
+                if(sessionInsRole==='admin'){   
+                    showRole.innerText='管理员'
+                }else if(sessionInsRole==='ins'){ 
+                    showRole.innerText='教练'
+                }
+                
+                const sessionRoleBlock=document.getElementById('sessionInsRole');
+                sessionRoleBlock.style.display='none';
+
+
+
                 return ({'sessionInsId':sessionInsId,'sessionInsName':sessionInsName,'sessionInsRole':sessionInsRole})
             }
         
