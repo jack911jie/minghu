@@ -136,7 +136,20 @@ class MinghuService(Flask):
         conn=self.connect_mysql()
         ins_id,pwd=data['user'],data['pwd']
         if ins_id[:2]=='01':
-            ins_id='MHINS'+ins_id[2:]
+            ins_place='MH'
+        else:
+            ins_place='MH'
+
+        
+        if ins_id[2:4]=='00':
+            ins_role='ADM'
+        elif ins_id[2:4]=='01':
+            ins_role='INS'
+        else:
+            ins_role='INS'
+
+        ins_id=ins_place+ins_role+ins_id[4:]
+
 
         with conn.cursor(cursor=pymysql.cursors.DictCursor) as cursor:
             try:
@@ -521,7 +534,10 @@ class MinghuService(Flask):
         return render_template('index.html',session_ins_name=session_name,session_role=session_role,session_ins_id=session_id)
 
     def start_limit_class(self):
-        return render_template('./start_limit_class.html')
+        session_name=session.get('user')
+        session_role=session.get('role')
+        session_id=session.get('ins_id')
+        return render_template('./start_limit_class.html',session_ins_name=session_name,session_role=session_role,session_ins_id=session_id)
 
     
     def write_body(self):
@@ -1154,8 +1170,8 @@ class MinghuService(Flask):
             buy_rec_cols=['index','cus_id','cus_name','收款日期','购课编码','购课类型','购课节数','购课时长（天）','应收金额','实收金额','收款人','收入类别','备注']
             not_start_list=self.mysql_list_data_to_dic(data=not_start_list,mysql_cols=buy_rec_cols)  
         else:
-            not_start_list={'index':'','cus_id':'','cus_name':'','收款日期':'','购课编码':'','购课类型':'','购课节数':'','购课时长（天）':'',
-                                            '应收金额':'','实收金额':'','收款人':'','收入类别':'','备注':''}      
+            not_start_list={'0':{'index':'','cus_id':'','cus_name':'','收款日期':'','购课编码':'','购课类型':'','购课节数':'','购课时长（天）':'',
+                                            '应收金额':'','实收金额':'','收款人':'','收入类别':'','备注':''}}    
 
         # buy_list
         sql=f"select * from buy_rec_table where cus_id='{cus_id}' and cus_name='{cus_name}'"
@@ -1681,8 +1697,8 @@ class MinghuService(Flask):
 
         result={}
 
-        # 获取收款人
-        sql="select ins_name from ins_table"
+        # 获取教练姓名，不包括管理员角色
+        sql="select ins_name from ins_table where role='ins';"
         cursor.execute(sql)
         ins_res = cursor.fetchall()
         ins_list=[x[0] for x in ins_res]
@@ -1701,7 +1717,10 @@ class MinghuService(Flask):
 
 
     def input_buy(self):
-        return render_template('input_buy.html')
+        session_name=session.get('user')
+        session_role=session.get('role')
+        session_id=session.get('ins_id')
+        return render_template('input_buy.html',session_ins_name=session_name,session_role=session_role,session_ins_id=session_id)
 
     def new_cus(self):
         session_name=session.get('user')
@@ -1710,7 +1729,10 @@ class MinghuService(Flask):
         return render_template('new_cus.html',session_ins_name=session_name,session_role=session_role,session_ins_id=session_id)
 
     def cus_cls_input(self):
-        return render_template('cus_cls_input.html')
+        session_name=session.get('user')
+        session_role=session.get('role')
+        session_id=session.get('ins_id') 
+        return render_template('cus_cls_input.html',session_ins_name=session_name,session_role=session_role,session_ins_id=session_id)
 
     def success(self):
         return render_template('success.html')

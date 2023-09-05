@@ -155,6 +155,10 @@
         // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
         document.addEventListener("DOMContentLoaded", function() {   
             loginCheck();
+            insInfo=hideInsSelectBlockAndGetInsInfo('insListBlock');
+            insName=insInfo['sessionInsName'];
+            insId=insInfo['sessionInsId'];
+            insRole=insInfo['sessionInsRole'];
 
             selectToday(id='dateInput',format='date');
             showWeekDay();
@@ -213,18 +217,18 @@
                 toggleInputBox(checkBoxId);
             });     
 
-            //如果是管理员，隐藏教练的选择
-            const sessionInsRole=document.getElementById('sessionInsRole').textContent;
-            insRole=sessionInsRole;
-            if(sessionInsRole==='admin'){
-                const insListBlock=document.getElementById('insListBlock');
-                insListBlock.style.display='block';
-            }else if(sessionInsRole==='ins'){
-                const insListBlock=document.getElementById('insListBlock');
-                insListBlock.style.display='none';
-                insName=document.getElementById('sessionInsName').textContent;
-                insId=document.getElementById('sessionInsId').textContent;
-            }
+            // //如果是管理员，隐藏教练的选择
+            // const sessionInsRole=document.getElementById('sessionInsRole').textContent;
+            // insRole=sessionInsRole;
+            // if(sessionInsRole==='admin'){
+            //     const insListBlock=document.getElementById('insListBlock');
+            //     insListBlock.style.display='block';
+            // }else if(sessionInsRole==='ins'){
+            //     const insListBlock=document.getElementById('insListBlock');
+            //     insListBlock.style.display='none';
+            //     insName=document.getElementById('sessionInsName').textContent;
+            //     insId=document.getElementById('sessionInsId').textContent;
+            // }
 
             // console.log(insId,insName,insRole);
         });
@@ -371,13 +375,16 @@
             const inputBox=document.getElementById(checkBoxId+'cus_name');
             // console.log(inputBox.id, document.getElementById(checkBoxId).checked)
             inputBox.disabled = !document.getElementById(checkBoxId).checked;
+            const originInputValue=inputBox.value;
             inputBox.value='';
             if(checkBoxId!=='2130'){  
                 const nextId=generateNextId(checkBoxId);
-                document.getElementById(nextId).checked=true;
-                document.getElementById(nextId).disabled=false;
-                document.getElementById(nextId+'cus_name').disabled=false;
-                document.getElementById(nextId+'cus_name').value='';
+                if(document.getElementById(nextId+'cus_name').value===originInputValue && document.getElementById(nextId+'cus_name').value!==''){
+                    document.getElementById(nextId).checked=true;
+                    document.getElementById(nextId).disabled=false;
+                    document.getElementById(nextId+'cus_name').disabled=false;
+                    document.getElementById(nextId+'cus_name').value='';
+                }                
             }
         }
 

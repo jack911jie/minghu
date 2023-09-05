@@ -12,13 +12,31 @@ function logout(){
 function hideInsSelectBlockAndGetInsInfo(id){
     const sessionInsId=document.getElementById('sessionInsId').textContent;
     const sessionInsName=document.getElementById('sessionInsName').textContent;
-    const sessionInsRole=document.getElementById('sessionInsRole').textContent;
-    const insSelectBlock=document.getElementById(id);
-    if(sessionInsRole==='admin'){
-        insSelectBlock.style.display='block';
-    }else if(sessionInsRole==='ins'){
-        insSelectBlock.style.display='none';
+    const sessionRoleBlock=document.getElementById('sessionInsRole');
+    const showRole=document.getElementById('showRole');
+
+    const sessionInsRole=sessionRoleBlock.textContent;
+    if(id){
+        const insSelectBlock=document.getElementById(id);
+        if(sessionInsRole==='admin'){
+            insSelectBlock.style.display='block';
+            showRole.innerText='管理员'
+        }else if(sessionInsRole==='ins'){
+            insSelectBlock.style.display='none';
+            showRole.innerText='教练'
+        }
+    }else{
+        if(sessionInsRole==='admin'){   
+            showRole.innerText='管理员'
+        }else if(sessionInsRole==='ins'){ 
+            showRole.innerText='教练'
+        }
     }
+    
+    sessionRoleBlock.style.display='none';
+
+
+
     return ({'sessionInsId':sessionInsId,'sessionInsName':sessionInsName,'sessionInsRole':sessionInsRole})
 }
 

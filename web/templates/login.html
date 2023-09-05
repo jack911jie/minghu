@@ -7,13 +7,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body style="background-color:#fffbf6">
-<div>
-    <div>教练账号登录</div>
-    <div id="userBox"><input id="user"></div>
-    <div id="pwdBox"><input id="pwd" type="password" ></div>
-    <div id="loginInfo"></div>
-    <hr>
-    <button id="login" onclick="login()">登录</button>
+<div class="login-container">
+        <div class="login-box">
+            <div id="logo">
+                <img src="{{ url_for('static', filename='pics/logo.png') }}" alt="minghulogo" style="width:120px;height:auto;opacity: 0.86;">
+                </div>
+            <div style="margin:15px;">教练登录</div>
+            <div id="userBox" style="font-size: 10px;">账号<input id="user" style="margin:5px;width:100px;"></div>
+            <div id="pwdBox" style="font-size: 10px;">密码<input id="pwd" type="password" style="margin:5px;width:100px;"></div>
+            <div id="loginInfo"></div>
+            <hr>
+            <button id="login" onclick="login()">登录</button>
+        </div>
 </div>
     
     <script>

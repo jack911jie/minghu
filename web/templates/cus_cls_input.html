@@ -7,6 +7,7 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
+    {% include 'show_ins_info.html' %}
     <h2>铭湖健身工作室会员训练日志</h2>        
         <h3><image src="../static/ico/客户.svg" class="ico"></image> 会员编码及姓名</h3>
             <input type="text" id="nameInput" placeholder="请输入客户姓名" oninput="handleInput()" style="margin-bottom: 8px;width:100px;">
@@ -26,9 +27,9 @@
                 女
             </label>
         </div> -->
-        <div id="insRadio">
+        <div id="insSelectBlock">
             <h3>上课教练</h3>
-            <div id="insNameRadio"></div>
+            <select id="insSelect"></select>
         </div>        
 
         <h3>上课的课程类型</h3>
@@ -222,8 +223,17 @@
         let copyCount=0;
         let deleteCount=0;
         let blockOrder=1;
+        let insName;
+        let insId;
+        let insRole;
         // 在页面加载完成后，将返回修改按钮和性别输入框设置为不可见
         document.addEventListener("DOMContentLoaded", function(){
+            loginCheck();
+            insInfo=hideInsSelectBlockAndGetInsInfo('insSelectBlock');
+            insName=insInfo['sessionInsName'];
+            insId=insInfo['sessionInsId'];
+            insRole=insInfo['sessionInsRole'];
+            
             document.getElementById("editButton").style.display = "none";
             document.getElementById("submit").setAttribute("disabled", true);
             selectToday(id='datetime',format='dateTime');
@@ -267,7 +277,7 @@
                 .then(data => {
             //将data赋值给块变量cus_list，供后面的handleInput使用
                 console.log('ins list:',data);
-                ins_radios(data['ins_list']);
+                generageInsList(data['ins_list']);
                  })
                 .catch(error => console.error('Error:', error));
 
@@ -349,15 +359,22 @@
                         
                         
                         // 读取暂存的信息
-                        const tempSavePage=localStorage.getItem(name+'-html');
+                        // if(insRole==='admin'){
+                        //     insNamePage=document.getElementById('insSelect').value;
+                        // }else if(insRole==='ins'){
+                        //     insNamePage=insName;
+                        // }else{
+                        //     insNamePage=insName;
+                        // }
+                        const tempSavePage=localStorage.getItem(insName+'-'+name+'-html');
                         if(tempSavePage){
                             const isConfirmed=confirm('该客户有一条暂存信息，是否需要读取？');
                             if(isConfirmed){
                                 const allTrainContents=document.getElementById('allTrainContents');
                                 allTrainContents.style.display='block';
                                 document.documentElement.innerHTML=tempSavePage;
-                                // console.log(localStorage.getItem(name+'-cls_recs'));
-                                reFillTempSave(localStorage.getItem(name+'-cls_recs'));
+                                // console.log(insName+'-'+name+'-cls_recs');
+                                reFillTempSave(localStorage.getItem(insName+'-'+name+'-cls_recs'));
                                 selectToday('datetime','dateTime'); 
                                 tempSave(show='no');
                             }                            
@@ -597,224 +614,6 @@
 
         }
 
-         // 保存数据
-         function tempSave(show='yes') {   
-            // 将客户信息保存到本地
-            cls_tkn = {
-                'cus_name':document.getElementById('nameInput').value,
-                // 'sex':document.querySelector('input[name="gender"]:checked').value,
-                'cls_tkn_date':document.getElementById('datetime').value.split("T")[0],
-                'cls_tkn_time':document.getElementById('datetime').value.split("T")[1]+':00',
-                'cls_long':document.getElementById('clsLong').value,
-                'cls_type':document.getElementById('buyType').value,
-                'ins_name':document.querySelector('input[name="insName"]:checked').value,
-                'basic_cls_comment':document.getElementById('basic_cls_comment').value
-            
-            };
-
-            allTrainItems=getTrainItems()
-
-            cls_recs={
-                "cls_tkn":cls_tkn,
-                "train_rec":allTrainItems
-            }
-
-            console.log(cls_recs);
-
-            localStorage.setItem(document.getElementById('nameInput').value+'-cls_recs', JSON.stringify(cls_recs));
-            localStorage.setItem(document.getElementById('nameInput').value+'-html',document.documentElement.outerHTML);
-            localStorage.setItem(document.getElementById('nameInput').value+'-copyCount',copyCount);
-            localStorage.setItem(document.getElementById('nameInput').value+'-deleteCount',deleteCount);
-            localStorage.setItem(document.getElementById('nameInput').value+'-blockOrder',blockOrder);
-            // let copyCount=0;
-            // let deleteCount=0;
-            // let blockOrder=1;
-            
-            
-            // 保存完成后，遍历结果，如没有空项，禁用输入框，并显示返回修改按钮。如有，提示，不进行操作。
-            let checkValueEmpty=0;
-            let emptyItem='';
-            for(const key in cls_recs['cls_tkn']){
-                //不是备注的基础信息不能为空
-                if(key!=='basic_cls_comment' && cls_recs['cls_tkn'][key]===''){
-                    checkValueEmpty+=1;
-                    emptyItem=emptyItem+'上课基本信息';
-                }
-            }
-
-            for(const key in cls_recs['train_rec']){
-                //不是备注的基础信息不能为空
-                if(key==='calories' && cls_recs['train_rec'][key]===''){
-                    checkValueEmpty+=1;
-                    emptyItem=emptyItem+'，'+'消耗热量未填写';
-                }
-
-                //热量消耗必须为正数
-                if(key==='calories' && parseInt(cls_recs['train_rec'][key])<0){
-                    checkValueEmpty+=1;
-                    emptyItem=emptyItem+'，'+'消耗热量为负数';
-                }
-            }
-            
-
-            let num=1;
-            for(const key in cls_recs['train_rec']['train_recs']){
-                //不是备注的基础信息不能为空
-                
-                if(cls_recs['train_rec']['train_recs'][key]['nonOxyName']==='' && 
-                    cls_recs['train_rec']['train_recs'][key]['oxyName']==='' ){
-                    checkValueEmpty+=1;
-                    emptyItem=emptyItem+'，'+`第${num}条：训练项目名称`;
-                }
-
-                // 有氧训练必须有时间
-                if(cls_recs['train_rec']['train_recs'][key]['oxyName']!=='' && cls_recs['train_rec']['train_recs'][key]['oxyTime']==='' ){
-                    checkValueEmpty+=1;
-                    emptyItem=emptyItem+'，'+`第${num}条：有氧训练时间`;
-                }
-
-                //有氧训练时间必须为正数
-                if(cls_recs['train_rec']['train_recs'][key]['oxyName']!=='' && parseInt(cls_recs['train_rec']['train_recs'][key]['oxyTime'])<0){
-                    checkValueEmpty+=1;
-                    emptyItem=emptyItem+'，'+`第${num}条：有氧训练时间为负数`;
-                }
-
-                //抗阻训练距离必须为正数
-                if(cls_recs['train_rec']['train_recs'][key]['nonOxyDis']!=='' && parseInt(cls_recs['train_rec']['train_recs'][key]['nonOxyDis'])<0){
-                    checkValueEmpty+=1;
-                    emptyItem=emptyItem+'，'+`第${num}条：抗阻训练距离为负数`;
-                }
-
-                
-
-
-                num+=1;
-
-                
-                
-            }
-
-            //检查的项目不为空时，则执行。
-            if(checkValueEmpty===0){
-            
-                document.getElementById("nameInput").setAttribute("disabled", true);
-
-                const inputItems = document.querySelectorAll('input');
-                inputItems.forEach(function(inputItem){
-                    inputItem.disabled=true;
-                })
-
-                const deleteButtons=document.querySelectorAll('[id*="deleteTrain-"]')
-                deleteButtons.forEach(deleteButton=>{
-                    deleteButton.style.display='none';
-                })
-
-                const selects1 = document.querySelectorAll('[id*="itemSelectRadio-"]');
-                selects1.forEach(function(select){
-                    select.style.display='none';
-                })
-
-                const selects2 = document.querySelectorAll('[id*="oxyGroup-"]');
-                selects2.forEach(function(select){
-                    select.disabled=true;
-                })
-
-                const selects3 = document.querySelectorAll('[id*="nonOxyGroup-"]');
-                selects3.forEach(function(select){
-                    select.disabled=true;
-                })
-
-                const selects4 = document.querySelectorAll('[id*="nonOxyWt-"]');
-                selects4.forEach(function(select){
-                    select.disabled=true;
-                })
-
-                const selects5 = document.querySelectorAll('[id*="nonOxyNum-"]');
-                selects5.forEach(function(select){
-                    select.disabled=true;
-                })
-
-                const deleteTrainButtons=document.querySelectorAll('[id*="deleteTrain-"]');
-                deleteButtons.forEach(deleteButton=>{
-                    deleteButton.disabled=true;
-                })
-
-                document.getElementById('appendTrainButton').disabled=true;
-
-                document.getElementById('buyType').disabled=true;
-                document.getElementById('clsLong').disabled=true;
-
-                document.getElementById("tempSaveButton").style.display = "none";
-                document.getElementById("editButton").style.display = "inline";
-                document.getElementById("submit").style.display = "inline";
-                document.getElementById("submit").disabled=false;
-
-                if(show==='yes'){
-                    alert("客户信息已暂存");
-                }
-            }else{
-                document.getElementById("submit").style.display = "none";
-                document.getElementById("submit").disabled=true;
-                alert(`有些信息未填写或填写错误，请检查: ${emptyItem.slice(1,)}`);
-            }
-
-        }
-   
-        // 允许修改数据
-        function enableEdit() {
-            // 移除禁用属性，并显示保存按钮
-            // document.getElementById("nameInput").removeAttribute("disabled");
-            const inputItems = document.querySelectorAll('input');
-            inputItems.forEach(function(inputItem){
-                inputItem.disabled=false;
-            })
-
-            const deleteButtons=document.querySelectorAll('[id*="deleteTrain-"]')
-            deleteButtons.forEach(deleteButton=>{
-                deleteButton.style.display='block';
-            })
-
-            const selects1 = document.querySelectorAll('[id*="itemSelectRadio-"]');
-            selects1.forEach(function(select){
-                select.style.display='block';
-            })
-
-            const selects2 = document.querySelectorAll('[id*="oxyGroup-"]');
-            selects2.forEach(function(select){
-                select.disabled=false;
-            })
-
-            const selects3 = document.querySelectorAll('[id*="nonOxyGroup-"]');
-            selects3.forEach(function(select){
-                select.disabled=false;
-            })
-
-            const selects4 = document.querySelectorAll('[id*="nonOxyWt-"]');
-            selects4.forEach(function(select){
-                select.disabled=false;
-            })
-
-            const selects5 = document.querySelectorAll('[id*="nonOxyNum-"]');
-            selects5.forEach(function(select){
-                select.disabled=false;
-            })
-
-
-            const deleteTrainButtons=document.querySelectorAll('[id*="deleteTrain-"]');
-            deleteButtons.forEach(deleteButton=>{
-                deleteButton.disabled=false;
-            })
-
-            document.getElementById('appendTrainButton').disabled=false;
-
-
-            document.getElementById('buyType').disabled=false;
-            document.getElementById('clsLong').disabled=false;
-
-            document.getElementById("tempSaveButton").style.display = "inline";
-            document.getElementById("editButton").style.display = "none";
-            document.getElementById("submit").style.display = "none";
-        }
         
 
         function hideProcessingModel() {
@@ -824,45 +623,7 @@
         function showProcessingModel() {
             document.getElementById('processingModel').style.display = 'block';
         }
-
-        function submit(){
-            const cusName=document.getElementById('nameInput').value;
-            const storedClassInfo = localStorage.getItem(cusName+"-cls_recs");
-            console.log(storedClassInfo);
-            if (storedClassInfo) {
-                dat = JSON.parse(storedClassInfo);   
-                showProcessingModel();                
-
-                
-                fetch('/deal_cls', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body:JSON.stringify(dat)
-                    })
-                  .then(response => response.text())
-                  .then(data => {
-                      console.log(data);                      
-                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-html');
-                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-cls_recs');
-                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-copyCount');
-                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-deleteCount');
-                      localStorage.removeItem(dat['cls_tkn']['cus_name']+'-blockOrder');
-                      hideProcessingModel();
-                      alert("客户信息提交成功");
-                      window.location.replace('./');
-                  })
-                  .catch(error => {
-                      console.error('Error:', error);
-                      alert("提交失败，请稍后再试");
-                  });
-
-            } else {
-                alert("暂无客户信息，请先暂存信息再提交");
-            }
-        }
-
+   
         //递归函数，用于多层遍历
         function traverseElementsRename(element,num) {
         // 遍历当前元素的子节点
@@ -1210,27 +971,311 @@
             })
         }
 
- 
+        function submit(){
+            const cusName=document.getElementById('nameInput').value;
+            const storedClassInfo = localStorage.getItem(insName+'-'+cusName+"-cls_recs");
+            // console.log(storedClassInfo);
+            if (storedClassInfo) {
+                dat = JSON.parse(storedClassInfo);   
+                showProcessingModel();                
+                // console.log(dat)
+                
+                fetch('/deal_cls', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body:JSON.stringify(dat)
+                    })
+                  .then(response => response.text())
+                  .then(data => {
+                    //   console.log(data);                      
+                      localStorage.removeItem(insName+'-'+dat['cls_tkn']['cus_name']+'-html');
+                      localStorage.removeItem(insName+'-'+dat['cls_tkn']['cus_name']+'-cls_recs');
+                      localStorage.removeItem(insName+'-'+dat['cls_tkn']['cus_name']+'-copyCount');
+                      localStorage.removeItem(insName+'-'+dat['cls_tkn']['cus_name']+'-deleteCount');
+                      localStorage.removeItem(insName+'-'+dat['cls_tkn']['cus_name']+'-blockOrder');
+                      hideProcessingModel();
+                      alert("客户信息提交成功");
+                      window.location.replace('./index');
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);
+                      alert("提交失败，请稍后再试");
+                  });
+
+            } else {
+                alert("暂无客户信息，请先暂存信息再提交");
+            }
+        }
+
+
+        // 保存数据
+        function tempSave(show='yes') {   
+            // 将客户信息保存到本地
+            let ins_name;
+            if(insRole==='admin'){
+                ins_name=document.getElementById('insSelect').value;
+            }else if(insRole==='ins'){
+                ins_name=insName;
+            }else{
+                ins_name=insName;
+            }
+
+            cls_tkn = {
+                'cus_name':document.getElementById('nameInput').value,
+                // 'sex':document.querySelector('input[name="gender"]:checked').value,
+                'cls_tkn_date':document.getElementById('datetime').value.split("T")[0],
+                'cls_tkn_time':document.getElementById('datetime').value.split("T")[1]+':00',
+                'cls_long':document.getElementById('clsLong').value,
+                'cls_type':document.getElementById('buyType').value,
+                'ins_name':ins_name,
+                // 'ins_name':document.querySelector('input[name="insName"]:checked').value,
+                'basic_cls_comment':document.getElementById('basic_cls_comment').value
+            
+            };
+
+            allTrainItems=getTrainItems()
+
+            cls_recs={
+                "cls_tkn":cls_tkn,
+                "train_rec":allTrainItems
+            }
+
+
+            localStorage.setItem(insName+'-'+document.getElementById('nameInput').value+'-cls_recs', JSON.stringify(cls_recs));
+            localStorage.setItem(insName+'-'+document.getElementById('nameInput').value+'-html',document.documentElement.outerHTML);
+            localStorage.setItem(insName+'-'+document.getElementById('nameInput').value+'-copyCount',copyCount);
+            localStorage.setItem(insName+'-'+document.getElementById('nameInput').value+'-deleteCount',deleteCount);
+            localStorage.setItem(insName+'-'+document.getElementById('nameInput').value+'-blockOrder',blockOrder);
+            // let copyCount=0;
+            // let deleteCount=0;
+            // let blockOrder=1;
+            
+            
+            // 保存完成后，遍历结果，如没有空项，禁用输入框，并显示返回修改按钮。如有，提示，不进行操作。
+            let checkValueEmpty=0;
+            let emptyItem='';
+            for(const key in cls_recs['cls_tkn']){
+                //不是备注的基础信息不能为空
+                if(key!=='basic_cls_comment' && cls_recs['cls_tkn'][key]===''){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'上课基本信息';
+                }
+            }
+
+            for(const key in cls_recs['train_rec']){
+                //不是备注的基础信息不能为空
+                if(key==='calories' && cls_recs['train_rec'][key]===''){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+'消耗热量未填写';
+                }
+
+                //热量消耗必须为正数
+                if(key==='calories' && parseInt(cls_recs['train_rec'][key])<0){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+'消耗热量为负数';
+                }
+            }
+            
+
+            let num=1;
+            for(const key in cls_recs['train_rec']['train_recs']){
+                //不是备注的基础信息不能为空
+                
+                if(cls_recs['train_rec']['train_recs'][key]['nonOxyName']==='' && 
+                    cls_recs['train_rec']['train_recs'][key]['oxyName']==='' ){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+`第${num}条：训练项目名称`;
+                }
+
+                // 有氧训练必须有时间
+                if(cls_recs['train_rec']['train_recs'][key]['oxyName']!=='' && cls_recs['train_rec']['train_recs'][key]['oxyTime']==='' ){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+`第${num}条：有氧训练时间`;
+                }
+
+                //有氧训练时间必须为正数
+                if(cls_recs['train_rec']['train_recs'][key]['oxyName']!=='' && parseInt(cls_recs['train_rec']['train_recs'][key]['oxyTime'])<0){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+`第${num}条：有氧训练时间为负数`;
+                }
+
+                //抗阻训练距离必须为正数
+                if(cls_recs['train_rec']['train_recs'][key]['nonOxyDis']!=='' && parseInt(cls_recs['train_rec']['train_recs'][key]['nonOxyDis'])<0){
+                    checkValueEmpty+=1;
+                    emptyItem=emptyItem+'，'+`第${num}条：抗阻训练距离为负数`;
+                }
+
+                
+
+
+                num+=1;
+
+                
+                
+            }
+
+            //检查的项目不为空时，则执行。
+            if(checkValueEmpty===0){
+            
+                document.getElementById("nameInput").setAttribute("disabled", true);
+
+                const inputItems = document.querySelectorAll('input');
+                inputItems.forEach(function(inputItem){
+                    inputItem.disabled=true;
+                })
+
+                const selectItems = document.querySelectorAll('select');
+                selectItems.forEach(function(selectItem){
+                    selectItem.disabled=true;
+                })
+
+                const deleteButtons=document.querySelectorAll('[id*="deleteTrain-"]')
+                deleteButtons.forEach(deleteButton=>{
+                    deleteButton.style.display='none';
+                })
+
+                const selects1 = document.querySelectorAll('[id*="itemSelectRadio-"]');
+                selects1.forEach(function(select){
+                    select.style.display='none';
+                })
+
+                const selects2 = document.querySelectorAll('[id*="oxyGroup-"]');
+                selects2.forEach(function(select){
+                    select.disabled=true;
+                })
+
+                const selects3 = document.querySelectorAll('[id*="nonOxyGroup-"]');
+                selects3.forEach(function(select){
+                    select.disabled=true;
+                })
+
+                const selects4 = document.querySelectorAll('[id*="nonOxyWt-"]');
+                selects4.forEach(function(select){
+                    select.disabled=true;
+                })
+
+                const selects5 = document.querySelectorAll('[id*="nonOxyNum-"]');
+                selects5.forEach(function(select){
+                    select.disabled=true;
+                })
+
+                const deleteTrainButtons=document.querySelectorAll('[id*="deleteTrain-"]');
+                deleteButtons.forEach(deleteButton=>{
+                    deleteButton.disabled=true;
+                })
+
+                document.getElementById('appendTrainButton').disabled=true;
+
+                document.getElementById('buyType').disabled=true;
+                document.getElementById('clsLong').disabled=true;
+
+                document.getElementById("tempSaveButton").style.display = "none";
+                document.getElementById("editButton").style.display = "inline";
+                document.getElementById("submit").style.display = "inline";
+                document.getElementById("submit").disabled=false;
+
+                if(show==='yes'){
+                    alert("客户信息已暂存");
+                }
+            }else{
+                document.getElementById("submit").style.display = "none";
+                document.getElementById("submit").disabled=true;
+                alert(`有些信息未填写或填写错误，请检查: ${emptyItem.slice(1,)}`);
+            }
+
+        }
+   
+        // 修改数据
+        function enableEdit() {
+            // 移除禁用属性，并显示保存按钮
+            // document.getElementById("nameInput").removeAttribute("disabled");
+            const inputItems = document.querySelectorAll('input');
+            inputItems.forEach(function(inputItem){
+                inputItem.disabled=false;
+            })
+
+            const selectItems = document.querySelectorAll('select');
+                selectItems.forEach(function(selectItem){
+                    selectItem.disabled=false;
+                })
+
+            const deleteButtons=document.querySelectorAll('[id*="deleteTrain-"]')
+            deleteButtons.forEach(deleteButton=>{
+                deleteButton.style.display='block';
+            })
+
+            const selects1 = document.querySelectorAll('[id*="itemSelectRadio-"]');
+            selects1.forEach(function(select){
+                select.style.display='block';
+            })
+
+            const selects2 = document.querySelectorAll('[id*="oxyGroup-"]');
+            selects2.forEach(function(select){
+                select.disabled=false;
+            })
+
+            const selects3 = document.querySelectorAll('[id*="nonOxyGroup-"]');
+            selects3.forEach(function(select){
+                select.disabled=false;
+            })
+
+            const selects4 = document.querySelectorAll('[id*="nonOxyWt-"]');
+            selects4.forEach(function(select){
+                select.disabled=false;
+            })
+
+            const selects5 = document.querySelectorAll('[id*="nonOxyNum-"]');
+            selects5.forEach(function(select){
+                select.disabled=false;
+            })
+
+
+            const deleteTrainButtons=document.querySelectorAll('[id*="deleteTrain-"]');
+            deleteButtons.forEach(deleteButton=>{
+                deleteButton.disabled=false;
+            })
+
+            document.getElementById('appendTrainButton').disabled=false;
+
+
+            document.getElementById('buyType').disabled=false;
+            document.getElementById('clsLong').disabled=false;
+
+            document.getElementById("tempSaveButton").style.display = "inline";
+            document.getElementById("editButton").style.display = "none";
+            document.getElementById("submit").style.display = "none";
+        }
+        
 
         function reFillTempSave(dataString){
             
             const data=JSON.parse(dataString);
             const cusName=document.getElementById('nameInput').value = data['cls_tkn']['cus_name'];
-            copyCount=parseInt(localStorage.getItem(cusName+'-copyCount'));
-            deleteCount=parseInt(localStorage.getItem(cusName+'-deleteCount'));
-            blockOrder=parseInt(localStorage.getItem(cusName+'-blockOrder'));
+            copyCount=parseInt(localStorage.getItem(insName+'-'+cusName+'-copyCount'));
+            deleteCount=parseInt(localStorage.getItem(insName+'-'+cusName+'-deleteCount'));
+            blockOrder=parseInt(localStorage.getItem(insName+'-'+cusName+'-blockOrder'));
+
+            // console.log(insName+'-'+cusName+'-blockOrder')
 
 
             document.getElementById('datetime').value = data['cls_tkn']['cls_tkn_date'] + 'T' + data['cls_tkn']['cls_tkn_time'];
             document.getElementById('clsLong').value = data['cls_tkn']['cls_long'];
 
-            const insRadios = document.querySelectorAll('input[name="insName"]');
-            for (const radio of insRadios) {
-                if (radio.value === data['cls_tkn']['ins_name']) {
-                    radio.checked = true;
-                    break;
-                }
+            // const insRadios = document.querySelectorAll('input[name="insName"]');
+            // for (const radio of insRadios) {
+            //     if (radio.value === data['cls_tkn']['ins_name']) {
+            //         radio.checked = true;
+            //         break;
+            //     }
+            // }
+
+            //由radio改为select
+            if(insRole==='admin'){
+                document.getElementById('insSelect').value=data['cls_tkn']['ins_name'];
             }
+            
 
             document.getElementById('basic_cls_comment').value = data['cls_tkn']['basic_cls_comment'];
             document.getElementById('buyType').value = data['cls_tkn']['cls_type'];
@@ -1269,7 +1314,7 @@
                 if (trainRec['nonOxyName']) {
                     const trainItemRadios = document.querySelectorAll('input[name="trainItem-'+i+'"]'); 
                     for (const radio of trainItemRadios) {
-                        console.log(radio.value);
+                        // console.log(radio.value);
                         if (radio.value === train_list['by_action_name'][trainRec['nonOxyName']][1] || radio.value === train_list['by_action_name'][trainRec['nonOxyName']][2]) {
                             radio.checked = true;
                             break;
@@ -1278,7 +1323,7 @@
                 } else if (trainRec['oxyName']) {                    
                     const trainItemRadios = document.querySelectorAll('input[name="trainItem-'+i+'"]'); 
                     for (const radio of trainItemRadios) {
-                        console.log(radio.value);
+                        // console.log(radio.value);
                         if (radio.value === train_list['by_action_name'][trainRec['oxyName']][1] || radio.value === train_list['by_action_name'][trainRec['oxyName']][2]) {
                             radio.checked = true;
                             break;
@@ -1291,32 +1336,28 @@
 
         }
 
-        function ins_radios(ins_list){
-            const radioOptionsContainer = document.getElementById("insNameRadio");
-            let firstRadio=true;
+        function generageInsList(ins_list){
+            const selectContainer = document.getElementById("insSelect");
+      
 
             // 遍历数组，为每个选项生成radio，并添加到容器中
-            ins_list.forEach(function(option) {
+            ins_list.forEach(function(ins_name) {
                 // console.log(option);
                 // 创建一个radio元素
-                const radioInput = document.createElement("input");
-                radioInput.setAttribute("type", "radio");
-                radioInput.setAttribute("name", "insName");
-                radioInput.setAttribute("id", "insName");
-                radioInput.setAttribute("value", option);
-
-                if(firstRadio){
-                    radioInput.checked=true;
-                    firstRadio=false;
-                }
+                const insInput = document.createElement("option");
+                // insInput.setAttribute("name", "insName");
+                insInput.id='select-'+ins_name;
+                insInput.value=ins_name;
+                insInput.text=ins_name;     
+           
                 
                 // 创建一个label元素，并设置其内容为选项文字
                 const label = document.createElement("label");
-                label.innerText = option;
+                label.innerText = ins_name;
                 
                 // 将radio和label元素添加到容器中
-                radioOptionsContainer.appendChild(radioInput);
-                radioOptionsContainer.appendChild(label);
+                selectContainer.appendChild(insInput);
+                selectContainer.appendChild(label);
 
 
 

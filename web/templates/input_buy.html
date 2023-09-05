@@ -7,6 +7,7 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
+    {% include 'show_ins_info.html' %}
     <div id="inputContents">
         <h3>请输入客户编码及姓名（支持模糊查询）：</h3>
         
@@ -93,6 +94,7 @@
         const allError={'dateError':0,'buyNumError':0};
         // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
         document.addEventListener("DOMContentLoaded", function() {   
+            loginCheck();
             const buyCodeBox=document.getElementById('buyCode');
             const historyDiv=document.getElementById('buyHistory');
 
@@ -143,7 +145,8 @@
             .catch(error => console.error('Error:', error));
             // 这里可以通过 JavaScript 来遍历某个文件夹中的文件，生成名字列表
             // var names = ["Alice", "Bob", "Charlie", "David"];    
-
+            
+            hideInsSelectBlockAndGetInsInfo();
             
         });
         
@@ -215,6 +218,8 @@
                             row.addEventListener('click', function(event) {
                             // 阻止事件冒泡，使得点击 history 不会触发 document 的点击事件
                                 event.stopPropagation();
+                                const buyCodeErrBox=document.getElementById('buyCodeErr');
+                                buyCodeErrBox.innerText='';
                                 realPay.value='';
                                 buyNum.value='';
                                 buyDays.value='';
@@ -452,7 +457,7 @@
                     .then(data=>{
                         console.log(data)
                         alert('购课记录增加成功')
-                        window.location.href='./';
+                        window.location.href='./index';
                     })
                     .catch(error=>{
                         console.error('Error:',error.message)
@@ -491,24 +496,32 @@
         }
 
         function fillBuyCode(){
+            // const buyCodeErrBox=document.getElementById('buyCodeErr');
+            // buyCodeErrBox.innerText='';
+            
             const cusName=document.getElementById('cusNameInput').value.trim();
-            const dateInput=document.getElementById('dateInput').value.trim()
+            const dateInput=document.getElementById('dateInput').value.trim();
+            const buyCode=document.getElementById('buyCode').value.trim();
             const dateTxt=dateInput.replace(/-/g,"")
             const ptn=/^MH\d{3}.*\d{8}$/;
-            if (cusName !== "" && dateInput !== "" ) {
-                // var cusIDName=document.getElementById('cusNameInput').value
-                const testBuyCode=cusName+dateTxt
-                console.log(testBuyCode)
-                if(ptn.test(testBuyCode)){
-                    const buyCodeInput=document.getElementById('buyCode');
-                    buyCodeInput.value=testBuyCode;
-                }else{
+            if(buyCode===""){
+                if (cusName !== "" && dateInput !== "" ) {
+                    // var cusIDName=document.getElementById('cusNameInput').value
+                    const testBuyCode=cusName+dateTxt
+                    console.log(testBuyCode)
+                    if(ptn.test(testBuyCode)){
+                        const buyCodeInput=document.getElementById('buyCode');
+                        buyCodeInput.value=testBuyCode;
+                    }else{
+                        // input3.style.display = "none";
+                    }
+                    
+                } else {
                     // input3.style.display = "none";
                 }
-                
-            } else {
-                // input3.style.display = "none";
             }
+            //输入完毕后再检查购课编码中的日期是否正确
+            isValidDate();
         }
 
         function handleInput() {
@@ -636,6 +649,7 @@
   
         function isValidDate(){
             let buyCodeErrBox=document.getElementById('buyCodeErr');
+            buyCodeErrBox.innerText='';
             let buyCode=document.getElementById('buyCode').value;
             let dateStr=buyCode.substring(buyCode.length-8);
             const ptn=/^\d{8}/;
