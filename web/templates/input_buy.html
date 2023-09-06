@@ -422,6 +422,8 @@
         function submit(){
             try{
                 if(submitCheck()==='True'){
+                    const operateTime=new Date();
+                    
                     const inputContents=document.getElementById('inputContents');
                     const inputElements=inputContents.querySelectorAll('input');
                     const dataKey=['客户编码及姓名','收款日期','客户购课编号','购课节数','购课时长（天）','应收金额','实收金额','备注'];
@@ -437,6 +439,7 @@
                     data['购课类型']=document.getElementById('buyType').value;
                     data['收款人']=document.getElementById('cashier').value;
                     data['收入类别']=document.getElementById('incomeType').value;
+                    data['operateTime']=dateToString(operateTime,'dateTime');
 
                     // 非限时课程，时长设置为99999天
                     if(['常规私教课','常规团课'].includes(data['购课类型'])){
@@ -453,11 +456,17 @@
                         },
                         body:JSON.stringify(data)
                     })
-                    .then(response=>response.text())
+                    .then(response=>response.json())
                     .then(data=>{
                         console.log(data)
-                        alert('购课记录增加成功')
-                        window.location.href='./index';
+                        if(data.res==='ok'){
+                            alert('购课记录增加成功')
+                            window.location.href='./index';
+                        }else{
+                            const errMsg=data.msg;
+                            alert('购课未增加成功！！'+errMsg)
+                        }
+                        
                     })
                     .catch(error=>{
                         console.error('Error:',error.message)

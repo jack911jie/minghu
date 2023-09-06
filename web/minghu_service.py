@@ -1417,19 +1417,22 @@ class MinghuService(Flask):
             dat=request.json
             dat['cus_id']=dat['客户编码及姓名'][:7].strip()
             dat['cus_name']=dat['客户编码及姓名'][7:].strip()
+            
             del dat['客户编码及姓名']
-            data_cols=['cus_id','cus_name','收款日期', '客户购课编号','购课类型','购课节数', '购课时长（天）', '应收金额', '实收金额', '收款人', '收入类别', '备注']
+            data_cols=['cus_id','cus_name','收款日期', '客户购课编号','购课类型','购课节数', '购课时长（天）', '应收金额', '实收金额', '收款人', '收入类别', '备注','operateTime']
             sorted_data={key: dat[key] for key in data_cols}
             values=tuple(sorted_data.values())
 
             conn=self.connect_mysql()
             cursor=conn.cursor()
+            
+            conn.begin()
 
             sql=f'''
                 insert into buy_rec_table
-                (cus_id,cus_name,buy_date,buy_code,buy_type,buy_num,buy_cls_days,pay,real_pay,cashier_name,income_type,comment)
+                (cus_id,cus_name,buy_date,buy_code,buy_type,buy_num,buy_cls_days,pay,real_pay,cashier_name,income_type,comment,operate_time)
                 values
-                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             '''
 
             cursor.execute(sql,values)
@@ -1447,18 +1450,20 @@ class MinghuService(Flask):
                     '''
                     cursor.execute(sql,[sorted_data['cus_id'],sorted_data['cus_name'],sorted_data['客户购课编号']])
                     res_txt=f'; {cus_name} 未开课的限时课程记录增加成功'
-                except Exception as e:
-                    res_txt=f'; ERROR: {cus_name} 未开课限时课程记录未增加成功'
-                    print(f'ERROR: {cus_name} 未开课限时课程记录未增加成功')
+                except Exception as start_lmt_error:                    
+                    res_txt=f' \n{cus_name} 未开课限时课程记录未增加成功:\n可能是同一天购课导致的重复购课编码。'
+                    print(f'ERROR: {cus_name} 未开课限时课程记录未增加成功：{start_lmt_error}')
+                    raise FERROR('未开课限时课程记录未增加成功，可能是同一天购课导致的重复购课编码。')
             
             conn.commit()
             cursor.close()
             conn.close()
             
-            return res_txt
+            return jsonify({'res':'ok','msg':res_txt})
         except Exception as e:
-            print('wirte_buy_db() error', e)
-            return 'error'
+            conn.rollback()
+            print('wirte_buy_db() error, rollbacked!', e)
+            return jsonify({'res':'failed','msg':res_txt})
 
 
     def cus_list(self):
@@ -2380,6 +2385,9 @@ class Vividict(dict):
     def __missing__(self, key):
         value = self[key] = type(self)()
         return value
+
+class FERROR(Exception):
+    pass
 
 if __name__ == '__main__':
     app = MinghuService(__name__)
