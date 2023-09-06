@@ -256,6 +256,8 @@ h3{
 .cus-list-trial{
     border:1px solid #515539;
     width: 120px;
+    height: 240px;
+    overflow: auto;
     border-radius:3px;
     font-size: 13px;
     line-height: 30px;

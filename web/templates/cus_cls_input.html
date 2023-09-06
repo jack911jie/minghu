@@ -996,7 +996,7 @@
                       localStorage.removeItem(insName+'-'+dat['cls_tkn']['cus_name']+'-deleteCount');
                       localStorage.removeItem(insName+'-'+dat['cls_tkn']['cus_name']+'-blockOrder');
                       hideProcessingModel();
-                      alert("客户信息提交成功");
+                      alert("上课及训练记录提交成功");
                       window.location.replace('./index');
                   })
                   .catch(error => {
@@ -1005,7 +1005,7 @@
                   });
 
             } else {
-                alert("暂无客户信息，请先暂存信息再提交");
+                alert("无暂存的上课及训练记录，请先暂存信息再提交");
             }
         }
 
@@ -1177,7 +1177,7 @@
                 document.getElementById("submit").disabled=false;
 
                 if(show==='yes'){
-                    alert("客户信息已暂存");
+                    alert("上课及训练记录已暂存");
                 }
             }else{
                 document.getElementById("submit").style.display = "none";
