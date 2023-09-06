@@ -13,7 +13,9 @@
                 <img src="{{ url_for('static', filename='pics/logo.png') }}" alt="minghulogo" style="width:120px;height:auto;opacity: 0.86;">
                 </div>
             <div style="margin:15px;">教练登录</div>
-            <div id="userBox" style="font-size: 10px;">账号<input id="user" style="margin:5px;width:100px;"></div>
+            <div id="userBox" style="font-size: 10px;">手机<input id="user" style="margin:5px;width:100px;" oninput="checkMobileValid()"></div>
+            <div id="mobileValidResult" style="font-size:8px;color:rgb(201, 91, 91)"> </div>
+            
             <div id="pwdBox" style="font-size: 10px;">密码<input id="pwd" type="password" style="margin:5px;width:100px;"></div>
             <div id="loginInfo"></div>
             <hr>
@@ -21,37 +23,69 @@
         </div>
 </div>
     
+    <script src="../static/js/common.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded',function(){
+            if(localStorage.getItem('isLogin')==='true'){
+                window.location.href='/index';
+            }
+        });
+
         function login(){
             const user=document.getElementById('user').value;
             const pwd=document.getElementById('pwd').value;
-            console.log(user,pwd)
-        body:
-            fetch('/deal_login',{
+
+            const isValidMobile=checkMobileValid();
+            if(isValidMobile==='ok' && isValidMobile!=='' && pwd!==''){
+                fetch('/deal_login',{
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                     },
                 body:JSON.stringify({'user':user,'pwd':pwd})                
-            })
-            .then(response=>response.json())
-            .then(data=>{
-                const loginInfo=document.getElementById('loginInfo');
-                console.log(data.res);
-                if(data.res==='ok'){
-                    console.log(data.url)
-                    loginInfo.innerText='';
-                    window.location.href = data.url;
-                }else{
-                    loginInfo.innerText='用户名或密码错误';
+                })
+                .then(response=>response.json())
+                .then(data=>{
+                    const loginInfo=document.getElementById('loginInfo');
+                    if(data.res==='ok'){
+                        if(data.reedit_pwd==='yes'){
+                            alert('需要修改密码')
+                            window.location.href = '/reedit_pwd';
+                        }else{
+                            localStorage.setItem('isLogin','true');
+                            console.log(data.url)
+                            loginInfo.innerText='';
+                            window.location.href = data.url;
+                        }
+                    }else{
+                        loginInfo.innerText='用户名或密码错误';
+                    }
                 }
-                const sessionInsName=data.session_ins_name;
-            }
-            )
-            .catch(error=>{
-                console.log(error);
-            })
+                )
+                .catch(error=>{
+                    console.log(error);
+                });       
+            }else{
+                loginInfo.innerText='用户名或密码错误';
+            }          
+                
+            
         }
+
+        function checkMobileValid(){
+            const mobilePattern = /^1[3-9]\d{9}$/;
+            const mobile=document.getElementById('user').value;
+            const mobileValidResult=document.getElementById('mobileValidResult');
+            mobileValidResult.innerText='';
+            if(mobile && mobile!==''){
+                if(!mobilePattern.test(mobile)){
+                    mobileValidResult.innerText='无效的手机号码'
+                    return 'not ok'
+                }
+            }
+            return 'ok'
+        }
+
         
 
     </script>

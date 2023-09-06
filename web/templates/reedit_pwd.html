@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>铭湖健身工作室教练工作台</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="background-color:#fffbf6">
+<div class="login-container">
+        <div class="login-box">
+            <div id="logo">
+                <img src="{{ url_for('static', filename='pics/logo.png') }}" alt="minghulogo" style="width:120px;height:auto;opacity: 0.86;">
+                </div>
+            <div style="margin:15px;"><span id="user_id">{{session_ins_id}}</span><span  id="user_name">{{session_ins_name}}</span></div>
+            <div style="color:#d26d6d">第一次登录请修改密码</div>
+
+            <div id="pwdBox" style="font-size: 10px;">密码<input id="edited_pwd" type="password" style="margin:10px;width:100px;"></div>
+            <div id="loginInfo"></div>
+            <hr>
+            <button id="editPwd" onclick="editPwd()">修改密码</button>
+        </div>
+</div>
+    
+    <script>
+        function editPwd(){
+            const userId=document.getElementById('user_id').textContent;
+            const editedPwd=document.getElementById('edited_pwd').value;
+            
+            if(editedPwd){
+                data={'user_id':userId,'edited_pwd':editedPwd};
+                console.log(data)
+                fetch('/deal_reedit_pwd',{
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                    },
+                body:JSON.stringify(data)                
+                })
+                .then(response=>response.json())
+                .then(data=>{
+                    const loginInfo=document.getElementById('loginInfo');
+                    console.log(data.res);
+                    if(data.res==='ok'){
+                        alert('密码修改成功，请登录。')
+                        loginInfo.innerText='';
+                        window.location.href = '/' ;
+                    }else{
+                        loginInfo.innerText='密码修改不成功';
+                    }
+                }
+                )
+                .catch(error=>{
+                    console.log(error);
+                });          
+            }else{
+                alert('密码不能为空')
+            }          
+        }
+
+        
+
+    </script>
+</body>

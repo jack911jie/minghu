@@ -1,11 +1,20 @@
 function loginCheck(){
-    const sessionInfo=document.getElementById('sessionInsName').innerText;
-            if(sessionInfo.includes('None')){
-                window.location.href='/';
-            }
+   
+    const sessionInsName=document.getElementById('sessionInsName').innerText;
+    const sessionInsId=document.getElementById('sessionInsId').innerText;
+    const insIsLogin=localStorage.getItem('isLogin')
+    if(insIsLogin!=='true'){
+        window.location.href='/';
+    }
+
+    return 'isLogin'
+    // if(sessionInsName.includes('None')){
+    //     window.location.href='/';
+    // }
 }
 
 function logout(){
+    localStorage.removeItem('isLogin');
     window.location.href='/logout';
 }
 

@@ -20,6 +20,8 @@ import pymysql
 import datetime
 from decimal import Decimal
 import json
+import random
+import hashlib
 
 
 class MinghuService(Flask):
@@ -37,7 +39,10 @@ class MinghuService(Flask):
         self.add_url_rule('/',view_func=self.login)
         
         #菜单页
-        self.add_url_rule('/index',view_func=self.index)        #获取客户信息页面
+        self.add_url_rule('/index',view_func=self.index)     
+        #修改密码页
+        self.add_url_rule('/reedit_pwd',view_func=self.reedit_pwd_page)      
+        #获取客户信息页面
         self.add_url_rule('/cus_infos',view_func=self.cus_infos)
         #欢迎页面
         self.add_url_rule('/welcome',view_func=self.welcome)
@@ -66,6 +71,8 @@ class MinghuService(Flask):
         #功能
         #登出处理
         self.add_url_rule('/logout',view_func=self.logout)
+        #修改密码处理
+        self.add_url_rule('/deal_reedit_pwd',view_func=self.deal_reedit_pwd_db,methods=['GET','POST'])
         #从模板.xlsm获取基本信息，如教练姓名、课程种类等
         self.add_url_rule('/get_template_info', view_func=self.get_template_info_db,methods=['GET','POST'])
         #遍历会员资料文件夹获取所有 客户列表
@@ -127,43 +134,114 @@ class MinghuService(Flask):
         )
 
         return conn
+    
+    def reedit_pwd_page(self):
+        session_name=session.get('user')
+        session_role=session.get('role')
+        session_id=session.get('ins_id')
+        return  render_template('./reedit_pwd.html',session_ins_name=session_name,session_role=session_role,session_ins_id=session_id)
+
+    def deal_reedit_pwd_db(self):
+        print('deal reedit pwd')
+        data=request.json
+
+        user_id=data['user_id']
+        edited_pwd=data['edited_pwd']
+        salt=str(random.randint(10000000,99999999))
+
+        pwd_salt=hashlib.sha256((edited_pwd + salt).encode()).hexdigest()
+        conn=self.connect_mysql()
+        cursor=conn.cursor()
+        try: 
+            #如果没有记录，写入salt值，如有，更新。
+            sql=f'select  ins_id from salt_table where ins_id=%s'
+            cursor.execute(sql,(user_id))
+            res=cursor.fetchone()
+            if res:
+                sql=f'update salt_table set salt=%s where ins_id=%s'
+                cursor.execute(sql,(salt,user_id))
+            else:
+                sql=f'insert into salt_table (ins_id,salt) values (%s,%s)'
+                cursor.execute(sql,(user_id,salt))                
+
+            sql=f'update ins_table set pwd=%s, first_login=0 where ins_id=%s'
+            cursor.execute(sql,(pwd_salt,user_id))
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'ok'})            
+        except Exception as e:
+            print(e)
+            cursor.close()
+            conn.close()
+            return jsonify({'res':'failed'})
+            
+
+            
+
 
     def login(self):
         return render_template('./login.html')
 
     def deal_login(self):
         data=request.json
+        mobile,pwd=data['user'],data['pwd']
         conn=self.connect_mysql()
-        ins_id,pwd=data['user'],data['pwd']
-        if ins_id[:2]=='01':
-            ins_place='MH'
-        else:
-            ins_place='MH'
+        # ins_id,pwd=data['user'],data['pwd']
+        # if ins_id[:2]=='01':
+        #     ins_place='MH'
+        # else:
+        #     ins_place='MH'
 
         
-        if ins_id[2:4]=='00':
-            ins_role='ADM'
-        elif ins_id[2:4]=='01':
-            ins_role='INS'
-        else:
-            ins_role='INS'
+        # if ins_id[2:4]=='00':
+        #     ins_role='ADM'
+        # elif ins_id[2:4]=='01':
+        #     ins_role='INS'
+        # else:
+        #     ins_role='INS'
 
-        ins_id=ins_place+ins_role+ins_id[4:]
+        # ins_id=ins_place+ins_role+ins_id[4:]
+
 
 
         with conn.cursor(cursor=pymysql.cursors.DictCursor) as cursor:
             try:
-                sql='select ins_name,role from ins_table where ins_id=%s and pwd=%s'
-            
+                #通过手机号码读取ID
+                sql='select ins_id,ins_name from ins_table where mobile=%s'
+                cursor.execute(sql,(mobile))
+                res=cursor.fetchone()
+                print(res)
+                if res:
+                    ins_id=str(res['ins_id'])
+                else:
+                    raise ValueError('没有手机号对应的ID')
+
+                #读取salt
+                sql='select ins_id,salt from salt_table where ins_id=%s'
+                
+                cursor.execute(sql,(ins_id))
+                res=cursor.fetchone()
+                print('226',res)
+                if res:
+                    salt=str(res['salt'])
+                    pwd=hashlib.sha256((pwd + salt).encode()).hexdigest()
+                    # hashed_password = hashlib.sha256((password + salt).encode()).hexdigest()
+
+                sql='select ins_name,role,first_login from ins_table where ins_id=%s and pwd=%s'            
                 cursor.execute(sql,(ins_id,pwd))
                 res=cursor.fetchone()
+                print(res)
                 session['user']=res['ins_name']
                 session['role']=res['role']
                 session['ins_id']=ins_id
 
                 # print(res['ins_name'],res['role'])
-
-                return jsonify({'res':'ok','url':url_for('index')})
+                if int(res['first_login'])==1:
+                    return jsonify({'res':'ok','url':url_for('reedit_pwd_page'),'ins_id':ins_id,'reedit_pwd':'yes'})
+                else:
+                    return jsonify({'res':'ok','url':url_for('index'),'ins_id':ins_id,'reedit_pwd':'no'})
             except Exception as e:
                 print(e)
                 return jsonify({'res':'failed'})
