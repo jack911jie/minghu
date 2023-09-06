@@ -303,7 +303,15 @@
 
         function get_book_data(){
             const dateInput=document.getElementById('dateInput').value;
-            const insName=document.querySelector('input[name="insName"]:checked').value;
+            let insNamePage;
+            if(insRole==='admin'){
+                insNamePage=document.querySelector('input[name="insName"]:checked').value;
+            }else if(insRole==='ins'){
+                insNamePage=insName;
+            }else{
+                insNamePage=insName;
+            }
+            
             // console.log(dateInput,insName);
             fetch('/get_book_data',{
                 method:"POST",
