@@ -312,13 +312,13 @@
                 insNamePage=insName;
             }
             
-            // console.log(dateInput,insName);
+            // console.log(dateInput,insNamePage);
             fetch('/get_book_data',{
                 method:"POST",
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body:JSON.stringify({'ins_name':insName,'date':dateInput})
+                body:JSON.stringify({'ins_name':insNamePage,'date':dateInput})
             })
             .then(response=>response.json())
             .then(data=>{
