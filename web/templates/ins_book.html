@@ -279,13 +279,15 @@
                 insIdPage=insId;
             }
             
-            // console.log(dateInput,insName);
+            // console.log(dateInput,insNamePage);
             fetch('/get_book_data',{
                 method:"POST",
                 headers: {
                     'Content-Type': 'application/json'
                 },
+
                 body:JSON.stringify({'ins_id':insIdPage,'date':dateInput})
+
             })
             .then(response=>response.json())
             .then(data=>{
