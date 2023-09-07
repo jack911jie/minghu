@@ -147,9 +147,15 @@
 
         function submitCheck(){
             const cusNameInput=document.getElementById("cusNameInput").value;
+            const mobilePhone=document.getElementById('mobilePhone').value;
+            const mobilePattern = /^1[3-9]\d{9}$/;
             if(!cusNameInput || cusNameInput===''){
                return false; 
             }
+            if(!mobilePattern.test(mobilePhone)){
+                return false;
+            }
+            
             return true;
         }
 
