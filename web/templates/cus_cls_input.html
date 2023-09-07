@@ -226,6 +226,7 @@
         let insName;
         let insId;
         let insRole;
+        let insIdReload;
         // 在页面加载完成后，将返回修改按钮和性别输入框设置为不可见
         document.addEventListener("DOMContentLoaded", function(){
             loginCheck();
@@ -277,7 +278,8 @@
                 .then(data => {
             //将data赋值给块变量cus_list，供后面的handleInput使用
                 console.log('ins list:',data);
-                generageInsList(data['ins_list']);
+                ins_list=data.ins_list;
+                generateInsList(data.ins_list,'insSelect');
                  })
                 .catch(error => console.error('Error:', error));
 
@@ -299,9 +301,9 @@
                  })
                 .catch(error => console.error('Error:', error));
 
-           
+           console.log('dom loaded:',insInfo)
 
-        })
+        });
 
         function handleInput() {
             // 获取输入框中的值
@@ -377,7 +379,7 @@
                                 reFillTempSave(localStorage.getItem(insName+'-'+name+'-cls_recs'));
                                 selectToday('datetime','dateTime'); 
                                 tempSave(show='no');
-                            }                            
+                            }                          
                         }
                         resultList.innerHTML = "";
                     });
@@ -978,7 +980,7 @@
             if (storedClassInfo) {
                 dat = JSON.parse(storedClassInfo);   
                 showProcessingModel();                
-                // console.log(dat)
+                console.log(dat)
                 
                 fetch('/deal_cls', {
                     method: 'POST',
@@ -1009,17 +1011,38 @@
             }
         }
 
+        function insIdToInsName(insId){
+            let insNameFromId;
+            let ctn=true;
+            console.log(ins_list)
+            ins_list.forEach(function(insItem){
+                if(ctn){
+                    if(insItem.includes(insId)){
+                    insNameFromId=insItem.slice(8,);
+                    ctn=false;
+                    }
+                }                
+            })
+            return insNameFromId;
+        }
+
 
         // 保存数据
         function tempSave(show='yes') {   
             // 将客户信息保存到本地
+            const currentTime=new Date();
+            const currentTimeStr=dateToString(currentTime,'dateTime');
+            let ins_id;
             let ins_name;
             if(insRole==='admin'){
-                ins_name=document.getElementById('insSelect').value;
+                ins_id=document.getElementById('insSelect').value;
+                ins_name=insIdToInsName(ins_id);
             }else if(insRole==='ins'){
-                ins_name=insName;
+                ins_id=insId;
+                ins_name=insIdToInsName(ins_id);
             }else{
-                ins_name=insName;
+                ins_id=insId;
+                ins_name=insIdToInsName(ins_id);
             }
 
             cls_tkn = {
@@ -1030,6 +1053,10 @@
                 'cls_long':document.getElementById('clsLong').value,
                 'cls_type':document.getElementById('buyType').value,
                 'ins_name':ins_name,
+                'ins_id':ins_id,
+                //操作者不是教练，是登录的人，是insId，不是ins_id
+                'operator_id':insId,
+                'operate_time':currentTimeStr,
                 // 'ins_name':document.querySelector('input[name="insName"]:checked').value,
                 'basic_cls_comment':document.getElementById('basic_cls_comment').value
             
@@ -1252,6 +1279,7 @@
         function reFillTempSave(dataString){
             
             const data=JSON.parse(dataString);
+            console.log(data);
             const cusName=document.getElementById('nameInput').value = data['cls_tkn']['cus_name'];
             copyCount=parseInt(localStorage.getItem(insName+'-'+cusName+'-copyCount'));
             deleteCount=parseInt(localStorage.getItem(insName+'-'+cusName+'-deleteCount'));
@@ -1271,11 +1299,16 @@
             //     }
             // }
 
+
+                
+
             //由radio改为select
             if(insRole==='admin'){
-                document.getElementById('insSelect').value=data['cls_tkn']['ins_name'];
+                document.getElementById('insSelect').value=data['cls_tkn']['ins_id'];               
+
             }
-            
+            //读取暂存的insid
+            insIdReload=data['cls_tkn']['ins_id'];
 
             document.getElementById('basic_cls_comment').value = data['cls_tkn']['basic_cls_comment'];
             document.getElementById('buyType').value = data['cls_tkn']['cls_type'];
@@ -1335,37 +1368,7 @@
         
 
         }
-
-        function generageInsList(ins_list){
-            const selectContainer = document.getElementById("insSelect");
-      
-
-            // 遍历数组，为每个选项生成radio，并添加到容器中
-            ins_list.forEach(function(ins_name) {
-                // console.log(option);
-                // 创建一个radio元素
-                const insInput = document.createElement("option");
-                // insInput.setAttribute("name", "insName");
-                insInput.id='select-'+ins_name;
-                insInput.value=ins_name;
-                insInput.text=ins_name;     
-           
-                
-                // 创建一个label元素，并设置其内容为选项文字
-                const label = document.createElement("label");
-                label.innerText = ins_name;
-                
-                // 将radio和label元素添加到容器中
-                selectContainer.appendChild(insInput);
-                selectContainer.appendChild(label);
-
-
-
-                
-                // 添加换行，使每个选项占一行
-                // radioOptionsContainer.appendChild(document.createElement("br"));
-            });
-        }
+        
 
        
     </script>

@@ -12,7 +12,7 @@
         <div><h4>铭湖健身客户预约登记</h4></div>
         <div style="display:inline-block"><h5>日期：<input type="date" id="dateInput" name="dateInput" onchange="showWeekDay();get_book_data();"></h5></div> <div id="dayBlock" style="display:inline-block;color:burlywood"></div>
         <br>
-        <div id='insListBlock' style="display:inline-block"><h5 style="display:inline-block">教练姓名：</h5><div style="display:inline-block;font-size:13px;" id='insNameRadio'></div></div>
+        <div id='insListBlock' style="display:inline-block"><h5 style="display:inline-block">教练姓名：</h5><select style="display:inline-block;font-size:13px;" id='insSelect' onchange="get_book_data()"></select></div>
 
         <!-- <div id="cusNameListBox"><select id="cusNameList" onchange="fillInputBox()"></select></div> -->
         <div id="cusNameList" ></div>
@@ -208,7 +208,8 @@
                 .then(data => {
             //将data赋值给块变量cus_list，供后面的handleInput使用
                 console.log('ins list:',data);
-                ins_radios(data['ins_list']);
+                // ins_radios(data['ins_list']);
+                generateInsList(data.ins_list,'insSelect');
                 get_book_data();       
                  })
                 .catch(error => console.error('Error:', error));
@@ -233,40 +234,6 @@
             // console.log(insId,insName,insRole);
         });
 
-
-        function ins_radios(ins_list){
-            const radioOptionsContainer = document.getElementById("insNameRadio");
-            let firstRadio=true;
-
-            // 遍历数组，为每个选项生成radio，并添加到容器中
-            ins_list.forEach(function(option) {
-                // console.log(option);
-                // 创建一个radio元素
-                const radioInput = document.createElement("input");
-                radioInput.setAttribute("type", "radio");
-                radioInput.setAttribute("name", "insName");
-                radioInput.setAttribute("value", option);
-
-                radioInput.addEventListener('change',()=>{
-                    get_book_data();
-                });
-
-                if(firstRadio){
-                    radioInput.checked=true;
-                    firstRadio=false;
-                }
-                
-                // 创建一个label元素，并设置其内容为选项文字
-                const label = document.createElement("label");
-                label.innerText = option;
-                
-                // 将radio和label元素添加到容器中
-                radioOptionsContainer.appendChild(radioInput);
-                radioOptionsContainer.appendChild(label);                
-                // 添加换行，使每个选项占一行
-                // radioOptionsContainer.appendChild(document.createElement("br"));
-            });
-        }
 
         function showWeekDay(){
             const dayOfWeek = new Date(document.getElementById('dateInput').value).getDay();
@@ -303,13 +270,13 @@
 
         function get_book_data(){
             const dateInput=document.getElementById('dateInput').value;
-            let insNamePage;
+            let insIdPage;
             if(insRole==='admin'){
-                insNamePage=document.querySelector('input[name="insName"]:checked').value;
+                insIdPage=document.getElementById('insSelect').value;
             }else if(insRole==='ins'){
-                insNamePage=insName;
+                insIdPage=insId;
             }else{
-                insNamePage=insName;
+                insIdPage=insId;
             }
             
             // console.log(dateInput,insName);
@@ -318,15 +285,16 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body:JSON.stringify({'ins_name':insName,'date':dateInput})
+                body:JSON.stringify({'ins_id':insIdPage,'date':dateInput})
             })
             .then(response=>response.json())
             .then(data=>{
-                // console.log(data.ins_book_data);
+                console.log(data.ins_book_data);
                 insBookData=data.ins_book_data;
-                console.log(insBookData);
+                // console.log(insBookData);
                 if(insBookData){
                     Object.keys(insBookData).forEach(checkBoxId=>{
+                        //读取时间的div
                         if(checkBoxId.match(/\d{4}/)){
                             const checkBox=document.getElementById(checkBoxId);
                             const inputbox=document.getElementById(checkBoxId+'cus_name');
@@ -339,8 +307,23 @@
                                 checkBox.checked=false;
                                 inputbox.disabled=true;
                                 inputbox.value='';
+                            }   
+                        }                                   
+                    });
+                    //同一个客户约课的，读取下一条显示变灰     
+                    Object.keys(insBookData).forEach(checkBoxId=>{
+                            const  nextId=generateNextId(checkBoxId);
+                            if(checkBoxId!=='2130'){
+                                const currentCheckBox=document.getElementById(checkBoxId);
+                                const currentInputBox=document.getElementById(checkBoxId+'cus_name');
+                                const nextCheckBox=document.getElementById(nextId);
+                                const nextInputBox=document.getElementById(nextId+'cus_name');                                
+                                if(currentInputBox.value!=='' && currentInputBox.value===nextInputBox.value){
+                                    nextCheckBox.disabled=true;
+                                    nextInputBox.disabled=true;
+                                }                                
                             }
-                        }
+
                     });
                     document.getElementById('comment').value=insBookData['comment'];
                 }else{
@@ -544,12 +527,10 @@
             data['date']=document.getElementById('dateInput').value;
             if(insRole==='admin'){
                 data['insRole']=insRole;
-                data['insId']='';
-                data['insName']=document.querySelector('input[name="insName"]:checked').value;
+                data['insId']=document.getElementById('insSelect').value;
             }else if(insRole==='ins'){
                 data['insRole']=insRole;
                 data['insId']=insId;
-                data['insName']=insName;
             }
             
             timePrd.forEach(id=>{

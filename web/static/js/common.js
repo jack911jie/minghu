@@ -19,6 +19,7 @@ function logout(){
 }
 
 function hideInsSelectBlockAndGetInsInfo(id){
+    
     const sessionInsId=document.getElementById('sessionInsId').textContent;
     const sessionInsName=document.getElementById('sessionInsName').textContent;
     const sessionRoleBlock=document.getElementById('sessionInsRole');
@@ -41,13 +42,20 @@ function hideInsSelectBlockAndGetInsInfo(id){
             showRole.innerText='教练'
         }
     }
-    
     sessionRoleBlock.style.display='none';
-
-
-
     return ({'sessionInsId':sessionInsId,'sessionInsName':sessionInsName,'sessionInsRole':sessionInsRole})
 }
+
+
+function generateInsList(insData,selectId){
+    const insSelect=document.getElementById(selectId);
+    insData.forEach(ins=>{
+        const option=document.createElement('option')
+        option.value=ins.slice(0,8);
+        option.text=ins.slice(8,);
+        insSelect.appendChild(option);                    
+        });
+    }
 
 function selectToday(id,format){
     const today = new Date();

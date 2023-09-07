@@ -91,6 +91,9 @@
         let selectedName;
         let tmplt_info;
         let buy_list;
+        let insId;
+        let insRole;
+        let insName;
         const allError={'dateError':0,'buyNumError':0};
         // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
         document.addEventListener("DOMContentLoaded", function() {   
@@ -146,7 +149,13 @@
             // 这里可以通过 JavaScript 来遍历某个文件夹中的文件，生成名字列表
             // var names = ["Alice", "Bob", "Charlie", "David"];    
             
-            hideInsSelectBlockAndGetInsInfo();
+            const insInfos=hideInsSelectBlockAndGetInsInfo();
+            insId=insInfos['sessionInsId'];
+            insName=insInfos['sessionInsName'];
+            insRole=insInfos['sessionInsRole'];
+
+
+            console.log(insInfos)
             
         });
         
@@ -379,6 +388,10 @@
                         throw new Error('输入项 '+input.id+' 有空值或未选择'); 
                         }
                     }
+                    const buyCodePattern=/^MH\d{5}.*\d{8}$/
+                    if(!buyCodePattern.test(document.getElementById('buyCode').value)){
+                        throw new Error('购课编码有错误');
+                    }
                     
                     if(document.getElementById('buyDays').value==='0'|| document.getElementById('buyNum').value==='0'
                         || document.getElementById('pay').value==='0' || document.getElementById('realPay').value==='0'
@@ -423,7 +436,7 @@
             try{
                 if(submitCheck()==='True'){
                     const operateTime=new Date();
-                    
+                    console.log(insId,insName,'line429')
                     const inputContents=document.getElementById('inputContents');
                     const inputElements=inputContents.querySelectorAll('input');
                     const dataKey=['客户编码及姓名','收款日期','客户购课编号','购课节数','购课时长（天）','应收金额','实收金额','备注'];
@@ -439,6 +452,7 @@
                     data['购课类型']=document.getElementById('buyType').value;
                     data['收款人']=document.getElementById('cashier').value;
                     data['收入类别']=document.getElementById('incomeType').value;
+                    data['operatorId']=insId;
                     data['operateTime']=dateToString(operateTime,'dateTime');
 
                     // 非限时课程，时长设置为99999天

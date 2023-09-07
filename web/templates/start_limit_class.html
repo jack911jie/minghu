@@ -126,23 +126,13 @@
             //将data赋值给块变量cus_list，供后面的handleInput使用
                 // ins_list=data
                 console.log(data)
-                insSelector(data)
+                generateInsList(data.ins_list,'insSelect');
                 // console.log(cus_list);
                   })
                 .catch(error => console.error('Error:', error));    
             
         });
 
-        function insSelector(data){
-            const insSelect=document.getElementById('insSelect');
-            const insList=data.ins_list;
-            insList.forEach(function(ins){
-                let option=document.createElement('option');
-                option.value=ins;
-                option.innerText=ins;
-                insSelect.appendChild(option)
-            })
-        }
 
         function showClsLongBlock(clsLong){
             const clsLongBlock=document.getElementById('clsLongBlock');
@@ -291,23 +281,24 @@
         function submit(){
             const cusName=document.getElementById('cusNameInput').value;
             const checkValidResult=checkSubmit();
-            let insNameSend;
+            let insIdSend;
             if(checkValidResult==='OK'){
                 document.getElementById('showDealResult').style.display='block';
                 if(insRole==='admin'){
-                    insNameSend=document.getElementById('insSelect').value;
+                    insIdSend=document.getElementById('insSelect').value;
                 }else if(insRole==='ins'){
-                    insNameSend=insName;
+                    insIdSend=insId;
                 }else{
-                    insNameSend=insName;
+                    insIdSend=insId;
                 }
-                console.log(insName,document.getElementById('insSelect').value)
+                console.log(insId,document.getElementById('insSelect').value)
                 data={
                     'cusName':cusName,
                     'buyCode':document.getElementById('selectBuyCodeContainer').value,
                     'startDate':document.getElementById('startDate').value,
                     'endDate':document.getElementById('endDate').value,
-                    'insName':insNameSend
+                    'insId':insIdSend,
+                    'operatorId':insId
                 }
 
                 console.log(data);

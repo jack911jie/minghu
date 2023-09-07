@@ -88,6 +88,7 @@ class MinghuService(Flask):
         # 获取体验课记录
         self.add_url_rule('/get_trial_list', view_func=self.get_trial_list_db,methods=['GET','POST']) 
         #获取客户既往购课记录,并整理合并
+
         self.add_url_rule('/get_cus_buy', view_func=self.get_cus_buy_db,methods=['GET','POST'])
         #获取既往体测记录
         self.add_url_rule('/get_body_history', view_func=self.get_body_history_db,methods=['GET','POST'])
@@ -261,18 +262,13 @@ class MinghuService(Flask):
 
             # print(data)
 
-            #通过教练姓名获取ins_id
-            if data['insRole']=='admin' :
-                sql=f'''
-                    SELECT ins_id FROM ins_table WHERE ins_name=%s ;
-                '''
-                cursor.execute(sql,data['insName'])
-                ins_id=cursor.fetchall()[0][0]
-                data['insId']=ins_id
-            elif  data['insRole']=='ins':
-                #教练角色传入有insId
-                pass
-
+            #通过教练ins_id获取ins_name
+            
+            sql=f'''
+                SELECT ins_id,ins_name FROM ins_table WHERE ins_id=%s ;
+            '''
+            cursor.execute(sql,data['insId'])
+            data['insName']=cursor.fetchone()[1]
             
             col_names=['date','insId','insName','0600','0630','0700','0730','0800','0830','0900','0930','1000','1030','1100','1130','1200','1230','1300','1330','1400','1430','1500','1530','1600','1630','1700','1730','1800','1830','1900','1930','2000','2030','2100','2130','comment']
             sorted_data={key:data[key] for key in col_names}
@@ -280,9 +276,9 @@ class MinghuService(Flask):
             # print(values)
             #查询是否已有数据
             sql=f'''
-                SELECT ins_id,ins_name FROM ins_book_table WHERE ins_name=%s and date=%s;
+                SELECT ins_id,ins_name FROM ins_book_table WHERE ins_id=%s and date=%s;
             '''
-            cursor.execute(sql,[data['insName'],data['date']])
+            cursor.execute(sql,[data['insId'],data['date']])
             res=cursor.fetchall()
             #如已有教练、日期 数据，更新
             if res:
@@ -326,21 +322,20 @@ class MinghuService(Flask):
     def get_book_data_db(self):
         print('from minghu database,get ins book data')
         data=request.json
-
         # print(data)
         conn=self.connect_mysql()
         cursor=conn.cursor()
         sql=f'''
-            SELECT ins_id FROM ins_table WHERE ins_name=%s ;
+            SELECT ins_name FROM ins_table WHERE ins_id=%s ;
         '''
-        cursor.execute(sql,data['ins_name'])
-        res_ins_id=cursor.fetchall()[0][0]
+        cursor.execute(sql,data['ins_id'])
+        res_ins_name=cursor.fetchone()[0]
 
         sql=f'''
-            SELECT * FROM ins_book_table WHERE ins_name=%s and ins_id=%s and date=%s;
+            SELECT * FROM ins_book_table WHERE ins_id=%s and ins_name=%s and date=%s;
         '''
 
-        cursor.execute(sql,[data['ins_name'],res_ins_id,data['date']])
+        cursor.execute(sql,[data['ins_id'],res_ins_name,data['date']])
         # print([data['ins_name'],res_ins_id,data['date']])
         ins_book_data=cursor.fetchall()
         # print(ins_book_data)
@@ -400,6 +395,13 @@ class MinghuService(Flask):
     def write_trial_rec_db(self):
         try:
             data=request.json
+            conn=self.connect_mysql()
+            cursor=conn.cursor()
+            sql=f'select ins_id,ins_name from ins_table where ins_id=%s'
+            cursor.execute(sql,(data['insId']))
+            ins_name_res=cursor.fetchone()
+            data['insName']=ins_name_res[1]
+
             data['trial_cls_long']=1
             data['datetime']=data['dateString']+' '+data['timeString']
             data['finish_yn']='是'
@@ -413,8 +415,7 @@ class MinghuService(Flask):
             values=tuple(sorted_data.values())
             # values = ', '.join(f'"{data[key]}"' if sorted_data[key] is not None else 'NULL' for key in data_cols)
             # print(values)            
-            conn=self.connect_mysql()
-            cursor=conn.cursor()
+            
             sql=f'''
                     insert into trial_cls_table (trial_datetime,trial_cls_long,trial_cus_name,trial_cus_mobile,ins_name,finish_yn,trial_cus_source,comment,deal_yn,deal_date,formal_cus_id_name)
                     values 
@@ -512,20 +513,22 @@ class MinghuService(Flask):
         try:
             data=request.json
             # print(data)
+            conn=self.connect_mysql()
+            cursor=conn.cursor()
+
             data['cus_id']=data['cusName'][:7].strip()
             data['cus_name']=data['cusName'][7:].strip()
             del data['cusName']
-            data_cols=['cus_id','cus_name','buyCode','startDate','endDate','insName']
+            data_cols=['cus_id','cus_name','buyCode','startDate','endDate','insId','operatorId']
             sorted_data={key: data[key] for key in data_cols}
             # print(sorted_data)
             values=tuple(sorted_data.values())
-            conn=self.connect_mysql()
-            cursor=conn.cursor()
+            
             sql=f'''
                 insert into lmt_cls_rec_table
-                (cus_id,cus_name,buy_code,start_date,end_date,ins_name)
+                (cus_id,cus_name,buy_code,start_date,end_date,ins_id,operator_id)
                 values
-                (%s,%s,%s,%s,%s,%s)
+                (%s,%s,%s,%s,%s,%s,%s)
             '''
             cursor.execute(sql,values)
 
@@ -831,6 +834,7 @@ class MinghuService(Flask):
             cls_tkn_rec['cls_datetime']=cls_tkn_rec['cls_tkn_date']+' '+cls_tkn_rec['cls_tkn_time']
             cus_id=cls_tkn_rec['cus_id']
             cus_name=cls_tkn_rec['cus_name']
+            ins_id=cls_tkn_rec['ins_id']
             ins_name=cls_tkn_rec['ins_name']
             basic_cls_comment=cls_tkn_rec['basic_cls_comment']
             train_datetime=cls_tkn_rec['cls_datetime']
@@ -838,16 +842,16 @@ class MinghuService(Flask):
             del cls_tkn_rec['cls_tkn_date']
             del cls_tkn_rec['cls_tkn_time']
 
-            cls_tkn_data_cols=['cus_id','cus_name','cls_datetime','cls_long','cls_type','ins_name','basic_cls_comment']
+            cls_tkn_data_cols=['cus_id','cus_name','cls_datetime','cls_long','cls_type','ins_id','ins_name','basic_cls_comment','operator_id','operate_time']
             sorted_cls_tkn_data={key: cls_tkn_rec[key] for key in cls_tkn_data_cols} 
             values_cls_tkn=tuple(sorted_cls_tkn_data.values())
             
             
             sql_cls_tkn=f'''
                 insert into cls_tkn_rec_table
-                (cus_id,cus_name,cls_datetime,cls_long,cls_type,ins_name,comment) 
+                (cus_id,cus_name,cls_datetime,cls_long,cls_type,ins_id,ins_name,comment,operator_id,operate_time) 
                 values 
-                (%s,%s,%s,%s,%s,%s,%s)
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             '''
             cursor.execute(sql_cls_tkn,values_cls_tkn)
 
@@ -876,14 +880,14 @@ class MinghuService(Flask):
                     muscle=cursor.fetchall()[0][0]
                     non_oxy_row.extend([train_datetime,cus_id,cus_name,muscle,action_name,train_item['nonOxyWt'],
                                             train_item['nonOxyDis'],train_item['nonOxyNum'],train_item['nonOxyGroup'],
-                                            calories,ins_name,train_comment])
+                                            calories,ins_id,ins_name,train_comment])
                 if non_oxy_row:
                     non_oxy_row[-1]=non_oxy_row[-1] if non_oxy_row[-1] else None
                     non_oxy_items.append(non_oxy_row)
 
                 if train_item['oxyName']:                   
                     oxy_row.extend([train_datetime,cus_id,cus_name,train_item['oxyName'],train_item['oxyTime'],
-                                    train_item['oxyGroup'],calories,ins_name,train_comment])
+                                    train_item['oxyGroup'],calories,ins_id,ins_name,train_comment])
                 if oxy_row:
                     oxy_row[-1]=oxy_row[-1] if oxy_row[-1] else None
                     oxy_items.append(oxy_row)
@@ -904,17 +908,17 @@ class MinghuService(Flask):
 
             non_oxy_train_sql=f'''
                 insert into train_nonoxy_rec_table 
-                (train_datetime,cus_id,cus_name,muscle,non_oxy_name,non_oxy_wt,non_oxy_dis,non_oxy_num,non_oxy_group,calories,ins_name,comment) 
+                (train_datetime,cus_id,cus_name,muscle,non_oxy_name,non_oxy_wt,non_oxy_dis,non_oxy_num,non_oxy_group,calories,ins_id,ins_name,comment) 
                 values 
-                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
             '''
             cursor.executemany(non_oxy_train_sql,non_oxy_items)
             
             oxy_train_sql=f'''
                 insert into train_oxy_rec_table 
-                (train_datetime,cus_id,cus_name,oxy_name,oxy_time,oxy_group,calories,ins_name,comment) 
+                (train_datetime,cus_id,cus_name,oxy_name,oxy_time,oxy_group,calories,ins_id,ins_name,comment) 
                 values 
-                (%s,%s,%s,%s,%s,%s,%s,%s,%s);
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
 
             '''
             cursor.executemany(oxy_train_sql,oxy_items)
@@ -1419,7 +1423,7 @@ class MinghuService(Flask):
             dat['cus_name']=dat['客户编码及姓名'][7:].strip()
             
             del dat['客户编码及姓名']
-            data_cols=['cus_id','cus_name','收款日期', '客户购课编号','购课类型','购课节数', '购课时长（天）', '应收金额', '实收金额', '收款人', '收入类别', '备注','operateTime']
+            data_cols=['cus_id','cus_name','收款日期', '客户购课编号','购课类型','购课节数', '购课时长（天）', '应收金额', '实收金额', '收款人', '收入类别', '备注','operatorId','operateTime']
             sorted_data={key: dat[key] for key in data_cols}
             values=tuple(sorted_data.values())
 
@@ -1430,9 +1434,9 @@ class MinghuService(Flask):
 
             sql=f'''
                 insert into buy_rec_table
-                (cus_id,cus_name,buy_date,buy_code,buy_type,buy_num,buy_cls_days,pay,real_pay,cashier_name,income_type,comment,operate_time)
+                (cus_id,cus_name,buy_date,buy_code,buy_type,buy_num,buy_cls_days,pay,real_pay,cashier_name,income_type,comment,operator_id,operate_time)
                 values
-                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             '''
 
             cursor.execute(sql,values)
@@ -1781,10 +1785,10 @@ class MinghuService(Flask):
         result={}
 
         # 获取教练姓名，不包括管理员角色
-        sql="select ins_name from ins_table where role='ins';"
+        sql="select ins_id,ins_name from ins_table where role='ins';"
         cursor.execute(sql)
         ins_res = cursor.fetchall()
-        ins_list=[x[0] for x in ins_res]
+        ins_list=[x[0]+x[1] for x in ins_res]
         result['ins_list']=ins_list
 
         cursor.close()
@@ -2269,7 +2273,7 @@ class MinghuService(Flask):
                 data['cus_name']=dataRequest['cusName']
                 data['nick_name']=data['cus_name'] if len(data['cus_name'])<2 else data['cus_name'][1:]
                 data['birthday_type']='ymd'
-                ins_names=dataRequest['insNames']
+                ins_ids=dataRequest['insIds']
                 # data['birthday_type']='ym'
                 # trial_cus_name=data['trial_cus_name']
                 cus_id_name=data['cus_id']+data['cus_name']
@@ -2284,12 +2288,12 @@ class MinghuService(Flask):
                 ins_id_arr=[]
                 with conn.cursor(cursor=pymysql.cursors.DictCursor) as cursor:
                     try:
-                        for ins_name in ins_names.split(','):
+                        for ins_id in ins_ids.split(','):
                             sql='''
                                 select ins_id,ins_name from ins_table 
-                                where ins_name=%s
+                                where ins_id=%s
                             '''
-                            cursor.execute(sql,(ins_name,))
+                            cursor.execute(sql,(ins_id,))
                             fetch_ins=cursor.fetchone()
                             ins_name_arr.append(fetch_ins['ins_name'])
                             ins_id_arr.append(fetch_ins['ins_id'])

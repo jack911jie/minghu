@@ -15,7 +15,7 @@
     </h4>
     <h4 style="color:brown;">· 关联的体验课客户  <input id='trialCusNameInput' style="width:100px;" oninput="handletrialCusNameInput()" onclick="handletrialCusNameInput()"></h4>            
     <div id="trialResultList"></div>    
-    <div id="insCheckBlock"><h4>主管教练</h4> <div id="insCheckBox"></div></div> 
+    <div id="insCheckBlock" ><h4>主管教练</h4> <div id="insCheckBox"></div></div> 
     <div id="sex">
         <h4>· 性别
         <label>
@@ -110,26 +110,33 @@
 
         function generateInsCheckBoxes(insData){
             const insCheckBox=document.getElementById('insCheckBox');
-            insData.forEach(ins=>{
-                if(ins!=='管理员'){
-                    console.log(ins,insName)
-                    const checkbox=document.createElement('input')
-                    checkbox.type='checkbox';
-                    checkbox.name='check-option';
-                    checkbox.id='checkBox-'+ins;
-                    checkbox.value=ins;
-                    if(ins===insName){
-                        checkbox.checked=true;                
+            let firstCheck=true;
+            insData.forEach(ins=>{ 
+                console.log(ins,insName)
+                const checkbox=document.createElement('input')
+                checkbox.type='checkbox';
+                checkbox.name='check-option';
+                checkbox.id='checkBox-'+ins.slice(0,8);
+                checkbox.value=ins.slice(0,8);   
+                if(insRole==='ins'){
+                    if(insId===ins.slice(0,8)){
+                        checkbox.checked=true;  
+                    }
+                }else if(insRole==='admin'){
+                    if(firstCheck){
+                        checkbox.checked=true;         
+                        firstCheck=false;       
                     }   
-                    const label=document.createElement('label');
-                    label.htmlFor='checkBox-'+ins;
-                    label.appendChild(checkbox);                 
-                    label.appendChild(document.createTextNode(ins));       
-                    insCheckBox.append(label);   
-                }
+                }               
+                
+                const label=document.createElement('label');
+                label.htmlFor='checkBox-'+ins.slice(0,8);
+                label.appendChild(checkbox);                 
+                label.appendChild(document.createTextNode(ins.slice(8,)));       
+                insCheckBox.append(label);                   
             });                
                 
-            }
+        }
 
             //在此页面重写该方法 
             function hideInsSelectBlockAndGetInsInfo(id){
@@ -144,8 +151,10 @@
                 // }
   
                 if(sessionInsRole==='admin'){   
+                    // document.getElementById('insCheckBlock').style.display='block';
                     showRole.innerText='管理员'
                 }else if(sessionInsRole==='ins'){ 
+                    // document.getElementById('insCheckBlock').style.display='none';
                     showRole.innerText='教练'
                 }
                 
@@ -354,17 +363,17 @@
             const mobilePhone=document.getElementById("mobilePhone").value.trim();
             const insNamesChecked=document.querySelectorAll('input[name="check-option"]:checked');
 
-            insNameList=[]
+            insIdsList=[]
             insNamesChecked.forEach(checkedName=>{
-                insNameList.push(checkedName.value);
+                insIdsList.push(checkedName.value);
             })
-            insNamesStr=insNameList.join(',')        
+            insIdsStr=insIdsList.join(',')        
             // console.log(insNamesStr)  
 
             let birthDay=document.getElementById("dateInput").value
             birthDay=birthDay.replace(/-/g,'');
 
-            if(cusName && insNamesStr){
+            if(cusName && insIdsStr){
                 const isMo=isMobile();
                 dvc=isMo?"mobile":"pc";
                 document.getElementById("new_cus_res").innerHTML='<p>正在生成新会员文件……</p>'
@@ -376,7 +385,7 @@
                     'birthDay':birthDay,
                     'cusSource':cusSource,
                     'dvc':dvc,
-                    'insNames':insNamesStr
+                    'insIds':insIdsStr
                 }
                 console.log(data)
                 fetch('/generate_new',{
@@ -393,7 +402,7 @@
                     if(data.res==='ok'){
                         alert(`新增客户 ${data.cus_name} 成功`);
                     }else{
-                        console.log(res.error);
+                        console.log(data.error);
                         alert(`新增客户 ${data.error} 错误`);                        
                     }
                     
