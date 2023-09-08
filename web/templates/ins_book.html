@@ -315,14 +315,17 @@
                     //同一个客户约课的，读取下一条显示变灰     
                     Object.keys(insBookData).forEach(checkBoxId=>{
                             const  nextId=generateNextId(checkBoxId);
-                            if(checkBoxId!=='2130'){
+                            if(checkBoxId.match(/\d{4}/) && checkBoxId!=='2130'){
                                 const currentCheckBox=document.getElementById(checkBoxId);
                                 const currentInputBox=document.getElementById(checkBoxId+'cus_name');
                                 const nextCheckBox=document.getElementById(nextId);
                                 const nextInputBox=document.getElementById(nextId+'cus_name');                                
                                 if(currentInputBox.value!=='' && currentInputBox.value===nextInputBox.value){
+                                    currentInputBox.style.color="#685a3f";
                                     nextCheckBox.disabled=true;
                                     nextInputBox.disabled=true;
+                                }else{
+                                    currentInputBox.style.color="#c1c5c2";
                                 }                                
                             }
 
@@ -435,10 +438,14 @@
                         event.stopPropagation();
                         // 点击后将完整的姓名设置为输入框的值
                         const inputBox=document.getElementById(inputId);
+                        inputBox.style.color="#685a3f";
                         inputBox.value = name;
                         if(inputId.slice(0,4)!=='2130'){
                             const nextId=generateNextId(inputId);
-                            document.getElementById(nextId+'cus_name').value=name
+                            const nextInputBox=document.getElementById(nextId+'cus_name');
+                            nextInputBox.value=name;
+                            nextInputBox.style.color='#c1c5c2';
+
                         }
                         // 点击后隐藏名字列表框
                         resultList.style.display = "none";  
