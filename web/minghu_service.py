@@ -125,13 +125,15 @@ class MinghuService(Flask):
         self.add_url_rule('/deal_login',view_func=self.deal_login,methods=['GET','POST'])
 
     def connect_mysql(self):
+        with open(os.path.join(os.path.dirname(os.path.realpath((__file__))),'config','db.config'),'r',encoding='utf-8') as f:
+            cfg=json.load(f)
         # 连接数据库
         conn = pymysql.connect(
-            host='localhost',         # 数据库主机地址
-            user='minghu',     # 数据库用户名
-            password='minghu88', # 数据库密码
-            database='minghu_trial',  # 要连接的数据库名称
-            port=3306
+            host=cfg['host'],       # 数据库主机地址
+            user=cfg['user'],     # 数据库用户名
+            password=cfg['password'], # 数据库密码
+            database=cfg['database'],  # 要连接的数据库名称
+            port=cfg['port']
         )
 
         return conn

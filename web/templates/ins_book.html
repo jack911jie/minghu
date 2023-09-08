@@ -322,6 +322,7 @@
                                 const nextInputBox=document.getElementById(nextId+'cus_name');                                
                                 if(currentInputBox.value!=='' && currentInputBox.value===nextInputBox.value){
                                     currentInputBox.style.color="#685a3f";
+                                    currentInputBox.style.fontSize='10px';
                                     nextCheckBox.disabled=true;
                                     nextInputBox.disabled=true;
                                 }else{
@@ -439,6 +440,7 @@
                         // 点击后将完整的姓名设置为输入框的值
                         const inputBox=document.getElementById(inputId);
                         inputBox.style.color="#685a3f";
+                        inputBox.style.fontSize='10px';
                         inputBox.value = name;
                         if(inputId.slice(0,4)!=='2130'){
                             const nextId=generateNextId(inputId);
