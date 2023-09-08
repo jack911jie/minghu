@@ -18,6 +18,10 @@ function logout(){
     window.location.href='/logout';
 }
 
+function goIndex(){
+    window.location.href='/index';
+}
+
 function hideInsSelectBlockAndGetInsInfo(id){
     
     const sessionInsId=document.getElementById('sessionInsId').textContent;
