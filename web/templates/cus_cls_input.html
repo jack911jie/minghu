@@ -511,10 +511,11 @@
                         data['l_leg']='-';
                         data['r_leg']='-';
                         data['hip']='-';
-                        bfr='0'
+                        bfr='-'
                         
                     }else{
-                        bfr=(parseFloat(data['bfr'])*100).toFixed(2)
+                        // bfr=(parseFloat(data['bfr'])*100).toFixed(2)
+                        bfr=(data['bfr']*100).toFixed(2);
                     }
                     classTakenInfo.innerHTML=`
                             <h2 style="color:#fafafa;">以往上课及体测情况</h2>
