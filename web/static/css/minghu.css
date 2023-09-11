@@ -37,6 +37,32 @@ h3{
   background: rgb(248, 249, 252);
   color:#5a6ba3
 }
+#index-container{
+  /* width:400px; */
+  display:flex;
+  justify-content: center; 
+  align-items: center;
+  flex-direction:column;
+  background-color:#fffbf6 ;
+}
+.cover-button {
+  display: flex; /* 使用 flex 布局 */
+  justify-content: center; 
+  align-items: center; 
+  margin-bottom: 15px;
+  width: 300px;
+  height: 60px;
+  border-radius: 4px;
+}
+
+.cover-button a {
+  color: rgb(108, 109, 90);
+  font-size: 32px;
+  text-decoration: none;
+  display: block; /* 让链接元素变成块级元素，以充分利用居中样式 */
+  width: 100%; /* 让链接元素充满父元素宽度 */
+  text-align: center; /* 文字水平居中 */
+}
 .login-container{
   display: flex;
   flex-direction: column;
@@ -63,15 +89,7 @@ h3{
   margin-right:10px;
   margin-bottom: 6px;
 }
-.cover-button{
-  display:table-cell;
-  margin-bottom: 15px; 
-  width:300px; 
-  height:60px; 
-  line-height: 60px;
-  text-align: center; 
-  vertical-align: middle;
-}
+
 .cusClsTkn{
   background-color: #959e96;
   color:#f9fffd;

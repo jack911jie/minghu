@@ -3,12 +3,13 @@ function loginCheck(){
     const sessionInsName=document.getElementById('sessionInsName').innerText;
     const sessionInsId=document.getElementById('sessionInsId').innerText;
     const insIsLogin=localStorage.getItem('isLogin')
+    console.log(window.location.href);
     if(insIsLogin!=='true'){
         window.location.href='/';
     }
-    // if(sessionInsName.includes('None')){
-    //     window.location.href='/';
-    // }
+    if(sessionInsName.includes('None')){
+        window.location.href='/';
+    }
 
     return 'isLogin'
    
