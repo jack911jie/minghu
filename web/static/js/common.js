@@ -8,6 +8,7 @@ function loginCheck(){
         window.location.href='/';
     }
     if(sessionInsName.includes('None')){
+        localStorage.removeItem('isLogin');
         window.location.href='/';
     }
 
