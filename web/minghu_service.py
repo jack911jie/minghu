@@ -123,6 +123,8 @@ class MinghuService(Flask):
         self.add_url_rule('/write_ins_book',view_func=self.write_ins_book_db,methods=['GET','POST'])
         #处理login
         self.add_url_rule('/deal_login',view_func=self.deal_login,methods=['GET','POST'])
+        #返回小程序首页显示教练的控制
+        self.add_url_rule('/show_who_ins',view_func=self.show_who_ins,methods=['GET','POST'])
 
     def connect_mysql(self):
         with open(os.path.join(os.path.dirname(os.path.realpath((__file__))),'config','db.config'),'r',encoding='utf-8') as f:
@@ -137,6 +139,13 @@ class MinghuService(Flask):
         )
 
         return conn
+
+    def show_who_ins(self):
+        print('sending show who ins...')
+        config_show_who_fn=os.path.join(os.path.dirname(os.path.realpath(__file__)),'config','show_who.config')
+        with open(config_show_who_fn,'r',encoding='utf-8') as f:
+            config_show_who=json.load(f)
+        return jsonify(config_show_who)
     
     def reedit_pwd_page(self):
         session_name=session.get('user')
