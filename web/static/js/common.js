@@ -6,11 +6,12 @@ function loginCheck(){
     if(insIsLogin!=='true'){
         window.location.href='/';
     }
+    if(sessionInsName.includes('None')){
+        window.location.href='/';
+    }
 
     return 'isLogin'
-    // if(sessionInsName.includes('None')){
-    //     window.location.href='/';
-    // }
+   
 }
 
 function logout(){
