@@ -3,4 +3,4 @@
 *.config
 *.minghu
 *.lnk
-static/ads/
+web/static/ads
