@@ -194,11 +194,14 @@ class MinghuService(Flask):
             conn.close()
             return jsonify({'res':'failed'})
             
-    def get_wxprg_ads_pic(self):        
-        return render_template('./ads.html')
+    def get_wxprg_ads_pic(self):    
+        with open (os.path.join(os.path.dirname(__file__),'config','wxprg_ads.config'),'r',encoding='utf-8') as f:
+            ads_url=json.load(f)
+        
+        return {'ads_urls':ads_url}
 
-    def send_ads_pic(self,fn='baoyue.jpg'):
-        return send_file(os.path.join(self.config_mh['wxprg_ads_pic_dir'],fn),mimetype='image/jpg')
+    def send_ads_pic(self):
+        return render_template('./ads.html')
 
     def login(self):
         return render_template('./login.html')
