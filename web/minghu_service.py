@@ -15,13 +15,14 @@ import xlwings as xw
 import pandas as pd
 pd.set_option('display.unicode.east_asian_width', True) #设置输出右对齐
 # pd.set_option('display.max_columns', None) #显示所有列
-from flask import Flask, request, jsonify,render_template,session,redirect,url_for
+from flask import Flask, request, jsonify,render_template,session,redirect,url_for,send_file
 import pymysql
 import datetime
 from decimal import Decimal
 import json
 import random
 import hashlib
+import base64
 
 
 class MinghuService(Flask):
@@ -125,6 +126,10 @@ class MinghuService(Flask):
         self.add_url_rule('/deal_login',view_func=self.deal_login,methods=['GET','POST'])
         #返回小程序首页显示教练的控制
         self.add_url_rule('/show_who_ins',view_func=self.show_who_ins,methods=['GET','POST'])
+        #返回微信小程序约课页面下方广告图片
+        self.add_url_rule('/get_wxprg_ads_pic',view_func=self.get_wxprg_ads_pic,methods=['GET','POST'])
+        self.add_url_rule('/send_ads_pic',view_func=self.send_ads_pic,methods=['GET','POST'])
+        
 
     def connect_mysql(self):
         with open(os.path.join(os.path.dirname(os.path.realpath((__file__))),'config','db.config'),'r',encoding='utf-8') as f:
@@ -189,9 +194,11 @@ class MinghuService(Flask):
             conn.close()
             return jsonify({'res':'failed'})
             
+    def get_wxprg_ads_pic(self):        
+        return render_template('./ads.html')
 
-            
-
+    def send_ads_pic(self,fn='baoyue.jpg'):
+        return send_file(os.path.join(self.config_mh['wxprg_ads_pic_dir'],fn),mimetype='image/jpg')
 
     def login(self):
         return render_template('./login.html')
