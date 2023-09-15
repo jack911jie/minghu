@@ -108,6 +108,7 @@
         let pageHeightChange = 0;
         let focusInputXy;
         let focusId;
+        let previousIdStatus;
         let nextCheckBoxStatus;
         let insName;
         let insId;
@@ -130,6 +131,8 @@
         function handleInputFocus(id){
             focusId=id;
             const inputBox=document.getElementById(id);
+            const previousId=generatePreviousId(id);
+            // previousIdStatus=[document.getElementById(previousId).checked,document.getElementById(previousId).disabled,document.getElementById(previousId+'cus_name').checked]
             let inputBoxRect=inputBox.getBoundingClientRect();
             // console.log(inputBoxRect.left,inputBoxRect.bottom);
             focusInputXy= {'left':inputBoxRect.left,'bottom':inputBoxRect.bottom,'y':inputBoxRect.y};
@@ -366,6 +369,19 @@
             }
             return newId
         }
+ 
+        function generatePreviousId(inputId){
+            let h=parseInt(inputId.slice(0,2));
+            let m=parseInt(inputId.slice(2,4));
+            let newId;
+            if(m+30===60){
+                newId=(h).toString().padStart(2,'0')+'00';
+            }else{
+                newId=(h-1).toString().padStart(2,'0')+'30';
+            }
+            return newId
+        }
+        
 
         function toggleInputBox(checkBoxId){
             
@@ -383,6 +399,58 @@
                     document.getElementById(nextId+'cus_name').value='';
                 }                
             }
+            //处理前面一个checkbox和inputbox
+            if(checkBoxId!=='0600'){  
+                const previousId=generatePreviousId(checkBoxId);
+                const previousIdCheck=document.getElementById(previousId).checked;
+                const previousIdCheckDisabled=document.getElementById(previousId).disabled;
+                const previousIdInputDisabled=document.getElementById(previousId+'cus_name').disabled;
+                const previousIdInputValue=document.getElementById(previousId+'cus_name').value;
+                
+                if(previousIdInputValue===""){
+                    const earlyTime=['0600','0630','0700','0730','0800','0830']
+                    if(earlyTime.includes(previousId)){
+                        document.getElementById(previousId).checked=false;
+                        document.getElementById(previousId).disabled=false;
+                        document.getElementById(previousId+'cus_name').disabled=true;
+                        document.getElementById(previousId+'cus_name').value=previousIdInputValue;
+                    }else{
+                        document.getElementById(previousId).checked=true;
+                        document.getElementById(previousId).disabled=false;
+                        document.getElementById(previousId+'cus_name').disabled=false;
+                        document.getElementById(previousId+'cus_name').value=previousIdInputValue;
+                    }
+                }else{
+                    document.getElementById(previousId).checked=previousIdCheck;
+                    document.getElementById(previousId).disabled=previousIdCheckDisabled;
+                    document.getElementById(previousId+'cus_name').disabled=previousIdInputDisabled;
+                    document.getElementById(previousId+'cus_name').value=previousIdInputValue;
+                }
+
+            }
+
+            //处理以下几个时段的toggle对后面一个框的影响
+            const earlyTime=['0600','0630','0700','0730','0800']
+            if(earlyTime.includes(checkBoxId)){
+                const nextId=generateNextId(checkBoxId);
+                const nextInputValue=document.getElementById(nextId+'cus_name').value;
+                if(nextInputValue===""){
+                    document.getElementById(nextId).checked=false;
+                    document.getElementById(nextId).disabled=false;
+                    document.getElementById(nextId+'cus_name').disabled=true;
+                }
+            }else{
+                if(checkBoxId!=="2130"){
+                    const nextId=generateNextId(checkBoxId);
+                    const nextInputValue=document.getElementById(nextId+'cus_name').value;
+                    if(nextInputValue===""){
+                        document.getElementById(nextId).checked=true;
+                        document.getElementById(nextId).disabled=false;
+                        document.getElementById(nextId+'cus_name').disabled=false;
+                    }
+                }
+                
+            }
         }
 
         function generateCusList(inputId){            
@@ -397,7 +465,7 @@
             if (UpperSearchTerm === "") {
                 resultList.style.display = "none";
                 resultList.innerHTML = "";
-                console.log(inputId)
+                // console.log(inputId)
                 if(inputId.slice(0,4)!=='2130'){
                     
                     console.log('input  empty')
@@ -408,22 +476,67 @@
                     document.getElementById(nextId+'cus_name').disabled=false;
                     document.getElementById(nextId+'cus_name').value='';
                 }
+                //除0600外，输入框为空，前面的框有效
+                if(inputId.slice(0,4)!=='0600'){ 
+                    const previousId=generatePreviousId(inputId);
+                    // nextCheckBoxStatus=[document.getElementById(nextId).checked,document.getElementById(nextId).disabled]
+                    if(document.getElementById(previousId).checked){
+                        document.getElementById(previousId).checked=true;
+                    }else{
+                        document.getElementById(previousId).checked=false;
+                    }
+                    // document.getElementById(previousId).checked=document.getElementById(previousId).checked;
+                    document.getElementById(previousId).disabled=false;
+                    document.getElementById(previousId+'cus_name').disabled=false;
+                    const previousInputValue=document.getElementById(previousId+'cus_name').value;
+                    // previousInputValue=previousInputValue?previousInputValue:"";
+                    
+                    const earlyTime=['0600','0630','0700','0730','0800','0830']
+                    if(earlyTime.includes(previousId)){
+                        if(previousInputValue===""){
+                            document.getElementById(previousId).checked=false;
+                            document.getElementById(previousId).disabled=false;
+                            document.getElementById(previousId+'cus_name').disabled=true;
+
+                        }
+                    }
+                
+                }
+                
                 return; // 输入框为空，不做处理
             }else{
                 resultList.style.display = "block";
-                console.log(inputId)
-                if(inputId.slice(0,4)!=='2130'){
-                    
-                    console.log(UpperSearchTerm)
+                // console.log(inputId)
+                if(inputId.slice(0,4)!=='2130'){                    
+                    // console.log(UpperSearchTerm)
                     const nextId=generateNextId(inputId);
                     document.getElementById(nextId).checked=true;
                     document.getElementById(nextId).disabled=true;
                     document.getElementById(nextId+'cus_name').disabled=true;
                     document.getElementById(nextId+'cus_name').value=UpperSearchTerm;
+                }
+                //除0600外，前面的框失效
+                if(inputId.slice(0,4)!=='0600'){ 
+                    const previousId=generatePreviousId(inputId);
+                    // nextCheckBoxStatus=[document.getElementById(nextId).checked,document.getElementById(nextId).disabled]
+                    document.getElementById(previousId).checked=true;
+                    document.getElementById(previousId).disabled=true;
+                    document.getElementById(previousId+'cus_name').disabled=true;
+                    let previousInputValue=document.getElementById(previousId+'cus_name').value;
+                    previousInputValue=previousInputValue?previousInputValue:"";
 
+                    const earlyTime=['0600','0630','0700','0730','0800','0830']
+                    if(previousInputValue===""){
+                        if(earlyTime.includes(previousId)){
+                            document.getElementById(previousId).checked=false;
+                        }
+                    }
+                    
                 }
 
             }
+
+            
 
             
             //输入字母模糊查询
