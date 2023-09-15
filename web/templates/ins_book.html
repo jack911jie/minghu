@@ -308,13 +308,53 @@
                                 checkBox.checked=true;
                                 inputbox.disabled=false;
                                 inputbox.value=insBookData[checkBoxId].split('|')[1];
-                            }else{
-                                checkBox.checked=false;
-                                inputbox.disabled=true;
-                                inputbox.value='';
+                            }else{         
+                                // checkBox.checked=true;
+                                // checkBox.disabled=true;
+                                // inputbox.disabled=true;
+                                inputbox.value=insBookData[checkBoxId].split('|')[1];
                             }   
                         }                                   
                     });
+
+                    //后半小时有客户约课的，显示变灰
+                    Object.keys(insBookData).forEach(checkBoxId=>{
+                        if(checkBoxId.match(/\d{4}/)){
+                            const checkBox=document.getElementById(checkBoxId);
+                            const inputBox=document.getElementById(checkBoxId+'cus_name');
+                            if(insBookData[checkBoxId].split('|')[0]==='invalid'){
+                                if(checkBoxId!=='2130'){
+                                    const nextId=generateNextId(checkBoxId);
+                                    const nextInputValue=document.getElementById(nextId+'cus_name').value;
+                                    if(nextInputValue){
+                                        document.getElementById(checkBoxId).checked=false;
+                                        document.getElementById(checkBoxId).disabled=true;
+                                        document.getElementById(checkBoxId+'cus_name').disabled=true;
+                                        document.getElementById(checkBoxId+'cus_name').value='';
+                                    }else{
+                                        const earlyTime=['0600','0630','0700','0730','0800','0830']
+                                        if(earlyTime.includes(checkBoxId)){
+                                            document.getElementById(checkBoxId).checked=false;
+                                            document.getElementById(checkBoxId).disabled=false;
+                                            document.getElementById(checkBoxId+'cus_name').disabled=true;
+                                            document.getElementById(checkBoxId+'cus_name').value='';
+                                        }else{
+                                            document.getElementById(checkBoxId).checked=true;
+                                            document.getElementById(checkBoxId).disabled=false;
+                                            document.getElementById(checkBoxId+'cus_name').disabled=false;
+                                            document.getElementById(checkBoxId+'cus_name').value='';
+                                        }
+
+                                    }
+
+                                }
+                            }
+                        }                        
+                    });
+
+
+
+                    
                     //同一个客户约课的，读取下一条显示变灰     
                     Object.keys(insBookData).forEach(checkBoxId=>{
                             const  nextId=generateNextId(checkBoxId);
