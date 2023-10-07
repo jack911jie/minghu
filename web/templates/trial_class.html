@@ -97,6 +97,7 @@
         
 
         function submit(){
+
             if(submitCheck()){
                 const dateInput=document.getElementById('dateInput').value;
                 const dateString=dateToString(dateInput,'date');
@@ -115,6 +116,7 @@
                     
                 }
 
+                
                 
                 data={
                     'dateString':dateString,
@@ -152,7 +154,7 @@
             if(!cusNameInput || cusNameInput===''){
                return false; 
             }
-            if(!mobilePattern.test(mobilePhone)){
+            if(mobilePhone && !mobilePattern.test(mobilePhone)){
                 return false;
             }
             
