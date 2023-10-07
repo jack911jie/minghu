@@ -695,6 +695,20 @@
             });
             // console.log(showBox.id);
             generateTrainList(nonOxyTrainList,d.id,showBox.id);
+            document.getElementById('nonOxyName-'+order).addEventListener('blur',function(){
+                const inputedTrainItem=document.getElementById('nonOxyName-'+order).value;
+                let trainNameInListCount=0;
+                //失焦时判断input框内的内容是否在给出的训练项目list内，如不在，则清空input框。
+                nonOxyTrainList.forEach(function(trainName){
+                    if(trainName===inputedTrainItem){
+                        trainNameInListCount+=1;
+                    }                
+                });
+                if(trainNameInListCount===0){
+                    document.getElementById('nonOxyName-'+order).value='';
+                }
+            });
+            
         }
             
         function handleOxyNameInput(d){
@@ -734,6 +748,19 @@
             });
             console.log(showBox.id);
             generateTrainList(nonOxyTrainList,d.id,showBox.id);
+            document.getElementById('oxyName-'+order).addEventListener('blur',function(){
+                const inputedTrainItem=document.getElementById('oxyName-'+order).value;
+                let trainNameInListCount=0;
+                //失焦时判断input框内的内容是否在给出的训练项目list内，如不在，则清空input框。
+                nonOxyTrainList.forEach(function(trainName){
+                    if(trainName===inputedTrainItem){
+                        trainNameInListCount+=1;
+                    }                
+                });
+                if(trainNameInListCount===0){
+                    document.getElementById('oxyName-'+order).value='';
+                }
+            });
         }
 
         function handleInputAction(){
@@ -907,6 +934,12 @@
             // });         
         }
 
+
+        function checkTrainName(input_id){
+            const inputedTrainName=document.getElementById(input_id).value;
+
+        }
+
         function generateTrainList(arr,input_id,show_id){
             // console.log(input_id,show_id);
             const searchTerm = document.getElementById(input_id).value.trim();
@@ -942,23 +975,24 @@
                 });
             }else{
                 arr.forEach(function(name) {
-                if (name[2].includes(UpperSearchTerm)) {
-                    // 创建列表项元素，并设置其文本内容为匹配到的结果
-                    const listItem = document.createElement("li");
-                    listItem.innerText = name[2];
+                    if (name[2].includes(UpperSearchTerm)) {
+                        // 创建列表项元素，并设置其文本内容为匹配到的结果
+                        const listItem = document.createElement("li");
+                        listItem.innerText = name[2];
 
-                    // 添加点击事件监听器
-                    listItem.addEventListener("click", function() {
-                        resultList.style.display='block';
-                        // 点击后将完整的姓名设置为输入框的值
-                        document.getElementById(input_id).value = name[2];
-                        // 填写进购课编号
-                        resultList.innerHTML = "";  
-                    });
+                        // 添加点击事件监听器
+                        listItem.addEventListener("click", function() {
+                            resultList.style.display='block';
+                            // 点击后将完整的训练项目名称写入input框的值
+                            document.getElementById(input_id).value = name[2];
+                    
+                            // resultList.innerHTML = "";  
+                            resultList.style.display='none';
+                        });
 
-                    // 将列表项添加到结果列表中
-                    resultList.appendChild(listItem);
-                }
+                        // 将列表项添加到结果列表中
+                        resultList.appendChild(listItem);
+                    }
                 });
             }
         }        
