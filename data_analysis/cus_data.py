@@ -69,12 +69,12 @@ class CusData:
         print('完成')
         return df_out
 
-    def merge_old_this_month_trial_class(self,month,output_dir,new_trial_table='E:\\temp\\minghu\\体验课上课记录.xlsx',old_xlsx='E:\\temp\\minghu\\所有体验课合并.xlsx'):
+    def merge_old_this_month_trial_class(self,year_month,output_dir,new_trial_table='E:\\temp\\minghu\\体验课上课记录.xlsx',old_xlsx='E:\\temp\\minghu\\所有体验课合并.xlsx'):
         df_old=pd.read_excel(old_xlsx,sheet_name='体验课上课记录表')
         df_new=pd.read_excel(new_trial_table,sheet_name='体验课上课记录表')    
-        df_this_month=df_new[df_new['体验课日期'].dt.month==int(month)]
+        df_this_month=df_new[(df_new['体验课日期'].dt.year==int(str(year_month)[:4])) & (df_new['体验课日期'].dt.month==int(str(year_month)[4:]))]
         df_out=pd.concat([df_old,df_this_month])
-        df_out.to_excel(os.path.join(output_dir,'所有体验课合并-'+str(month)+'月.xlsx'),index=False)
+        df_out.to_excel(os.path.join(output_dir,'所有体验课合并-'+str(year_month)[4:].zfill(2)+'月.xlsx'),index=False)
        
         print('完成')
         return df_out
