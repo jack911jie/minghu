@@ -229,13 +229,20 @@ class MinghuService(Flask):
 
 
         with conn.cursor(cursor=pymysql.cursors.DictCursor) as cursor:
+<<<<<<< HEAD
             print('matching login information...')
+=======
+>>>>>>> wx_prg
             try:
                 #通过手机号码读取ID
                 sql='select ins_id,ins_name from ins_table where mobile=%s'
                 cursor.execute(sql,(mobile))
                 res=cursor.fetchone()
+<<<<<<< HEAD
                 # print(res)
+=======
+                print(res)
+>>>>>>> wx_prg
                 if res:
                     ins_id=str(res['ins_id'])
                 else:
@@ -246,7 +253,11 @@ class MinghuService(Flask):
                 
                 cursor.execute(sql,(ins_id))
                 res=cursor.fetchone()
+<<<<<<< HEAD
                 # print('226',res)
+=======
+                print('226',res)
+>>>>>>> wx_prg
                 if res:
                     salt=str(res['salt'])
                     pwd=hashlib.sha256((pwd + salt).encode()).hexdigest()
@@ -684,7 +695,11 @@ class MinghuService(Flask):
             conn=self.connect_mysql()
             cursor=conn.cursor()
             cus_id,cus_name=data['cusName'][:7],data['cusName'][7:]
+<<<<<<< HEAD
             sql=f"select sex,birthday from cus_info_table where cus_id='{cus_id}' and cus_name='{cus_name}'"
+=======
+            sql=f"select sex,birthday from basic_info_table where cus_id='{cus_id}' and cus_name='{cus_name}'"
+>>>>>>> wx_prg
             cursor.execute(sql)
             res=cursor.fetchall()
             sex=res[0][0]
@@ -1778,7 +1793,11 @@ class MinghuService(Flask):
         result={}
 
         # 获取收款人
+<<<<<<< HEAD
         sql="select concat(cus_id,cus_name) from cus_info_table"
+=======
+        sql="select concat(cus_id,cus_name) from basic_info_table"
+>>>>>>> wx_prg
         cursor.execute(sql)
         cus_list_res = cursor.fetchall()
         cus_list=[x[0] for x in cus_list_res]
@@ -2273,8 +2292,13 @@ class MinghuService(Flask):
         with self.app_lock:
             conn=self.connect_mysql()
             cursor=conn.cursor()
+<<<<<<< HEAD
             # sql=f"select max(id) from cus_info_table"
             sql=f"SELECT max(cast(substring(cus_id,3) as UNSIGNED)) FROM cus_info_table;"
+=======
+            # sql=f"select max(id) from basic_info_table"
+            sql=f"SELECT max(cast(substring(cus_id,3) as UNSIGNED)) FROM basic_info_table;"
+>>>>>>> wx_prg
             cursor.execute(sql)
             max_id=cursor.fetchall()[0][0]
             
@@ -2336,7 +2360,11 @@ class MinghuService(Flask):
                     cursor=conn.cursor()
                     #新增会员
                     sql=f'''
+<<<<<<< HEAD
                             insert into  cus_info_table (cus_id,cus_name,nick_name,sex,mobile_phone,birthday,birthday_type,source) 
+=======
+                            insert into  basic_info_table (cus_id,cus_name,nick_name,sex,mobile_phone,birthday,birthday_type,source) 
+>>>>>>> wx_prg
                             values
                             (%s,%s,%s,%s,%s,%s,%s,%s)
                         '''

@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>铭湖健身客户预约登记</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body>
+    {% include 'show_ins_info.html' %}
+    <div>
+        <div><h4>铭湖健身客户预约登记</h4></div>
+        <div style="display:inline-block"><h5>日期：<input type="date" id="dateInput" name="dateInput" onchange="showWeekDay();get_book_data();"></h5></div> <div id="dayBlock" style="display:inline-block;color:burlywood"></div>
+        <br>
+        <div id='insListBlock' style="display:inline-block"><h5 style="display:inline-block">教练姓名：</h5><select style="display:inline-block;font-size:13px;" id='insSelect' onchange="get_book_data()"></select></div>
+
+        <!-- <div id="cusNameListBox"><select id="cusNameList" onchange="fillInputBox()"></select></div> -->
+        <div id="cusNameList" ></div>
+        
+
+        <div style="margin-top:16px;">
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="0600" value="0600" onchange="toggleInputBox(this.id)">06:00 <input id="0600cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="0630" onchange="toggleInputBox(this.id)" value="0630">06:30 <input id="0630cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>    
+        <div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="0700" value="0700" onchange="toggleInputBox(this.id)">07:00 <input id="0700cus_name" class="book_cusname_list"  oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)" ></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="0730" value="0730" onchange="toggleInputBox(this.id)">07:30 <input id="0730cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>
+        <hr>
+        <div style="margin-top:16px;">
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="0800" value="0800" onchange="toggleInputBox(this.id)">08:00 <input id="0800cus_name" class="book_cusname_list" oninput="generateCusList(this.id)"  onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="0830" value="0830" onchange="toggleInputBox(this.id)">08:30 <input id="0830cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>    
+        <div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="0900" value="0900" onchange="toggleInputBox(this.id)" checked>09:00 <input id="0900cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="0930" value="0930" onchange="toggleInputBox(this.id)" checked>09:30 <input id="0930cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>
+        <hr>
+        <div style="margin-top:16px;">
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1000" value="1000" onchange="toggleInputBox(this.id)" checked>10:00 <input id="1000cus_name" class="book_cusname_list"  oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1030" value="1030" onchange="toggleInputBox(this.id)" checked>10:30 <input id="1030cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>    
+        <div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1100" value="1100" onchange="toggleInputBox(this.id)" checked>11:00 <input id="1100cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1130" value="1130" onchange="toggleInputBox(this.id)" checked>11:30 <input id="1130cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>
+        <hr>
+        <div style="margin-top:16px;">
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1200" value="1200" onchange="toggleInputBox(this.id)" checked>12:00 <input id="1200cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)" ></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1230" value="1230" onchange="toggleInputBox(this.id)" checked>12:30 <input id="1230cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>    
+        <div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1300" value="1300" onchange="toggleInputBox(this.id)" checked>13:00 <input id="1300cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1330" value="1330" onchange="toggleInputBox(this.id)" checked>13:30 <input id="1330cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>
+        <hr>
+
+        <div style="margin-top:16px;">
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1400" value="1400" onchange="toggleInputBox(this.id)" checked>14:00 <input id="1400cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)" ></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1430" value="1430" onchange="toggleInputBox(this.id)" checked>14:30 <input id="1430cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>    
+        <div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1500" value="1500" onchange="toggleInputBox(this.id)" checked>15:00 <input id="1500cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1530" value="1530" onchange="toggleInputBox(this.id)" checked>15:30 <input id="1530cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>
+        <hr>
+        <div style="margin-top:16px;">
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1600" value="1600" onchange="toggleInputBox(this.id)" checked>16:00 <input id="1600cus_name" class="book_cusname_list"  oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1630" value="1630" onchange="toggleInputBox(this.id)" checked>16:30 <input id="1630cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>    
+        <div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1700" value="1700" onchange="toggleInputBox(this.id)" checked>17:00 <input id="1700cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1730" value="1730" onchange="toggleInputBox(this.id)" checked>17:30 <input id="1730cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>
+        <hr>
+        <div style="margin-top:16px;">
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1800" value="1800" onchange="toggleInputBox(this.id)" checked>18:00 <input id="1800cus_name" class="book_cusname_list"  oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1830" value="1830" onchange="toggleInputBox(this.id)" checked>18:30 <input id="1830cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>    
+        <div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1900" value="1900" onchange="toggleInputBox(this.id)" checked>19:00 <input id="1900cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="1930" value="1930" onchange="toggleInputBox(this.id)" checked>19:30 <input id="1930cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>
+        <hr>
+        <div style="margin-top:16px;">
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="2000" value="2000" onchange="toggleInputBox(this.id)" checked>20:00 <input id="2000cus_name" class="book_cusname_list" oninput="generateCusList(this.id)"  onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="2030" value="2030" onchange="toggleInputBox(this.id)" checked>20:30 <input id="2030cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>    
+        <div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="2100" value="2100" onchange="toggleInputBox(this.id)" checked>21:00 <input id="2100cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+            <div style="display:inline-block;font-size:14px;"><input type="checkbox" style="vertical-align:middle;" id="2130" value="2130" onchange="toggleInputBox(this.id)">21:30 <input id="2130cus_name" class="book_cusname_list" oninput="generateCusList(this.id)" onfocus="handleInputFocus(this.id)"></div>
+        </div>
+        <div>备注<div><input id="comment" type="text"></div></div>
+        <hr>
+        <div><button id="submit" onclick="submit();">修改约课</button></div>
+        <!-- <button onclick="get_book_data()">get book data</button>
+        <button onclick="setDefaultCheckBoxAndInputBox()">set default</button> -->
+        
+    </div>
+
+    <script src="../static/js/moment.min.js"></script>
+    <script src="../static/js/common.js"></script>
+    <script> 
+        let cus_list;
+        let selectedName;
+        let tmplt_info;
+        let inputIdPage;
+        let pageHeightChange = 0;
+        let focusInputXy;
+        let focusId;
+        let previousIdStatus;
+        let nextCheckBoxStatus;
+        let insName;
+        let insId;
+        let insRole;
+
+        const timePrd=[
+            '0600','0630','0700','0730',
+            '0800','0830','0900','0930',
+            '1000','1030','1100','1130',
+            '1200','1230','1300','1330',
+            '1400','1430','1500','1530',
+            '1600','1630','1700','1730',
+            '1800','1830','1900','1930',
+            '2000','2030','2100','2130'];        
+
+        function test(id){
+            cosole.log(id)
+        }
+
+        function handleInputFocus(id){
+            focusId=id;
+            const inputBox=document.getElementById(id);
+            const previousId=generatePreviousId(id);
+            // previousIdStatus=[document.getElementById(previousId).checked,document.getElementById(previousId).disabled,document.getElementById(previousId+'cus_name').checked]
+            let inputBoxRect=inputBox.getBoundingClientRect();
+            // console.log(inputBoxRect.left,inputBoxRect.bottom);
+            focusInputXy= {'left':inputBoxRect.left,'bottom':inputBoxRect.bottom,'y':inputBoxRect.y};
+        }
+
+        // Listen for scroll event,让fixed的cusNameList跟着滚动走。
+        window.addEventListener('scroll', () => {           
+            try{
+                const inputXy=document.getElementById(focusId).getBoundingClientRect();      
+                const cusList=document.getElementById('cusNameList');
+                if(parseInt(focusId.substring(0,2))>=20){
+                    cusList.style.top = inputXy.bottom-130 + "px";
+                }else{
+                    cusList.style.top = inputXy.bottom-20 + "px";
+                }
+            }catch{
+                error=>{
+                    console.log('inputXy not defined')
+                }
+            }
+        });
+        
+        // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
+        document.addEventListener("DOMContentLoaded", function() {   
+            loginCheck();
+            insInfo=hideInsSelectBlockAndGetInsInfo('insListBlock');
+            insName=insInfo['sessionInsName'];
+            insId=insInfo['sessionInsId'];
+            insRole=insInfo['sessionInsRole'];
+
+            selectToday(id='dateInput',format='date');
+            showWeekDay();
+            
+
+            //侦听页面事件，点击时页面空白处隐藏cusNameList，在需要点击的部分event.stopPropagation();即可
+            const cusNameList=document.getElementById('cusNameList');
+            document.addEventListener('click',()=>{
+                cusNameList.style.display='none';
+            });
+
+
+            fetch('/get_template_info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                tmplt_info=data;         
+                  })
+                .catch(error => console.error('Error:', error));
+
+            fetch('/get_cus_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                    // console.log(data);
+                    cus_list=data;     
+                 })
+                .catch(error => console.error('Error:', error));
+
+                fetch('/get_ins_list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+                })
+                .then(response => response.json())
+                .then(data => {
+            //将data赋值给块变量cus_list，供后面的handleInput使用
+                console.log('ins list:',data);
+                // ins_radios(data['ins_list']);
+                generateInsList(data.ins_list,'insSelect');
+                get_book_data();       
+                 })
+                .catch(error => console.error('Error:', error));
+
+            timePrd.forEach((checkBoxId)=>{
+                toggleInputBox(checkBoxId);
+            });     
+
+            // //如果是管理员，隐藏教练的选择
+            // const sessionInsRole=document.getElementById('sessionInsRole').textContent;
+            // insRole=sessionInsRole;
+            // if(sessionInsRole==='admin'){
+            //     const insListBlock=document.getElementById('insListBlock');
+            //     insListBlock.style.display='block';
+            // }else if(sessionInsRole==='ins'){
+            //     const insListBlock=document.getElementById('insListBlock');
+            //     insListBlock.style.display='none';
+            //     insName=document.getElementById('sessionInsName').textContent;
+            //     insId=document.getElementById('sessionInsId').textContent;
+            // }
+
+            // console.log(insId,insName,insRole);
+        });
+
+
+        function showWeekDay(){
+            const dayOfWeek = new Date(document.getElementById('dateInput').value).getDay();
+            // 将星期几的数值转换为中文
+            let weekDayChinese = '';
+            switch (dayOfWeek) {
+            case 0:
+                weekDayChinese = '星期日';
+                break;
+            case 1:
+                weekDayChinese = '星期一';
+                break;
+            case 2:
+                weekDayChinese = '星期二';
+                break;
+            case 3:
+                weekDayChinese = '星期三';
+                break;
+            case 4:
+                weekDayChinese = '星期四';
+                break;
+            case 5:
+                weekDayChinese = '星期五';
+                break;
+            case 6:
+                weekDayChinese = '星期六';
+                break;
+            default:
+                weekDayChinese = '未知';
+            }
+            dateDisplay=`${weekDayChinese}`; 
+            dayBlock.innerText=dateDisplay;
+        }
+
+        function get_book_data(){
+            const dateInput=document.getElementById('dateInput').value;
+            let insIdPage;
+            if(insRole==='admin'){
+                insIdPage=document.getElementById('insSelect').value;
+            }else if(insRole==='ins'){
+                insIdPage=insId;
+            }else{
+                insIdPage=insId;
+            }
+            
+            // console.log(dateInput,insNamePage);
+            fetch('/get_book_data',{
+                method:"POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+
+                body:JSON.stringify({'ins_id':insIdPage,'date':dateInput})
+
+            })
+            .then(response=>response.json())
+            .then(data=>{
+                console.log(data.ins_book_data);
+                insBookData=data.ins_book_data;
+                // console.log(insBookData);
+                if(insBookData){
+                    Object.keys(insBookData).forEach(checkBoxId=>{
+                        //读取时间的div
+                        if(checkBoxId.match(/\d{4}/)){
+                            const checkBox=document.getElementById(checkBoxId);
+                            const inputbox=document.getElementById(checkBoxId+'cus_name');
+                            checkBox.disabled=false;
+                            if(insBookData[checkBoxId].split('|')[0]==='valid'){
+                                checkBox.checked=true;
+                                inputbox.disabled=false;
+                                inputbox.value=insBookData[checkBoxId].split('|')[1];
+                            }else{         
+                                // checkBox.checked=true;
+                                // checkBox.disabled=true;
+                                // inputbox.disabled=true;
+                                inputbox.value=insBookData[checkBoxId].split('|')[1];
+                            }   
+                        }                                   
+                    });
+
+                    //后半小时有客户约课的，显示变灰
+                    Object.keys(insBookData).forEach(checkBoxId=>{
+                        if(checkBoxId.match(/\d{4}/)){
+                            const checkBox=document.getElementById(checkBoxId);
+                            const inputBox=document.getElementById(checkBoxId+'cus_name');
+                            if(insBookData[checkBoxId].split('|')[0]==='invalid'){
+                                if(checkBoxId!=='2130'){
+                                    const nextId=generateNextId(checkBoxId);
+                                    const nextInputValue=document.getElementById(nextId+'cus_name').value;
+                                    if(nextInputValue){
+                                        document.getElementById(checkBoxId).checked=false;
+                                        document.getElementById(checkBoxId).disabled=true;
+                                        document.getElementById(checkBoxId+'cus_name').disabled=true;
+                                        document.getElementById(checkBoxId+'cus_name').value='';
+                                    }else{
+                                        const earlyTime=['0600','0630','0700','0730','0800','0830']
+                                        if(earlyTime.includes(checkBoxId)){
+                                            document.getElementById(checkBoxId).checked=false;
+                                            document.getElementById(checkBoxId).disabled=false;
+                                            document.getElementById(checkBoxId+'cus_name').disabled=true;
+                                            document.getElementById(checkBoxId+'cus_name').value='';
+                                        }else{
+                                            document.getElementById(checkBoxId).checked=true;
+                                            document.getElementById(checkBoxId).disabled=false;
+                                            document.getElementById(checkBoxId+'cus_name').disabled=false;
+                                            document.getElementById(checkBoxId+'cus_name').value='';
+                                        }
+
+                                    }
+
+                                }
+                            }
+                        }                        
+                    });
+
+
+
+                    
+                    //同一个客户约课的，读取下一条显示变灰     
+                    Object.keys(insBookData).forEach(checkBoxId=>{
+                            const  nextId=generateNextId(checkBoxId);
+                            if(checkBoxId.match(/\d{4}/) && checkBoxId!=='2130'){
+                                const currentCheckBox=document.getElementById(checkBoxId);
+                                const currentInputBox=document.getElementById(checkBoxId+'cus_name');
+                                const nextCheckBox=document.getElementById(nextId);
+                                const nextInputBox=document.getElementById(nextId+'cus_name');                                
+                                if(currentInputBox.value!=='' && currentInputBox.value===nextInputBox.value){
+                                    currentInputBox.style.color="#685a3f";
+                                    currentInputBox.style.fontSize='10px';
+                                    nextCheckBox.disabled=true;
+                                    nextInputBox.disabled=true;
+                                }else{
+                                    currentInputBox.style.color="#c1c5c2";
+                                }                                
+                            }
+
+                    });
+                    document.getElementById('comment').value=insBookData['comment'];
+                }else{
+                    setDefaultCheckBoxAndInputBox();
+                }
+                // console.log('insbookdata:',insBookData)
+                const today=new Date();
+                const selectedDay=new Date(dateInput);
+                today.setHours(0, 0, 0, 0);
+                selectedDay.setHours(0, 0, 0, 0);
+                if(today-selectedDay>0){
+                    setAllInputDisable();
+                }else{
+                    if(!insBookData){
+                        setDefaultCheckBoxAndInputBox();
+                    }   
+                    document.getElementById('submit').disabled=false;   
+                    document.getElementById('comment').disabled=false;   
+                }
+            })
+            .catch(error=>{
+                console.log('get book data error:',error);
+            });
+        }
+
+        function generateNextId(inputId){
+            let h=parseInt(inputId.slice(0,2));
+            let m=parseInt(inputId.slice(2,4));
+            let newId;
+            if(m+30===60){
+                newId=(h+1).toString().padStart(2,'0')+'00';
+            }else{
+                newId=(h).toString().padStart(2,'0')+'30';
+            }
+            return newId
+        }
+ 
+        function generatePreviousId(inputId){
+            let h=parseInt(inputId.slice(0,2));
+            let m=parseInt(inputId.slice(2,4));
+            let newId;
+            if(m+30===60){
+                newId=(h).toString().padStart(2,'0')+'00';
+            }else{
+                newId=(h-1).toString().padStart(2,'0')+'30';
+            }
+            return newId
+        }
+        
+
+        function toggleInputBox(checkBoxId){
+            
+            const inputBox=document.getElementById(checkBoxId+'cus_name');
+            // console.log(inputBox.id, document.getElementById(checkBoxId).checked)
+            inputBox.disabled = !document.getElementById(checkBoxId).checked;
+            const originInputValue=inputBox.value;
+            inputBox.value='';
+            if(checkBoxId!=='2130'){  
+                const nextId=generateNextId(checkBoxId);
+                if(document.getElementById(nextId+'cus_name').value){
+                    if(document.getElementById(nextId+'cus_name').value===originInputValue){
+                        document.getElementById(nextId).checked=true;
+                        document.getElementById(nextId).disabled=false;
+                        document.getElementById(nextId+'cus_name').disabled=false;
+                        document.getElementById(nextId+'cus_name').value='';
+                    }else{
+                        document.getElementById(nextId).checked=true;
+                        document.getElementById(nextId).disabled=false;
+                        document.getElementById(nextId+'cus_name').disabled=false;
+                        document.getElementById(nextId+'cus_name').value='';
+                    }
+
+                    if(nextId!=='2130'){
+                        const nextNextId=generateNextId(nextId);
+                        if(document.getElementById(nextNextId+'cus_name').value){
+                            document.getElementById(nextId).checked=false;
+                            document.getElementById(nextId).disabled=true;
+                            document.getElementById(nextId+'cus_name').disabled=true;
+                            // document.getElementById(nextId+'cus_name').value='';
+                        }
+                    }
+                }else{
+                    
+                    if(nextId!=='2130'){
+                        const nextNextId=generateNextId(nextId);
+                        if(document.getElementById(nextNextId+'cus_name').value){
+                            document.getElementById(nextId).checked=false;
+                            document.getElementById(nextId).disabled=true;
+                            document.getElementById(nextId+'cus_name').disabled=true;
+                            // document.getElementById(nextId+'cus_name').value='';
+                        }
+
+                    }
+                    
+                }
+
+
+
+                // if(document.getElementById(nextId+'cus_name').value===originInputValue && document.getElementById(nextId+'cus_name').value!==''){
+                //     document.getElementById(nextId).checked=true;
+                //     document.getElementById(nextId).disabled=false;
+                //     document.getElementById(nextId+'cus_name').disabled=false;
+                //     document.getElementById(nextId+'cus_name').value='';
+                // }else{
+                //     document.getElementById(nextId).checked=true;
+                //     document.getElementById(nextId).disabled=false;
+                //     document.getElementById(nextId+'cus_name').disabled=false;
+                //     document.getElementById(nextId+'cus_name').value='';
+                // }                
+            }
+            //处理前面一个checkbox和inputbox
+            if(checkBoxId!=='0600'){  
+                const previousId=generatePreviousId(checkBoxId);
+                const previousIdCheck=document.getElementById(previousId).checked;
+                const previousIdCheckDisabled=document.getElementById(previousId).disabled;
+                const previousIdInputDisabled=document.getElementById(previousId+'cus_name').disabled;
+                const previousIdInputValue=document.getElementById(previousId+'cus_name').value;
+                
+                if(previousIdInputValue===""){
+                    const earlyTime=['0600','0630','0700','0730','0800','0830']
+                    if(earlyTime.includes(previousId)){
+                        document.getElementById(previousId).checked=false;
+                        document.getElementById(previousId).disabled=false;
+                        document.getElementById(previousId+'cus_name').disabled=true;
+                        document.getElementById(previousId+'cus_name').value=previousIdInputValue;
+                    }else{
+                        document.getElementById(previousId).checked=true;
+                        document.getElementById(previousId).disabled=false;
+                        document.getElementById(previousId+'cus_name').disabled=false;
+                        document.getElementById(previousId+'cus_name').value=previousIdInputValue;
+                    }
+                }else{
+                    document.getElementById(previousId).checked=previousIdCheck;
+                    document.getElementById(previousId).disabled=previousIdCheckDisabled;
+                    document.getElementById(previousId+'cus_name').disabled=previousIdInputDisabled;
+                    document.getElementById(previousId+'cus_name').value=previousIdInputValue;
+                }
+
+            }
+
+            //处理以下几个时段的toggle对后面一个框的影响
+            const earlyTime=['0600','0630','0700','0730','0800']
+            if(earlyTime.includes(checkBoxId)){
+                const nextId=generateNextId(checkBoxId);
+                const nextInputValue=document.getElementById(nextId+'cus_name').value;
+                if(nextInputValue===""){
+                    document.getElementById(nextId).checked=false;
+                    document.getElementById(nextId).disabled=false;
+                    document.getElementById(nextId+'cus_name').disabled=true;
+                }
+                if(nextId!=='2130'){
+                    const nextNextId=generateNextId(nextId);
+                    if(document.getElementById(nextNextId+'cus_name').value){
+                        document.getElementById(nextId).checked=false;
+                        document.getElementById(nextId).disabled=true;
+                        document.getElementById(nextId+'cus_name').disabled=true;
+                        // document.getElementById(nextId+'cus_name').value='';
+                    }
+                }
+                
+            }else{
+                if(checkBoxId!=="2130"){
+                    const nextId=generateNextId(checkBoxId);
+                    const nextInputValue=document.getElementById(nextId+'cus_name').value;
+                    if(nextId!=='2130'){
+                        const nextNextId=generateNextId(nextId);
+                        if(document.getElementById(nextNextId+'cus_name').value){
+                            document.getElementById(nextId).checked=false;
+                            document.getElementById(nextId).disabled=true;
+                            document.getElementById(nextId+'cus_name').disabled=true;
+                            // document.getElementById(nextId+'cus_name').value='';
+                        }
+                    }
+                }
+                
+            }
+        }
+
+        function generateCusList(inputId){            
+            // console.log('from generate:   cuslist top:',cusListXy.top,'focus xy:',focusInputXy)
+            const searchTerm = document.getElementById(inputId).value.trim();
+            const UpperSearchTerm=searchTerm.toUpperCase();
+
+            
+            // 获取展示结果的列表元素
+            const resultList = document.getElementById("cusNameList");
+            resultList.innerText='';
+            if (UpperSearchTerm === "") {
+                resultList.style.display = "none";
+                resultList.innerHTML = "";
+                // console.log(inputId)
+                if(inputId.slice(0,4)!=='2130'){
+                    
+                    console.log('input  empty')
+                    const nextId=generateNextId(inputId);
+                    // nextCheckBoxStatus=[document.getElementById(nextId).checked,document.getElementById(nextId).disabled]
+                    document.getElementById(nextId).checked=true;
+                    document.getElementById(nextId).disabled=false;
+                    document.getElementById(nextId+'cus_name').disabled=false;
+                    document.getElementById(nextId+'cus_name').value='';
+                }
+                //除0600外，输入框为空，前面的框有效
+                if(inputId.slice(0,4)!=='0600'){ 
+                    const previousId=generatePreviousId(inputId);
+                    // nextCheckBoxStatus=[document.getElementById(nextId).checked,document.getElementById(nextId).disabled]
+                    if(document.getElementById(previousId).checked){
+                        document.getElementById(previousId).checked=true;
+                    }else{
+                        document.getElementById(previousId).checked=false;
+                    }
+                    // document.getElementById(previousId).checked=document.getElementById(previousId).checked;
+                    document.getElementById(previousId).disabled=false;
+                    
+                    const previousInputValue=document.getElementById(previousId+'cus_name').value;
+                    // previousInputValue=previousInputValue?previousInputValue:"";
+                    if(previousInputValue){
+                        const prePreInputValue=generatePreviousId(previousId);
+                        if(document.getElementById(prePreInputValue+'cus_name').value===previousInputValue){
+                            document.getElementById(previousId).disabled=true;
+                            document.getElementById(previousId+'cus_name').disabled=true;
+                        }else{
+                            document.getElementById(previousId).disabled=false;
+                            document.getElementById(previousId+'cus_name').disabled=false;
+                        }
+                        
+                    }else{
+                        document.getElementById(previousId).checked=true;
+                        document.getElementById(previousId+'cus_name').disabled=false;
+                    }
+                    
+                    const earlyTime=['0600','0630','0700','0730','0800','0830']
+                    if(earlyTime.includes(previousId)){
+                        if(previousInputValue===""){
+                            document.getElementById(previousId).checked=false;
+                            document.getElementById(previousId).disabled=false;
+                            document.getElementById(previousId+'cus_name').disabled=true;
+
+                        }
+                    }
+                
+                }
+                
+                return; // 输入框为空，不做处理
+            }else{
+                resultList.style.display = "block";
+                // console.log(inputId)
+                if(inputId.slice(0,4)!=='2130'){                    
+                    // console.log(UpperSearchTerm)
+                    const nextId=generateNextId(inputId);
+                    document.getElementById(nextId).checked=true;
+                    document.getElementById(nextId).disabled=true;
+                    document.getElementById(nextId+'cus_name').disabled=true;
+                    document.getElementById(nextId+'cus_name').value=UpperSearchTerm;
+                }
+                //除0600外，前面的框失效
+                if(inputId.slice(0,4)!=='0600'){ 
+                    const previousId=generatePreviousId(inputId);
+                    // nextCheckBoxStatus=[document.getElementById(nextId).checked,document.getElementById(nextId).disabled]
+                    document.getElementById(previousId).checked=false;
+                    document.getElementById(previousId).disabled=true;
+                    document.getElementById(previousId+'cus_name').disabled=true;
+                    let previousInputValue=document.getElementById(previousId+'cus_name').value;
+                    previousInputValue=previousInputValue?previousInputValue:"";
+                    if(previousInputValue){
+                        document.getElementById(previousId).checked=true;
+                    }
+
+                    const earlyTime=['0600','0630','0700','0730','0800','0830']
+                    if(previousInputValue===""){
+                        if(earlyTime.includes(previousId)){
+                            document.getElementById(previousId).checked=false;
+                        }
+                    }
+                    
+                }
+
+            }
+
+            
+
+            
+            //输入字母模糊查询
+            // console.log(UpperSearchTerm);
+            cus_list.reverse().forEach(function(name) {
+                if (name.includes(UpperSearchTerm)) {
+                    // 创建列表项元素，并设置其文本内容为匹配到的结果
+                    const listItem = document.createElement("li");
+                    listItem.innerText = name;
+
+                    // 添加点击事件监听器,点击名字时执行。
+                    listItem.addEventListener("click", function(event) {
+                        event.stopPropagation();
+                        // 点击后将完整的姓名设置为输入框的值
+                        const inputBox=document.getElementById(inputId);
+                        inputBox.style.color="#685a3f";
+                        inputBox.style.fontSize='10px';
+                        inputBox.value = name;
+                        if(inputId.slice(0,4)!=='2130'){
+                            const nextId=generateNextId(inputId);
+                            const nextInputBox=document.getElementById(nextId+'cus_name');
+                            nextInputBox.value=name;
+                            nextInputBox.style.color='#c1c5c2';
+
+                        }
+                        // 点击后隐藏名字列表框
+                        resultList.style.display = "none";  
+                    });    
+                    // 将列表项添加到结果列表中
+                    resultList.appendChild(listItem);                   
+                }            
+
+                resultList.classList.add('cus-list-booking');   
+            });
+
+            if(resultList.innerHTML===''){
+                resultList.innerHTML='<span>无匹配姓名</span>';
+            }
+            //左边输入结果显示在屏幕右边，右边输入结果显示在屏幕左边
+            if(inputId.substring(2,4)==='30'){
+                left_x=20;
+            }else{
+                left_x=180;
+            }
+            resultList.style.left = left_x + "px";
+
+            //20点的以后弹出的选择框，放在屏幕的上方
+            //获取input框初始点击的坐标 focusId是公共变量
+            const focusInputRect=document.getElementById(focusId).getBoundingClientRect();
+            if(parseInt(inputId.substring(0,2))>=20){
+                resultList.style.top = focusInputRect.bottom-130 + "px";
+            }else{
+                resultList.style.top = focusInputRect.bottom-20 + "px";
+            }
+        }
+
+        function setDefaultCheckBoxAndInputBox(){
+
+            const validTime=['0900','0930',
+            '1000','1030','1100','1130',
+            '1200','1230','1300','1330',
+            '1400','1430','1500','1530',
+            '1600','1630','1700','1730',
+            '1800','1830','1900','1930',
+            '2000','2030','2100']
+            timePrd.forEach(time=>{
+                const checkBox=document.getElementById(time);
+                const inputBox=document.getElementById(time+'cus_name');
+                const submitButton=document.getElementById('submit');
+                const commentBox=document.getElementById('comment');
+                if(validTime.includes(time)){
+                    checkBox.checked=true;                    
+                    inputBox.disabled=false;
+                }else{
+                    checkBox.checked=false;                    
+                    inputBox.disabled=true;
+                }
+                checkBox.disabled=false;
+                inputBox.value='';
+                submitButton.disabled=false;
+                commentBox.disabled=false;
+            });
+            document.getElementById('comment').value='';
+        }
+
+        function setAllInputDisable(){
+            timePrd.forEach(id=>{
+                const checkBox=document.getElementById(id);
+                const inputBox=document.getElementById(id+'cus_name');
+                const commentBox=document.getElementById('comment');
+                const submitButton=document.getElementById('submit');
+                checkBox.disabled=true;
+                inputBox.disabled=true;
+                submitButton.disabled=true;
+                commentBox.disabled=true;
+            });
+        }
+
+        function fillInputBox(){
+            const inputBox=document.getElementById(inputIdPage);
+            const resultList = document.getElementById("cusNameList");
+            inputBox.value=resultList.value;
+            resultList.innerText='';
+            // resultList.style.display='none';
+            
+              
+        }
+    
+        function submit(){
+            // console.log('submitting...')
+            let data={};
+            data['date']=document.getElementById('dateInput').value;
+            if(insRole==='admin'){
+                data['insRole']=insRole;
+                data['insId']=document.getElementById('insSelect').value;
+            }else if(insRole==='ins'){
+                data['insRole']=insRole;
+                data['insId']=insId;
+            }
+            
+            timePrd.forEach(id=>{
+                let strValCusIdName;
+                const checkBox=document.getElementById(id);
+                const inputBox=document.getElementById(id+'cus_name');
+                if(checkBox.checked){
+                    strValCusIdName='valid|'+inputBox.value;
+                }else{
+                    strValCusIdName='invalid|'+inputBox.value;
+                }
+                data[id]=strValCusIdName;
+
+            });
+            const comment=document.getElementById('comment').value;
+            data['comment']=comment;
+            // console.log(data);
+            fetch('/write_ins_book',{
+                method:"POST",
+                headers: {
+                        'Content-Type': 'application/json'
+                    },
+                body:JSON.stringify(data)
+            })
+            .then(response=>response.json())
+            .then(data=>{
+                console.log(data.res);
+                alert('修改成功');
+            })
+            .catch(error=>{
+                console.log('write booking error:',error);
+            })
+        }
+    </script>
+</body>
+</html>

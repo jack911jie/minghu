@@ -1,7 +1,7 @@
 import datetime
 
 def calculate_age(birth_s='20181215'):
-    birth_d = datetime.datetime.strptime(birth_s, "%Y%m%d")
+    birth_d = datetime.datetime.strptime(str(birth_s), "%Y%m%d")
     today_d = datetime.datetime.now()
     birth_t = birth_d.replace(year=today_d.year)
     if today_d > birth_t:

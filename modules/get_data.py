@@ -11,6 +11,8 @@ import random
 from tkinter import simpledialog
 import re
 import copy
+import warnings
+warnings.simplefilter("ignore")
 
 
 class ReadAndExportData:
@@ -414,11 +416,11 @@ class cals:
         return bmr
 
 class ReadCourses:
-    def __init__(self,work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室'):
+    def __init__(self,work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室',dl_taken_fn='D:\\铭湖健身工作目录\\教练工作日志\\教练工作日志.xlsx'):
         self.work_dir=work_dir
         self.base_fn=os.path.join(work_dir,'01-会员管理','工作文档','20220531私教会员剩余课程节数.xlsx')
         self.gp_base_fn=os.path.join(work_dir,'01-会员管理','工作文档','20220430限时课程会员剩余课程节数.xlsx')
-        self.taken_fn='D:\\铭湖健身工作目录\\教练工作日志\\教练工作日志.xlsx'
+        self.taken_fn=dl_taken_fn
         self.df_base=pd.read_excel(self.base_fn)
         self.gp_base=pd.read_excel(self.gp_base_fn)
         self.df_base['备注'].fillna('无',inplace=True)
@@ -469,7 +471,7 @@ class ReadCourses:
         return {'name':t_name,'nickname':t_nickname,'sex':t_sex,'birthday':t_birth,'callit':callit,'title':title}
 
 
-####################常规私教#####################
+####################常规私教-旧#####################
 
     def cus_taken(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'],start_time='20220501',nowtime='20220604'):
         all_cus_taken=self.read_excel_taken(start_time=start_time,nowtime=nowtime)
@@ -479,7 +481,7 @@ class ReadCourses:
                 df_cus_taken=all_cus_taken[(all_cus_taken['会员姓名']==cus_name) & (all_cus_taken['课程类型']==crs_type) & (all_cus_taken['是否完成']=='是')]
                 _df_cus_takens.append(df_cus_taken)
             df_cus_takens=pd.concat(_df_cus_takens)
-            print(_df_cus_takens)
+            # print(_df_cus_takens)
             gp_taken=df_cus_takens.groupby(['课程类型']).count().reset_index()
             gp_taken=gp_taken[['课程类型','会员姓名']]
             gp_taken.columns=['课程类型','上课次数']
@@ -491,9 +493,153 @@ class ReadCourses:
 
         # print(gp_taken)
         return gp_taken
+
+
+####################限时课程-旧#####################
+
+    def cus_taken_intime(self,cus_name='MH075黄子严',crs_types=['限时私教课'],start_time='20220501',nowtime='20220826'):
+        df_intime=pd.read_excel(os.path.join(self.work_dir,'10-工作室管理文件','业务数据管理','限时课程启动及结束记录表.xlsx'),engine="openpyxl")
+        cus_taken_intime=df_intime[df_intime['会员姓名及编号']==cus_name]
+
+        if not cus_taken_intime.empty:
+            cus_taken_intime['real_endtime']=cus_taken_intime.apply(lambda x: x['课程结束时间'] if pd.isna(x['课程实际结束时间']) else x['课程实际结束时间'],axis=1)
+            latest_date=cus_taken_intime['real_endtime'].max()
+
+            #最新一条记录
+            latest_rec=cus_taken_intime[cus_taken_intime['real_endtime']==latest_date]
+
+            #区间开始、结束时间
+            s_intime=latest_rec['课程开始时间'].tolist()[0]
+            e_intime=latest_rec['real_endtime'].tolist()[0]
+            
+            all_cus_taken=self.read_excel_taken(start_time=start_time,nowtime=nowtime)
+
+            # print(all_cus_taken)
+            _df_cus_takens=[]
+            try:
+                for crs_type in crs_types:
+                    df_cus_taken=all_cus_taken[(all_cus_taken['会员姓名']==cus_name) & (all_cus_taken['课程类型']==crs_type) & (all_cus_taken['是否完成']=='是')]
+                    _df_cus_takens.append(df_cus_taken)
+                df_cus_takens=pd.concat(_df_cus_takens)
+            except Exception as e:
+                print('in func cus_taken_intime:',e)
+            
+            df_intime_cus=df_cus_takens[(df_cus_takens['日期']>=s_intime) & (df_cus_takens['日期']<=e_intime)]
+            
+            #区间内上课次数
+            num_taken=df_intime_cus['会员姓名'].count()
+            #区间内剩余节数
+            remain_crs=int(latest_rec['期间节数'].tolist()[0])-num_taken
+            
+
+            return {'crs_taken':num_taken,'crs_remain':remain_crs,'end_date':e_intime}
+        else:
+            return 0
+
+    def cus_buy_from_person(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','常规团课']):
+        cus_fn=os.path.join(self.work_dir,'01-会员管理','会员资料',cus_name+'.xlsx')
+        # cus_fn=os.path.join('e:\\temp\\minghu','01-会员管理','会员资料',cus_name+'.xlsx')
+        df_cus_buy=pd.read_excel(cus_fn,sheet_name='购课表')
+        gp_crs=df_cus_buy.groupby('购课类型').sum().reset_index()[['购课类型','购课节数','购课时长（天）','限时课程起始日','限时课程结束日','限时课程实际结束日','购课金额']]
+        return gp_crs
+
+####################常规课程数量-新#####################
+    def cus_normal_crs_amt(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','常规团课'],normal_list=['常规私教课','常规团课']):
+        df_crs_all=self.cus_buy_from_person(cus_name=cus_name,crs_types=crs_types)
+        nml_amts=[]
+        for crs_type in normal_list:
+            nml_amt=df_crs_all.loc[df_crs_all['购课类型']==crs_type]
+            nml_amts.append(nml_amt)
+        crs_nml_amt=pd.concat(nml_amts)
+        crs_nml_amt=crs_nml_amt[['购课类型','购课节数']]
+        crs_nml_amt.columns=['购课类型','购课数量']
+
+        cus_crs_types=[]
+        for cus_crs_type in crs_types:
+            cus_nml_crs=crs_nml_amt.loc[crs_nml_amt['购课类型']==cus_crs_type]
+            cus_crs_types.append(cus_nml_crs)
+        cus_nml=pd.concat(cus_crs_types)
+
+
+        #以输入的课程类型作为列名输出，如无数据，则为0
+        cus_nml.set_index('购课类型',inplace=True)        
+        df_input=pd.DataFrame({'购课类型':crs_types,'购课数量':0})
+        df_input.set_index('购课类型',inplace=True)
+        cus_nml=df_input+cus_nml
+        cus_nml=cus_nml.reset_index().fillna(0)
     
+
+        if cus_nml.empty:
+            return np.nan
+        else:
+            return cus_nml
+    
+ ####################限时课程数量及时间-新#####################   
+    def read_prd_crs_amt(self,cus_name='MH016徐颖丽'):
+            cus_fn=os.path.join(self.work_dir,'01-会员管理','会员资料',cus_name+'.xlsx')
+            # cus_fn=os.path.join('e:\\temp\\minghu','01-会员管理','会员资料',cus_name+'.xlsx')
+            df_cus_buy_prd=pd.read_excel(cus_fn,sheet_name='购课表')
+            df_cus_buy_prd['日期']=df_cus_buy_prd['日期'].apply(lambda x: datetime.strptime(str(x),'%Y%m%d'))
+            
+
+            #总的节数，总的天数
+            # total_amt=df_cus_buy['购课节数'].sum()
+            # total_days=df_cus_buy['购课时长（天）'].sum()
+            return df_cus_buy_prd
+     
+    def cus_prd_crs_amt(self,cus_name='MH075黄子严',now_time_input='20220920',crs_type='限时私教课'):
+            df_cus_buy_prd=self.read_prd_crs_amt(cus_name=cus_name)
+            lst_buy=df_cus_buy_prd[df_cus_buy_prd['购课类型']==crs_type]
+            lst_buy=lst_buy[lst_buy['日期']==lst_buy['日期'].max()]
+            now_time=datetime.strptime(str(now_time_input),'%Y%m%d')
+            try:
+                lst_buy['限时课程起始日']=lst_buy['限时课程起始日'].apply(lambda x: datetime.strptime(str(x),'%Y%m%d'))
+                lst_buy['限时课程结束日']=lst_buy['限时课程结束日'].apply(lambda x: datetime.strptime(str(x),'%Y%m%d'))
+                lst_buy['限时课程实际结束日']=lst_buy['限时课程实际结束日'].apply(lambda x: datetime.strptime(str(x),'%Y%m%d'))
+            except Exception as err:
+                # print(err)
+                pass
+
+            #奇怪但有用的判断空值
+            # prd_end_date=lst_buy['限时课程结束日'] if 'true' in str(pd.isnull(lst_buy['限时课程实际结束日'])).lower() else lst_buy['限时课程实际结束日']
+
+            #时段内上课次数
+        
+            start_time=str(lst_buy['限时课程起始日'].tolist()[0])[:10].replace('-','')
+            end_time=str(lst_buy['限时课程结束日'].tolist()[0])[:10].replace('-','')
+            fmt_start_time=datetime.strptime(start_time,'%Y%m%d')
+            fmt_end_time=datetime.strptime(end_time,'%Y%m%d')
+
+            
+            # "现在时间点"处于起止日内
+            if now_time>=fmt_start_time and now_time<=fmt_end_time:
+                #在限时课程最后一条记录的起止日内，该会员的上课表
+                prd_amt=self.read_excel_taken(start_time=start_time,nowtime=end_time) 
+                try:
+                    df_cus_prd_taken_amt=prd_amt[(prd_amt['会员姓名']==cus_name) & (prd_amt['课程类型']==crs_type) & (prd_amt['日期']>=fmt_start_time) & (prd_amt['日期']<=fmt_end_time)]
+                except KeyError as err_coach_tbl:
+                    print(err_coach_tbl,' 未找到 ',crs_type)
+                    return {'crs_type':crs_type,'err':err_coach_tbl+'未找到'+crs_type}
+                #该段起止日内剩余天数
+                days_remain=fmt_end_time-now_time
+                days_remain=days_remain.days
+
+                #该会员在最后一条记录起止日内上课次数统计
+                cus_prd_taken_amt=df_cus_prd_taken_amt['会员姓名'].count()
+
+                #上课次数小于等于购课次数
+                if cus_prd_taken_amt<=lst_buy['购课节数'].tolist()[0]:
+                    crs_remain=lst_buy['购课节数'].tolist()[0]-cus_prd_taken_amt
+
+                    return {'crs_type':crs_type,'days_remain':days_remain,'crs_remain':crs_remain,'prd':[start_time,end_time],'err':np.nan}
+                else:
+                    return {'crs_type':crs_type,'err':'上课次数已超过该时间段内有效次数'}
+            else:
+                return {'crs_type':crs_type,'err':'输入时间点不在课程有效时间内。'}
+
+
     def cus_buy(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'],data_fn='客户业务流水数据.xlsx',start_time='20220601'):
-        df_gp_buy=pd.read_excel(os.path.join(self.work_dir,'02-运营规划','业务数据管理',data_fn),sheet_name='购课业务流水')
+        df_gp_buy=pd.read_excel(os.path.join(self.work_dir,'10-工作室管理文件','业务数据管理',data_fn),sheet_name='购课业务流水')
         # df_gp_buy['购课期数'].fillna(0,inplace=True)
         # df_gp_buy['购课节数'].fillna(0,inplace=True)
         df_gp_buy['购课时间'].fillna(0,inplace=True)
@@ -540,7 +686,8 @@ class ReadCourses:
             df_ins=df_all_ins[df_all_ins['姓名']==ins]
         return df_ins
 
-    def cal_crs_remain(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','团课']):
+    def cal_crs_remain(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','常规团课']):
+
         # 客户的课程节数/期数的底
         _df_cus_takens=[]
         for crs_type in crs_types:
@@ -552,7 +699,13 @@ class ReadCourses:
         cus_base.groupby(['课程类型']).sum()
 
         #客户购课的数
-        df_cus_buy=self.cus_buy(cus_name=cus_name,crs_types=crs_types)
+        # df_cus_buy=self.cus_buy(cus_name=cus_name,crs_types=crs_types)
+
+            #新方法，从客户资料表中提取数据
+        df_cus_buy=self.cus_normal_crs_amt(cus_name=cus_name,crs_types=crs_types)
+        # print(df_cus_buy)
+
+
         #如客户购课数为空，构建一个空表。
         if df_cus_buy.empty:
             dic_empty_buy=[]
@@ -582,37 +735,70 @@ class ReadCourses:
 
         res['客户名称']=cus_name
         res['剩余课时（节）'].fillna(0,inplace=True)
-        res['本次剩余课时']=res['剩余课时（节）']+res['购课数量']-res['上课次数']
 
-        res=res[['客户名称','课程类型','剩余课时（节）','购课数量','上课次数','本次剩余课时']]
+
+        # res['本次剩余课时']=res['剩余课时（节）']+res['购课数量']-res['上课次数']
+        # res=res[['客户名称','课程类型','剩余课时（节）','购课数量','上课次数','本次剩余课时']]
+
+
+            #新的计算方法
+        res['本次剩余课时']=res['购课数量']-res['上课次数']
+        res=res[['客户名称','课程类型','购课数量','上课次数','本次剩余课时']]
 
         # print(res)
 
         return res
 
         # print(res)
+    def cal_prd_remain(self,cus_name='MH075黄子严',now_time_input='20221011',crs_types=['限时私教课','限时团课']):
+        res_prds=[]
+        for crs_type in crs_types:
+            res_prd=self.cus_prd_crs_amt(cus_name=cus_name,now_time_input=now_time_input,crs_type=crs_type)
+            res_prds.append(res_prd)
+        
+        return res_prds
+            
     
     def exp_txt(self,cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220527',crs_time='1000-1100',ins='MHINS001陆伟杰'):
-        cus_info=self.cus_info(cus_name=cus_name)
-        # print(cus_name,crs_type,crs_date,crs_time,ins)
-        crs_types=[crs_type]
-        crs_remain=self.cal_crs_remain(cus_name=cus_name,crs_types=crs_types)
-        txt_crs_remain=str(int(crs_remain[crs_remain['课程类型']==crs_type]['本次剩余课时'].tolist()[0]))
-
         talk_template=pd.read_excel(os.path.join(self.work_dir,'01-会员管理','工作文档','预约客户话术模板.xlsx'))
-        txt_datetime='\n【'+crs_date[:4]+'年'+crs_date[4:6]+'月'+crs_date[6:]+'日】\n【'+crs_time[:2]+':'+crs_time[2:7]+':'+crs_time[7:]+'】'
 
+        if crs_type in ['常规私教课']:
+        #常规私教课话术
+            cus_info=self.cus_info(cus_name=cus_name)
+            # print(cus_name,crs_type,crs_date,crs_time,ins)
+            crs_types=[crs_type]
+            crs_remain=self.cal_crs_remain(cus_name=cus_name,crs_types=crs_types)
+            txt_crs_remain=str(int(crs_remain[crs_remain['课程类型']==crs_type]['本次剩余课时'].tolist()[0]))            
+            txt_datetime='\n【'+crs_date[:4]+'年'+crs_date[4:6]+'月'+crs_date[6:]+'日】\n【'+crs_time[:2]+':'+crs_time[2:7]+':'+crs_time[7:]+'】'
 
-        txt_talk=talk_template[talk_template['课程类型']==crs_type]['话术'].tolist()[0]
-        txt_talk=txt_talk.replace('cus_name',' '+cus_info['callit']+' '+cus_info['title'])
-        txt_talk=txt_talk.replace('time',' '+txt_datetime+' ')
-        txt_talk=txt_talk.replace('ins','【'+ins[8:]+'】')
-        txt_talk=txt_talk.replace('remain',txt_crs_remain)        
-        
-        return txt_talk
-
+            txt_talk=talk_template[talk_template['课程类型']==crs_type]['话术'].tolist()[0]
+            txt_talk=txt_talk.replace('cus_name',' '+cus_info['callit']+' '+cus_info['title'])
+            txt_talk=txt_talk.replace('time',' '+txt_datetime+' ')
+            txt_talk=txt_talk.replace('ins','【'+ins[8:]+'】')
+            txt_talk=txt_talk.replace('remain',txt_crs_remain)        
+            
+            return txt_talk
 
 #####################团课及限时私教################
+
+        #限时私教课话术
+        elif crs_type in ['限时私教课']:
+            cus_info=self.cus_info(cus_name=cus_name)
+            crs_types=[crs_type]
+            res_intime=self.cus_taken_intime(cus_name=cus_name,crs_types=[crs_type],start_time='20220501',nowtime=crs_date)
+            txt_talk=talk_template[talk_template['课程类型']==crs_type]['话术'].tolist()[0]
+
+            txt_datetime='\n【'+crs_date[:4]+'年'+crs_date[4:6]+'月'+crs_date[6:]+'日】\n【'+crs_time[:2]+':'+crs_time[2:7]+':'+crs_time[7:]+'】'
+            txt_crs_remain=res_intime['crs_remain']
+            txt_duedate=res_intime['end_date'].strftime('%Y-%m-%d')
+            txt_talk=txt_talk.replace('cus_name',' '+cus_info['callit']+' '+cus_info['title'])
+            txt_talk=txt_talk.replace('time',' '+txt_datetime+' ')
+            txt_talk=txt_talk.replace('ins','【'+ins[8:]+'】')
+            txt_talk=txt_talk.replace('remain',str(txt_crs_remain))
+            txt_talk=txt_talk.replace('duedate',txt_duedate)    
+
+            return txt_talk
+
 
     def gp_cus_taken(self,cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'],start_time='20210501',nowtime='20220604'):
         all_gp_cus_taken=self.read_excel_taken(start_time=start_time,nowtime=nowtime)
@@ -751,8 +937,6 @@ class ReadCourses:
 
         return txt_out
 
-
-
 class ReadDiet:
     def __init__(self,fn_diet='D:\\Documents\\WXWork\\1688851376227744\\WeDrive\\铭湖健身工作室\\05-专业资料\\减脂饮食建议表.xlsx'):
         self.fn_diet=fn_diet
@@ -765,24 +949,325 @@ class ReadDiet:
 
         return diet_suggests
 
+class ReadWebData:
+    def __init__(self):
+        pass
+        
+
+    def deal_data(self,df):
+        # print(df)        
+        cus_name=df['Q4_会员姓名'].tolist()[0]
+        train_date=datetime.strftime(df['Q3_训练日期'].tolist()[0],'%Y-%m-%d')
+        ins_name=df['Q2_教练姓名'].tolist()[0]
+        calories=df['Q7_消耗热量'].tolist()[0]
+        ins_cmt=df['Q8_教练评语'].tolist()[0]
+        cus_star=df['Q9_为会员本次训练情况打分_选项1'].tolist()[0]
+
+
+        ########################抗阻####################
+        # if pd.isna(df['Q5_抗阻训练内容_训练项目']):
+        # print(df['Q5_抗阻训练内容_训练项目'])
+
+        if df['Q5_抗阻训练内容_训练部位'].empty or pd.isna(df['Q5_抗阻训练内容_训练部位'].tolist()[0]):
+            print('抗阻内容为空')
+            # res_muscle={'内容':'','目标肌群':'','重量（Kg）':'','距离（m）':'','次数':''}
+            # df_muscle=pd.DataFrame(res_muscle,index=[0])
+            # df_muscle.fillna('',inplace=True)
+            df_res_muscle=pd.DataFrame()
+        else:
+            if '||' in df['Q5_抗阻训练内容_训练部位'].tolist()[0]:
+                #多项内容
+                train_parts=df['Q5_抗阻训练内容_训练部位'].tolist()[0].split('||')
+                try:
+                    train_items_upper=pd.DataFrame(df['Q5_抗阻训练内容_● 训练项目（上肢及胸部）'].tolist()[0].split('||'))
+                    train_items_upper_detail=pd.DataFrame(df['Q5_抗阻训练内容_---- 上肢及胸部详细内容'].tolist()[0].split('||'))
+
+                    train_items_upper_complete=[]
+                    for dt_up_num,item_up in enumerate(train_items_upper[0].tolist()):
+                        dt_up=train_items_upper_detail[0].tolist()[dt_up_num]
+                        if dt_up!='':
+                            up_train=str(item_up)+'（'+str(dt_up)+'）'
+                        else:
+                            up_train=item_up
+                        train_items_upper_complete.append(up_train)
+
+                    train_items_legs=pd.DataFrame(df['Q5_抗阻训练内容_● 训练项目（下肢/背部/核心）'].tolist()[0].split('||'))
+                    train_items_legs_detail=pd.DataFrame(df['Q5_抗阻训练内容_---- 下肢/背部/核心详细内容'].tolist()[0].split('||'))
+                    train_items_legs_complete=[]
+                    for dt_leg_num,item_leg in enumerate(train_items_legs[0].tolist()):
+                        dt_leg=train_items_legs_detail[0].tolist()[dt_leg_num]
+                        if dt_leg!='':
+                            leg_train=str(item_leg)+'（'+str(dt_leg)+'）'
+                        else:
+                            leg_train=item_leg
+                        train_items_legs_complete.append(leg_train)
+
+                    # print(train_items_upper_complete,train_items_legs_complete)
+
+                    df_train_items=pd.concat([pd.DataFrame(train_items_upper_complete),pd.DataFrame(train_items_legs_complete)],axis=1)
+
+                    df_train_items.columns=['upper','down']                    
+                    df_train_items['训练项目']=df_train_items.apply(lambda x: x['upper'] if x['down']=='' else x['down'],axis=1)
+                    train_items=df_train_items['训练项目'].tolist()
+                except Exception as e:
+                    print('错误:',e)
+                train_wts=df['Q5_抗阻训练内容_重量（Kg）'].tolist()[0].split('||')
+                train_diss=df['Q5_抗阻训练内容_距离（m）'].tolist()[0].split('||')
+                train_nums=df['Q5_抗阻训练内容_次数'].tolist()[0].split('||')
+                train_grps=df['Q5_抗阻训练内容_组数'].tolist()[0].split('||')
+                
+                train_wts=['0' if x=='' else x for x in train_wts]
+                train_diss=['0' if x=='' else x for x in train_diss]
+                train_nums=['0' if x=='' else x for x in train_nums]
+                train_grps=['0' if x=='' else x for x in train_grps]
+                
+
+                muscle_train_part,muscle_train_item,muscle_train_wt,muscle_train_num,muscle_train_dis=[],[],[],[],[]
+                for itm_no,grp in enumerate(train_grps):
+                    for ct in range(int(grp)):
+                        muscle_train_part.append(train_parts[itm_no])
+                        muscle_train_item.append(train_items[itm_no])
+                        muscle_train_wt.append(train_wts[itm_no])
+                        muscle_train_dis.append(train_diss[itm_no])
+                        muscle_train_num.append(train_nums[itm_no])
+                res_muscle={'目标肌群':muscle_train_part,'内容':muscle_train_item,'重量（Kg）':muscle_train_wt,'距离（m）':muscle_train_dis,'次数':muscle_train_num}
+                # print(train_items,train_wts,train_diss,train_nums,train_grps)
+                # print(res_muscle)
+                df_muscle=pd.DataFrame(res_muscle)
+                # df_muscle.replace('',0,inplace=True)        
+                
+            else:
+                #一项内容
+                train_part=df['Q5_抗阻训练内容_训练部位'].tolist()[0]
+                if train_part in ['上肢肌群','胸部肌群']:
+                    train_item=df['Q5_抗阻训练内容_● 训练项目（上肢及胸部）'].tolist()[0]
+                    train_item_detail=df['Q5_抗阻训练内容_---- 上肢及胸部详细内容'].tolist()[0]
+                    if train_item_detail!='':
+                        train_item=str(train_item)+'（'+str(train_item_detail)+'）'
+                else:
+                    train_item=df['Q5_抗阻训练内容_● 训练项目（下肢/背部/核心）'].tolist()[0]
+                    train_item_detail=df['Q5_抗阻训练内容_---- 下肢/背部/核心详细内容'].tolist()[0]
+                    if train_item_detail!='':
+                        train_item=str(train_item)+str(train_item_detail)
+
+                train_wt=df['Q5_抗阻训练内容_重量（Kg）'].tolist()[0]
+                train_dis=df['Q5_抗阻训练内容_距离（m）'].tolist()[0]
+                train_num=df['Q5_抗阻训练内容_次数'].tolist()[0]
+                train_grp=df['Q5_抗阻训练内容_组数'].tolist()[0]
+
+                train_wts='0' if train_wt=='' else train_wt
+                train_dis='0' if train_wt=='' else train_dis
+                train_num='0' if train_wt=='' else train_num
+                train_grp='0' if train_wt=='' else train_grp
+                # print(train_grps)
+                # print(muscle_train_item,muscle_train_wt,muscle_train_dis,muscle_train_num)
+
+                muscle_train_part,muscle_train_item,muscle_train_wt,muscle_train_dis,muscle_train_num=[],[],[],[],[]
+                for ct in range(int(train_grp)):
+                    muscle_train_part.append(train_part)
+                    muscle_train_item.append(train_item)
+                    muscle_train_wt.append(train_wt)
+                    muscle_train_dis.append(train_dis)
+                    muscle_train_num.append(train_num)
+
+                    res_muscle={'目标肌群':muscle_train_part,'内容':muscle_train_item,'重量（Kg）':muscle_train_wt,'距离（m）':muscle_train_dis,'次数':muscle_train_num}
+                # print(res_muscle)
+                df_muscle=pd.DataFrame(res_muscle)
+                df_muscle.fillna('',inplace=True)
+        
+            df_muscle['时间']=train_date
+            df_muscle['形式']='抗阻训练'
+            df_muscle['消耗热量']=int(calories)
+            df_muscle['教练姓名']=ins_name
+            df_muscle['教练评语']=ins_cmt
+            df_muscle['评分']=int(cus_star)
+            df_muscle['有氧项目']=''
+            df_muscle['有氧时长']=''
+
+            # print(df_muscle)
+            df_res_muscle=df_muscle[['时间','形式','目标肌群','有氧项目','有氧时长','内容','重量（Kg）','距离（m）','次数','消耗热量','教练姓名','教练评语','评分']]
+            # print(df_res_muscle)
+
+        ########################有氧################
+        # if pd.isna(df['Q6_有氧训练内容_训练项目']):
+        if df['Q6_有氧训练内容_训练项目'].empty or pd.isna(df['Q6_有氧训练内容_训练项目'].tolist()[0]):
+            print('有氧训练内容为空')
+            # res_muscl={'项目':'','时长（s）':''}
+            # df_muscle=pd.DataFrame(res_muscle,index=[0])
+            # df_muscle.fillna('',inplace=True)
+            df_res_oxy=pd.DataFrame()
+        else:
+            if '||' in df['Q6_有氧训练内容_训练项目'].tolist()[0]:
+                #多项内容
+                oxy_train_items=df['Q6_有氧训练内容_训练项目'].tolist()[0].split('||')
+                # oxy_train_wts=df['Q6_有氧训练内容_重量（Kg）'].tolist()[0].split('||')
+                oxy_train_times=df['Q6_有氧训练内容_时间（秒）'].tolist()[0].split('||')
+                oxy_train_grps=df['Q6_有氧训练内容_组数'].tolist()[0].split('||')
+
+                oxy_train_items=['0' if x=='' else x for x in oxy_train_items]
+                oxy_train_times=['0' if x=='' else x for x in oxy_train_times]
+
+                oxy_train_grps=['1' if  np.isnan(int(x)) else x for x in oxy_train_grps]
+
+                oxy_train_item,oxy_train_wt,oxy_train_time=[],[],[]
+                for itm_no,grp in enumerate(oxy_train_grps):
+                    for ct in range(int(grp)):
+                        oxy_train_item.append(oxy_train_items[itm_no])
+                        # oxy_train_wt.append(oxy_train_wts[itm_no])
+                        oxy_train_time.append(oxy_train_times[itm_no])
+                res_oxy={'项目':oxy_train_item,'时长（s）':oxy_train_time}
+                # res_oxy={'项目':oxy_train_item,'重量':oxy_train_wt,'时长（s）':oxy_train_time}
+
+                df_oxy=pd.DataFrame(res_oxy)
+                # df_muscle.replace('',0,inplace=True)               
+
+            else:
+                #一项内容
+                train_item=df['Q6_有氧训练内容_训练项目'].tolist()[0]
+                # train_wt=df['Q6_有氧训练内容_重量（Kg）'].tolist()[0]
+                train_time=df['Q6_有氧训练内容_时间（秒）'].tolist()[0]
+                train_grp=df['Q6_有氧训练内容_组数'].tolist()[0]
+
+                train_item='0' if train_item=='' else train_item
+                train_time='0' if train_time=='' else train_time
+
+                if isinstance(train_grp,str):
+                    train_grp=int(train_grp)
+                train_grp='1' if np.isnan(train_grp) else train_grp
+
+             
+
+                # print('train_grp',np.isnan(train_time),type(train_grp))
+
+                oxy_train_item,oxy_train_wt,oxy_train_time=[],[],[]
+                for ct in range(int(train_grp)):
+                    oxy_train_item.append(train_item)
+                    # oxy_train_wt.append(train_wt)
+                    oxy_train_time.append(train_time)
+                res_oxy={'项目':oxy_train_item,'时长（s）':oxy_train_time}
+                # res_oxy={'项目':oxy_train_item,'重量（Kg）':oxy_train_wt,'时长（s）':oxy_train_time}
+                    # print(res_oxy)
+                df_oxy=pd.DataFrame(res_oxy)
+                df_oxy.fillna('',inplace=True)
+
+            df_oxy['时间']=train_date
+            df_oxy['形式']='有氧训练'
+            df_oxy['消耗热量']=int(calories)
+            df_oxy['教练姓名']=ins_name
+            df_oxy['教练评语']=ins_cmt
+            df_oxy['评分']=int(cus_star)
+            df_oxy['内容']=''
+            df_oxy['重量（Kg）']=''
+            df_oxy['距离（m）']=''
+            df_oxy['次数']=''
+            df_oxy['目标肌群']=''
+
+            df_oxy.rename(columns={'项目':'有氧项目','时长（s）':'有氧时长'},inplace=True)
+            # df_oxy.rename(columns={'项目':'有氧项目','时长（s）':'有氧时长','重量':'有氧重量'},inplace=True)
+
+            #去年有氧重量项目
+            df_res_oxy=df_oxy[['时间','形式','目标肌群','有氧项目','有氧时长','内容','重量（Kg）','距离（m）','次数','消耗热量','教练姓名','教练评语','评分']]
+        
+            # print(df_res_oxy)
+
+        return {'df_muscle':df_res_muscle,'df_oxy':df_res_oxy}
+
+    def exp_data_one(self,cus_name='MH003吕雅颖',date_input='20220729',fn='e:/temp/minghu/test.xlsx'):
+        df_fn=pd.read_excel(fn,parse_dates=['Q3_训练日期'])
+        df_match=df_fn[(df_fn['Q4_会员姓名']==cus_name) & (df_fn['Q3_训练日期']==datetime.strptime(date_input,'%Y%m%d'))]
+        # df_match.iloc[:,5:]=df_match.iloc[:,5:].astype(str)
+        if df_match.empty:
+            # print('无数据')
+            res=''
+        else:
+            res=self.deal_data(df_match)
+        return res
+        # df_row=self.df_fn[self.df_fn['']]
+        # df_row=self.df_fn.iloc[0,:]
+        # res=self.deal_data(df_match)
+        # return res
+
+    def body_data(self,cus_name='MH003吕雅颖',date_input='20220803',webfn='e:/temp/minghu/body.xlsx'):
+        df_body=pd.read_excel(webfn,parse_dates=['Q3_日期'])
+        df_body=df_body[(df_body['Q3_日期']==datetime.strptime(date_input,'%Y%m%d')) & (df_body['Q1_客户编码及姓名']==cus_name)]
+        return df_body
+
+class CusInfo:
+    def __init__(self):
+        pass
+
+    def get_cus_list(self,work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料'):
+        cus_list=[]
+        for fns in os.listdir(work_dir):
+            if re.match(r'MH\d{3}.*.xlsx',fns):
+                # print(d[:-5])
+                cus_list.append(fns[:-5])
+        return cus_list 
+
+    def get_cus_body_data(self,cus_fn='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH003吕雅颖.xlsx'):
+        df_body=pd.read_excel(cus_fn,sheet_name='身体数据')
+        return df_body
+
+    def get_cus_basic_data(self,cus_fn='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室\\01-会员管理\\会员资料\\MH003吕雅颖.xlsx'):
+        df_basic=pd.read_excel(cus_fn,sheet_name='基本情况')
+        return df_basic
+
+class InsInfo:
+    def __init__(self):
+        pass
+
+    def get_info(self,ins_fn='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室\\03-教练管理\\教练资料\\教练信息.xlsx'):
+        df_ins=pd.read_excel(ins_fn,sheet_name='教练信息')
+        return df_ins
+
 class Vividict(dict):
     def __missing__(self, key):
         value = self[key] = type(self)()
         return value
 
 if __name__=='__main__':
-    p=ReadCourses(work_dir='D:\\Documents\\WXWork\\1688851376196754\\WeDrive\\铭湖健身工作室')
+    # p=InsInfo()
+    # p.get_info()
+
+    # p=ReadWebData()
+    # res=p.exp_data_one(cus_name='MH075黄子严',date_input='20220825',fn='e:/temp/minghu/webdl.xlsx')
+    # print(res)
+    # res=p.body_data(cus_name='MH003吕雅颖',date_input='20220803',webfn='e:/temp/minghu/body.xlsx')
+    # print(res)
+    
+
+    # print(res['df_muscle'])
+    # print(res)
+
+
+    p=ReadCourses(work_dir='E:\\temp\\minghu',dl_taken_fn='e:\\temp\\minghu\\教练工作日志合并.xlsx')
+    # p=ReadCourses(work_dir='D:\\Documents\\WXWork\\1688851376239499\\WeDrive\\铭湖健身工作室',dl_taken_fn='e:\\temp\\minghu\\教练工作日志合并.xlsx')
+
+    # k=p.read_excel_taken(start_time='20221131',nowtime='20230202')
+    # print(k)
+    # res=p.cus_taken_intime()
+    # print(res)
+    # p.cus_buy_from_person(cus_name='MH016徐颖丽',crs_types=['常规私教课','常规团课'],start_time='20200101')
+    # nml_amt=p.cus_normal_crs_amt(cus_name='MH016徐颖丽',crs_types=['常规私教课','常规团课'])
+    # print(nml_amt)
+
+    # prd_amt=p.cus_prd_crs_amt(cus_name='MH016徐颖丽',crs_types=['限时私教课'])
+    # print(prd_amt)
+
     # k=p.cus_buy(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
     # print(k)
-    # res=p.cus_taken(cus_name='MH016徐颖丽',crs_types=['常规私教课','团课'])
+    # res=p.cus_taken(cus_name='MH010苏云',crs_types=['常规私教课','初级团课'],start_time='20220501',nowtime='20220804')
     # print(res)
-    # k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','初级团课'])
-    # print(k)
-    k=p.exp_txt(cus_name='MH016徐颖丽',crs_type='常规私教课',crs_date='20220608',crs_time='1000-1100',ins='MHINS001陆伟杰')
+    # k=p.cus_prd_crs_amt(cus_name='MH075黄子严',now_time_input='20221011',crs_type='限时私教课')
+    k=p.cal_prd_remain(cus_name='MH075黄子严',now_time_input='20220811',crs_types=['限时私教课','限时团课'])
+    # k=p.cal_crs_remain(cus_name='MH016徐颖丽',crs_types=['常规私教课','常规团课'])
     print(k)
+    # print(k)
+    # k=p.exp_txt(cus_name='MH075黄子严',crs_type='限时私教课',crs_date='20220827',crs_time='1000-1100',ins='MHINS001陆伟杰')
+    # print(k)
     # p.cus_info(cus_name='MH016徐颖丽')
     # k=p.group_exp_txt(y_m='202206',crs_type='常规私教课')
-    # k=p.gp_cus_taken(cus_name='MH010苏云',crs_types=['常规私教课','初级团课'],start_time='20210501',nowtime='20220523')
+    # k=p.gp_cus_taken(cus_name='MH010苏云',crs_types=['常规私教课','初级团课'],start_time='20210501',nowtime='20220804')
     # print(k)
     # p.gp_cal_crs_remain(cus_name='MH010苏云',crs_types=['初级团课'],data_fn='客户业务流水数据.xlsx',start_time='20210501',nowtime='20220531')
 

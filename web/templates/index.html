@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>铭湖健身工作室教练工作台</title>
+    <link rel="stylesheet" href="../static/css/minghu.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+</head>
+<body style="background-color:#fffbf6">
+
+    {% include 'show_ins_info.html' %}
+
+    <div id="index-container">
+        <div id="date" style="display:flex;flex-direction:column;align-items:center;text-align:center;color:rgb(171, 176, 179); font-size:20px; margin-bottom: 20px;"></div>
+
+        
+        <div class='cover-button' style="border:1px solid #abc98a; background-color:#a9d594;">
+            <a href="./ins_book" style="color:rgb(108, 109, 90);">会员预约排课</a>
+        </div>
+
+        <div class='cover-button' style="border:1px solid #f1edd3; background-color:#f1edd3;">
+            <a href="./cus_cls_input" style="color:rgb(136, 116, 25);">正式课上课</a>
+        </div>
+       
+        <div class='cover-button' style="border:1px solid #fce3fa; background-color:#fce3fa;">
+            <a href="./input_body" style="color:rgb(167, 81, 167);">会员体测录入</a>
+        </div>       
+
+        <div class='cover-button' style="border:1px solid #d0dbff; background-color:#d0dbff;">
+           <a href="./trial_class" style="color:rgb(57, 63, 126);">体验课上课</a>
+        </div>
+
+        <div class='cover-button' style="border:1px solid #d3ffde; background-color:#d3ffde;">
+            <a href="./new_cus" style="color:rgb(50, 107, 64);">新增会员</a>
+        </div>
+
+        <div class='cover-button' style="border:1px solid #c8f1fc; background-color:#c8f1fc;">
+            <a href="./input_buy" style="color:rgb(41, 95, 145);">会员购课</a>
+        </div>
+
+        <div class='cover-button' style="border:1px solid #f7e2d5; background-color:#f7e2d5;">
+            <a href="./start_limit_class" style="color:rgb(238, 136, 96);">限时课程开课</a>
+        </div> 
+        
+    </div>
+
+
+    <script src="../static/js/common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded',function(){
+            loginCheck();
+            const goIndexButton=document.getElementById('goIndex');
+            goIndexButton.style.display='none';
+            const dateBlock=document.getElementById('date');
+            const today=new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            // 获取星期几的数值
+            const dayOfWeek = today.getDay();
+            // 将星期几的数值转换为中文
+            let weekDayChinese = '';
+            switch (dayOfWeek) {
+            case 0:
+                weekDayChinese = '星期日';
+                break;
+            case 1:
+                weekDayChinese = '星期一';
+                break;
+            case 2:
+                weekDayChinese = '星期二';
+                break;
+            case 3:
+                weekDayChinese = '星期三';
+                break;
+            case 4:
+                weekDayChinese = '星期四';
+                break;
+            case 5:
+                weekDayChinese = '星期五';
+                break;
+            case 6:
+                weekDayChinese = '星期六';
+                break;
+            default:
+                weekDayChinese = '未知';
+            }
+            dateDisplay=`${year} 年 ${month} 月 ${day} 日
+                        ${weekDayChinese}`; 
+            dateBlock.innerText=dateDisplay;
+        });
+        hideInsSelectBlockAndGetInsInfo();
+
+        
+
+    </script>
+</body>

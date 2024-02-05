@@ -5,6 +5,7 @@ from turtle import bgcolor
 # from openpyxl.reader.excel import load_workbook
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'modules'))
 import pic_transfer
+import xlwings as xw
 import days_cal
 import readconfig
 import composing
@@ -73,7 +74,7 @@ class MingHu:
         nums=[]
         for fn in os.listdir(self.cus_file_dir):
             if len(fn)<16:
-                if re.match(self.prefix+r'\d\d\d.*.xlsx',fn):
+                if re.match(self.prefix+r'\d\d\d.*.xlsm',fn):
                     num=int(fn[2:5])
                     if num not in nums:
                         nums.append(num)
@@ -100,18 +101,33 @@ class MingHu:
             xls_name=self.prefix+verify+cus_name_input
         else:
             xls_name=self.prefix+new_num+cus_name_input
-        
-        wb=openpyxl.load_workbook(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsx'))
-        sht=wb['基本情况']
-        sht['A2']=xls_name[0:5]
-        sht['B2']=cus_name_input
+
+        app=xw.App(visible=False)
+        wb=app.books.open(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsm'))
+        sht=wb.sheets['基本情况']
+        sht['A2'].value=xls_name[0:5]
+        sht['B2'].value=cus_name_input
         if len(cus_name_input)>1:
-            sht['C2']=cus_name_input[1:]
+            sht['C2'].value=cus_name_input[1:]
         else:
-            sht['C2']=cus_name_input
+            sht['C2'].value=cus_name_input
+
+        wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsm'))
+        wb.close()
+        app.quit()
         
-        wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsx'))
-        print('\n生成新的会员档案文件：{}'.format(self.cus_file_dir+'\\'+xls_name+'.xlsx'))
+        # wb=openpyxl.load_workbook(os.path.join(os.path.dirname(self.cus_file_dir),'模板.xlsm'),keep_vba=True)
+        # sht=wb['基本情况']
+        # sht['A2']=xls_name[0:5]
+        # sht['B2']=cus_name_input
+        # if len(cus_name_input)>1:
+        #     sht['C2']=cus_name_input[1:]
+        # else:
+        #     sht['C2']=cus_name_input
+        
+        # wb.save(os.path.join(self.cus_file_dir,xls_name+'.xlsm'))        
+
+        print('\n生成新的会员档案文件：{}'.format(self.cus_file_dir+'\\'+xls_name+'.xlsm'))
 
         return xls_name
 

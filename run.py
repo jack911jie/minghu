@@ -1,6 +1,6 @@
 import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__),'modules'))
+sys.path.extend([os.path.join(os.path.dirname(__file__),'modules'),os.path.join(os.path.dirname(__file__),'WeCom')])
 import main
 import seven_GUI
 import wxwork
