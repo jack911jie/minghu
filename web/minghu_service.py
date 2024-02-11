@@ -29,10 +29,14 @@ class MinghuService(Flask):
 
     def __init__(self,*args,**kwargs):
         super(MinghuService, self).__init__(*args, **kwargs)
-        config_fn=os.path.join(os.path.join(os.path.dirname(__file__),'config','minghu_service.config'))
-        self.config_mh=readconfig.exp_json2(config_fn)
+        config_fn=os.path.join(os.path.join(os.path.dirname(__file__),'config','lz_service.config'))
+        # self.config_lz=readconfig.exp_json2(config_fn)
+        with open(config_fn,'r',encoding='utf-8') as f:
+            self.config_lz=json.load(f)
+        # print(self.config_lz)
         self.app_lock=threading.Lock()
-
+        self.cus_id_prefix=self.config_lz['cus_id_prefix']
+        
 
         #路由
         #渲染页面
@@ -89,6 +93,11 @@ class MinghuService(Flask):
         # 获取体验课记录
         self.add_url_rule('/get_trial_list', view_func=self.get_trial_list_db,methods=['GET','POST']) 
         #获取客户既往购课记录,并整理合并
+        # 获取有效的卡
+        self.add_url_rule('/get_cards', view_func=self.get_cards,methods=['GET','POST']) 
+        #获取客户既往购课记录,并整理合并
+        #按不同的类型获取有效的卡号返回给购卡页面
+        self.add_url_rule('/get_cus_cards_by_type', view_func=self.get_cus_cards_by_type,methods=['GET','POST'])
 
         self.add_url_rule('/get_cus_buy', view_func=self.get_cus_buy_db,methods=['GET','POST'])
         #获取既往体测记录
@@ -210,39 +219,17 @@ class MinghuService(Flask):
         data=request.json
         mobile,pwd=data['user'],data['pwd']
         conn=self.connect_mysql()
-        # ins_id,pwd=data['user'],data['pwd']
-        # if ins_id[:2]=='01':
-        #     ins_place='MH'
-        # else:
-        #     ins_place='MH'
-
-        
-        # if ins_id[2:4]=='00':
-        #     ins_role='ADM'
-        # elif ins_id[2:4]=='01':
-        #     ins_role='INS'
-        # else:
-        #     ins_role='INS'
-
-        # ins_id=ins_place+ins_role+ins_id[4:]
 
 
 
         with conn.cursor(cursor=pymysql.cursors.DictCursor) as cursor:
-<<<<<<< HEAD
             print('matching login information...')
-=======
->>>>>>> wx_prg
             try:
                 #通过手机号码读取ID
                 sql='select ins_id,ins_name from ins_table where mobile=%s'
                 cursor.execute(sql,(mobile))
                 res=cursor.fetchone()
-<<<<<<< HEAD
-                # print(res)
-=======
                 print(res)
->>>>>>> wx_prg
                 if res:
                     ins_id=str(res['ins_id'])
                 else:
@@ -253,11 +240,7 @@ class MinghuService(Flask):
                 
                 cursor.execute(sql,(ins_id))
                 res=cursor.fetchone()
-<<<<<<< HEAD
                 # print('226',res)
-=======
-                print('226',res)
->>>>>>> wx_prg
                 if res:
                     salt=str(res['salt'])
                     pwd=hashlib.sha256((pwd + salt).encode()).hexdigest()
@@ -279,7 +262,39 @@ class MinghuService(Flask):
             except Exception as e:
                 print(e)
                 return jsonify({'res':'failed'})
-            
+
+    def get_cards(self):
+        print('get valid cards')
+        data=request.json
+        cus_id=data['cus_id_name'][:7]
+
+        conn=self.connect_mysql()
+        cursor=conn.cursor()
+        #获取该会员上课次数
+        sql='select count(card_id) as tkn_qty from cls_tkn_rec_table where cus_id=%s'
+        cursor.execute(sql,cus_id)
+        qty=cursor.fetchone()[0]
+        
+        today=datetime.datetime.now().strftime('%Y-%m-%d')
+
+
+        sql='''
+        select card_id,card_type,card_name,cls_qty,card_start_time,prd,end_time,cmt from
+        cards_table 
+        where card_id in (select card_id from cardholder_card_table where cus_id=%s) and cls_qty>=%s and end_time>=%s;
+
+        '''
+        try:
+            cursor.execute(sql,(cus_id,qty,today))
+            res=cursor.fetchall()
+            print(res)
+
+            return {'res':'ok','valid_cards':res}
+        except:
+            print('get cards id failed')
+            return {'res':'failed'}
+
+
 
     def logout(self):
         session.pop('user',None)
@@ -398,7 +413,7 @@ class MinghuService(Flask):
     def write_trial_rec(self):
         try:
             data=request.json
-            fn=os.path.join(self.config_mh['work_dir'],'03-教练管理','体验课上课记录表.xlsx')
+            fn=os.path.join(self.config_lz['work_dir'],'03-教练管理','体验课上课记录表.xlsx')
             df_old=pd.read_excel(fn,sheet_name='体验课上课记录表')
             df_old.dropna(subset=['体验客户姓名'],inplace=True)
 
@@ -485,7 +500,7 @@ class MinghuService(Flask):
 
     def get_trial_list(self):
         
-        df_trial=pd.read_excel(os.path.join(self.config_mh['work_dir'],'03-教练管理','体验课上课记录表.xlsx'),sheet_name='体验课上课记录表')
+        df_trial=pd.read_excel(os.path.join(self.config_lz['work_dir'],'03-教练管理','体验课上课记录表.xlsx'),sheet_name='体验课上课记录表')
         df_trial.dropna(subset=['体验客户姓名'],inplace=True)
         df_trial.fillna('',inplace=True)
         df_trial['体验课日期']=df_trial['体验课日期'].apply(lambda x:self.date_to_string(x,'date'))
@@ -587,7 +602,7 @@ class MinghuService(Flask):
 
    
     def add_rec_to_start_class_table(self,dic):
-        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',dic['cusName'].strip()+'.xlsm')
+        fn=os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料',dic['cusName'].strip()+'.xlsm')
 
         df=pd.DataFrame(dic,index=[0])
         df=df[['buyCode','startDate','endDate']]
@@ -606,7 +621,7 @@ class MinghuService(Flask):
 
     
     def add_rec_in_aux_table(self,buy_code):
-        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',buy_code[:-8].strip()+'.xlsm')
+        fn=os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料',buy_code[:-8].strip()+'.xlsm')
         df_old=pd.read_excel(fn,sheet_name='辅助表')
         df_old=df_old[['未开课的购课编码']]
         df_old.dropna(how='any',inplace=True)
@@ -624,7 +639,7 @@ class MinghuService(Flask):
         return '限时课程写入辅助表成功'
 
     def delete_rec_in_aux_table(self,dic):
-        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',dic['cusName'].strip()+'.xlsm')
+        fn=os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料',dic['cusName'].strip()+'.xlsm')
         app=xw.App(visible=False)
         wb=app.books.open(fn)
         sht=wb.sheets['辅助表']
@@ -658,8 +673,8 @@ class MinghuService(Flask):
         try:
             data=request.json
             # print('写入身体数据：',data)
-            fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',data['cusName']+'.xlsm')
-            df_old=pd.read_excel(os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',data['cusName']+'.xlsm'),sheet_name='身体数据')
+            fn=os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料',data['cusName']+'.xlsm')
+            df_old=pd.read_excel(os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料',data['cusName']+'.xlsm'),sheet_name='身体数据')
             df_old.dropna(subset=['日期'],inplace=True)
             df_new=pd.DataFrame(data,index=[0])
 
@@ -695,11 +710,7 @@ class MinghuService(Flask):
             conn=self.connect_mysql()
             cursor=conn.cursor()
             cus_id,cus_name=data['cusName'][:7],data['cusName'][7:]
-<<<<<<< HEAD
             sql=f"select sex,birthday from cus_info_table where cus_id='{cus_id}' and cus_name='{cus_name}'"
-=======
-            sql=f"select sex,birthday from basic_info_table where cus_id='{cus_id}' and cus_name='{cus_name}'"
->>>>>>> wx_prg
             cursor.execute(sql)
             res=cursor.fetchall()
             sex=res[0][0]
@@ -768,7 +779,7 @@ class MinghuService(Flask):
     def get_body_history(self):
         cus_name=request.data.decode('utf-8')
         print(f'\n{cus_name}')
-        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name+'.xlsm')
+        fn=os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料',cus_name+'.xlsm')
         df_body=pd.read_excel(fn,sheet_name='身体数据')
         df_basic=pd.read_excel(fn,sheet_name='基本情况')
 
@@ -871,6 +882,7 @@ class MinghuService(Flask):
             cls_tkn_rec['cls_datetime']=cls_tkn_rec['cls_tkn_date']+' '+cls_tkn_rec['cls_tkn_time']
             cus_id=cls_tkn_rec['cus_id']
             cus_name=cls_tkn_rec['cus_name']
+            card_id=cls_tkn_rec['card_id']
             ins_id=cls_tkn_rec['ins_id']
             ins_name=cls_tkn_rec['ins_name']
             basic_cls_comment=cls_tkn_rec['basic_cls_comment']
@@ -879,16 +891,16 @@ class MinghuService(Flask):
             del cls_tkn_rec['cls_tkn_date']
             del cls_tkn_rec['cls_tkn_time']
 
-            cls_tkn_data_cols=['cus_id','cus_name','cls_datetime','cls_long','cls_type','ins_id','ins_name','basic_cls_comment','operator_id','operate_time']
+            cls_tkn_data_cols=['cus_id','cus_name','cls_datetime','cls_long','cls_type','card_id','ins_id','ins_name','basic_cls_comment','operator_id','operate_time']
             sorted_cls_tkn_data={key: cls_tkn_rec[key] for key in cls_tkn_data_cols} 
             values_cls_tkn=tuple(sorted_cls_tkn_data.values())
             
             
             sql_cls_tkn=f'''
                 insert into cls_tkn_rec_table
-                (cus_id,cus_name,cls_datetime,cls_long,cls_type,ins_id,ins_name,comment,operator_id,operate_time) 
+                (cus_id,cus_name,cls_datetime,cls_long,cls_type,card_id,ins_id,ins_name,comment,operator_id,operate_time) 
                 values 
-                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             '''
             cursor.execute(sql_cls_tkn,values_cls_tkn)
 
@@ -903,7 +915,7 @@ class MinghuService(Flask):
             train_items=train_data['train_recs']
 
             
-
+           
             oxy_items=[]
             non_oxy_items=[]
             for train_item in train_items:
@@ -917,14 +929,14 @@ class MinghuService(Flask):
                     muscle=cursor.fetchall()[0][0]
                     non_oxy_row.extend([train_datetime,cus_id,cus_name,muscle,action_name,train_item['nonOxyWt'],
                                             train_item['nonOxyDis'],train_item['nonOxyNum'],train_item['nonOxyGroup'],
-                                            calories,ins_id,ins_name,train_comment])
+                                            calories,card_id,ins_id,ins_name,train_comment])
                 if non_oxy_row:
                     non_oxy_row[-1]=non_oxy_row[-1] if non_oxy_row[-1] else None
                     non_oxy_items.append(non_oxy_row)
 
                 if train_item['oxyName']:                   
                     oxy_row.extend([train_datetime,cus_id,cus_name,train_item['oxyName'],train_item['oxyTime'],
-                                    train_item['oxyGroup'],calories,ins_id,ins_name,train_comment])
+                                    train_item['oxyGroup'],calories,card_id,ins_id,ins_name,train_comment])
                 if oxy_row:
                     oxy_row[-1]=oxy_row[-1] if oxy_row[-1] else None
                     oxy_items.append(oxy_row)
@@ -943,19 +955,21 @@ class MinghuService(Flask):
             
             # print(oxy_items,non_oxy_items)
 
+            #无氧训练写入
             non_oxy_train_sql=f'''
                 insert into train_nonoxy_rec_table 
-                (train_datetime,cus_id,cus_name,muscle,non_oxy_name,non_oxy_wt,non_oxy_dis,non_oxy_num,non_oxy_group,calories,ins_id,ins_name,comment) 
+                (train_datetime,cus_id,cus_name,muscle,non_oxy_name,non_oxy_wt,non_oxy_dis,non_oxy_num,non_oxy_group,calories,card_id,ins_id,ins_name,comment) 
                 values 
-                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
             '''
             cursor.executemany(non_oxy_train_sql,non_oxy_items)
             
+            #有氧训练写入
             oxy_train_sql=f'''
                 insert into train_oxy_rec_table 
-                (train_datetime,cus_id,cus_name,oxy_name,oxy_time,oxy_group,calories,ins_id,ins_name,comment) 
+                (train_datetime,cus_id,cus_name,oxy_name,oxy_time,oxy_group,calories,card_id,ins_id,ins_name,comment) 
                 values 
-                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);
 
             '''
             cursor.executemany(oxy_train_sql,oxy_items)
@@ -983,7 +997,7 @@ class MinghuService(Flask):
     def write_cls_tkn(self,dic_tkn):
         # print(dic_tkn)
         try:
-            fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',dic_tkn['cus_name']+'.xlsm')
+            fn=os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料',dic_tkn['cus_name']+'.xlsm')
             df_tkn=pd.DataFrame(dic_tkn,index=[0])
             df_tkn=df_tkn[['cls_tkn_date','cls_tkn_time','cls_long','cls_type','ins_name','basic_cls_comment']]
             df_old=pd.read_excel(fn,sheet_name='上课记录')
@@ -1012,7 +1026,7 @@ class MinghuService(Flask):
         print(dic['train_rec']['train_recs'])
         cus_name,ins_name=basic_cls_info['cus_name'],basic_cls_info['ins_name']
         # print(dic)
-        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name+'.xlsm')
+        fn=os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料',cus_name+'.xlsm')
         # print(dic['train_rec'])
     
         
@@ -1101,7 +1115,7 @@ class MinghuService(Flask):
 
     def wecom_dir(self):
         # fn=os.path.join(os.path.dirname(__file__),'config','wecom_dir.config')        
-        res=os.path.join(self.config_mh['work_dir'].strip(),'01-会员管理','会员资料')
+        res=os.path.join(self.config_lz['work_dir'].strip(),'01-会员管理','会员资料')
         return res
 
     def get_cus_buy(self):
@@ -1110,7 +1124,7 @@ class MinghuService(Flask):
         
         # print(fn)
         try:
-            fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
+            fn=os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
             df=pd.read_excel(fn,sheet_name='购课表')
             df['收款次数']=1
             # df_gp=df.groupby('购课编码')
@@ -1175,7 +1189,7 @@ class MinghuService(Flask):
 
     def get_cus_buy_list(self,cus_name):
         # cus_name=request.data.decode('utf-8')
-        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
+        fn=os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
         df=pd.read_excel(fn,sheet_name='购课表')
         # dic_buy=df.to_dict()
         # dic_res=self.dic_format(dic=dic_buy,order_name='收款日期')
@@ -1183,7 +1197,7 @@ class MinghuService(Flask):
         return df
 
     def  get_limit_class_records(self,cus_name):
-        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
+        fn=os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
         df=pd.read_excel(fn,sheet_name='限时课程记录')
 
         df.fillna('',inplace=True)
@@ -1191,7 +1205,7 @@ class MinghuService(Flask):
 
     def get_not_start_lmt_list(self,cus_name):
         # cus_name=request.data.decode('utf-8')
-        fn=os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
+        fn=os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料',cus_name.strip()+'.xlsm')
         df=pd.read_excel(fn,sheet_name='辅助表')
         df_not_start=df['未开课的购课编码']
         df_not_start.dropna(inplace=True)
@@ -1273,14 +1287,15 @@ class MinghuService(Flask):
 
     def deal_start_limit_page_db(self):
         print('get buy history via deal_start_limit_page_db()')
-        cus_id_name=request.data.decode('utf-8')
-        # print(cus_id_name)
+        data=request.json
+        cus_id_name=data['cus_name']
+        cls_tkn_time=datetime.datetime.strptime(data['cls_tkn_time'],'%Y-%m-%dT%H:%M')
         cus_id,cus_name=cus_id_name[:7],cus_id_name[7:]
         conn=self.connect_mysql() 
         cursor=conn.cursor()
 
         # not_start_list
-        sql=f"select * from buy_rec_table where buy_code in (SELECT buy_code from not_start_lmt_table WHERE cus_id='{cus_id}' and cus_name='{cus_name}')"
+        sql=f"select * from buy_rec_table where card_id in (SELECT card_id from not_start_lmt_table WHERE cus_id='{cus_id}' and cus_name='{cus_name}')"
         cursor.execute(sql)
         not_start_list=cursor.fetchall()
         if not_start_list:
@@ -1318,20 +1333,123 @@ class MinghuService(Flask):
             limit_cls_recs={'id':'','cus_id':'','cus_name':'','购课编码':'','限时课程起始日':'','限时课程结束日':''}      
 
 
-        # maxdate_limit_cls_rec
-        sql=f"SELECT * FROM lmt_cls_rec_table WHERE cus_id='{cus_id}' and cus_name='{cus_name}' ORDER BY end_date desc limit 1"
-        cursor.execute(sql)
-        maxdate_limit_cls_rec=cursor.fetchall()
-        if maxdate_limit_cls_rec:
-            maxdate_limit_cls_rec=self.convert_mysql_data_to_string(maxdate_limit_cls_rec)
-            # maxdate_limit_cls_rec=['id','cus_id','cus_name','buy_code','start_date','end_date']
-            maxdate_limit_cls_rec_cols=['id','cus_id','cus_name','购课编码','限时课程起始日','限时课程结束日']
-            maxdate_limit_cls_rec=self.mysql_list_data_to_dic(data=maxdate_limit_cls_rec,mysql_cols=maxdate_limit_cls_rec_cols)  
-        else:
-            maxdate_limit_cls_rec={'0':{'id':'','cus_id':'','cus_name':'','购课编码':'','限时课程起始日':'','限时课程结束日':''}}   
+        # maxdate_limit_cls_rec ##old
+        # sql=f"SELECT * FROM lmt_cls_rec_table WHERE cus_id='{cus_id}' and cus_name='{cus_name}' ORDER BY end_date desc limit 1"
+        # cursor.execute(sql)
+        # maxdate_limit_cls_rec=cursor.fetchall()
+        # if maxdate_limit_cls_rec:
+        #     maxdate_limit_cls_rec=self.convert_mysql_data_to_string(maxdate_limit_cls_rec)
+        #     # maxdate_limit_cls_rec=['id','cus_id','cus_name','buy_code','start_date','end_date']
+        #     maxdate_limit_cls_rec_cols=['id','cus_id','cus_name','购课编码','限时课程起始日','限时课程结束日']
+        #     maxdate_limit_cls_rec=self.mysql_list_data_to_dic(data=maxdate_limit_cls_rec,mysql_cols=maxdate_limit_cls_rec_cols)  
+        # else:
+        #     maxdate_limit_cls_rec={'0':{'id':'','cus_id':'','cus_name':'','购课编码':'','限时课程起始日':'','限时课程结束日':''}}   
+
+        # maxdate_limit_cls_rec限时私教课
+        # sql='''
+        # SELECT card_id,max(end_time) FROM cards_table 
+        # where card_id in (select card_id from cardholder_card_table where cus_id=%s)
+        # and card_type='limit_prd'
+        # and card_name='私教' 
+        # and end_time>=%s
+        # group by card_id;
+        # '''
 
 
-        return jsonify({'not_start_list':not_start_list,'buy_list':buy_list,'limit_cls_recs':limit_cls_recs,'maxdate_limit_class_rec':maxdate_limit_cls_rec})
+        sql='''
+        SELECT 
+            filtered_a.card_id, max(cards_table.end_time) as end_time,
+            sum(cards_table.cls_qty) - IFNULL(b_count.times, 0) as remain_qty
+        FROM (
+            SELECT DISTINCT card_id 
+            FROM cards_table
+            WHERE card_id IN (
+                SELECT card_id
+                FROM cardholder_card_table
+                WHERE cus_id=%s
+            )
+            AND card_type=%s
+            AND card_name=%s
+            AND end_time>=%s
+        ) AS filtered_a
+        LEFT JOIN (
+            SELECT card_id, COUNT(card_id) as times
+            FROM cls_tkn_rec_table
+            GROUP BY card_id
+        ) AS b_count ON filtered_a.card_id = b_count.card_id 
+        LEFT JOIN cards_table ON filtered_a.card_id = cards_table.card_id
+        GROUP BY filtered_a.card_id
+        '''
+        
+        try:
+            cursor.execute(sql,(cus_id,'limit_prd','私教',cls_tkn_time))
+            card_id_lmt_sj,maxdate_limit_class_sj,lmt_sj_cls_remain=cursor.fetchone()
+        except:
+             card_id_lmt_sj=maxdate_limit_class_sj=lmt_sj_cls_remain=None
+
+        # maxdate_limit_cls_rec限时团课
+        sql='''
+        SELECT card_id,max(end_time) FROM cards_table 
+        where card_id in (select card_id from cardholder_card_table where cus_id=%s)
+        and card_type='limit_prd'
+        and card_name='团课'
+        and end_time>=%s
+        group by card_id;
+        '''
+        cursor.execute(sql,(cus_id,cls_tkn_time))
+        try:
+            card_id_lmt_grp,maxdate_limit_class_grp=cursor.fetchone()
+        except:
+            card_id_lmt_grp=maxdate_limit_class_grp=None
+
+
+
+        # normal card id 普通卡
+        # 普通卡卡号
+        # sql='''
+        # SELECT DISTINCT card_id FROM cards_table 
+        # where card_id in (select card_id from cardholder_card_table where cus_id=%s)
+        # and card_type='long_prd'
+        # and card_name='私教'
+        # and end_time>=%s
+        # '''
+
+        sql='''
+            SELECT 
+                filtered_a.card_id, max(cards_table.end_time) as end_time,
+                sum(cards_table.cls_qty) - IFNULL(b_count.times, 0) as remain_qty
+            FROM (
+                SELECT DISTINCT card_id 
+                FROM cards_table
+                WHERE card_id IN (
+                    SELECT card_id
+                    FROM cardholder_card_table
+                    WHERE cus_id=%s
+                )
+                AND card_type=%s
+                AND card_name=%s
+                AND end_time>=%s
+            ) AS filtered_a
+            LEFT JOIN (
+                SELECT card_id, COUNT(card_id) as times
+                FROM cls_tkn_rec_table
+                GROUP BY card_id
+            ) AS b_count ON filtered_a.card_id = b_count.card_id 
+            LEFT JOIN cards_table ON filtered_a.card_id = cards_table.card_id
+            GROUP BY filtered_a.card_id
+        '''
+        cursor.execute(sql,(cus_id,'long_prd','私教',cls_tkn_time))
+        cards_id_cgsj=cursor.fetchall()     
+
+        return jsonify({'not_start_list':not_start_list,
+                        'buy_list':buy_list,
+                        'limit_cls_recs':limit_cls_recs,
+                        'maxdate_limit_class_sj':maxdate_limit_class_sj,
+                        'limit_prd_card_id_sj':card_id_lmt_sj,
+                        'maxdate_limit_class_grp':maxdate_limit_class_grp,
+                        'limit_prd_card_id_grp':card_id_lmt_grp,
+                        'lmt_sj_cls_remain':lmt_sj_cls_remain,
+                        'long_prd_sj_card_ids':cards_id_cgsj})
         
     
 
@@ -1377,7 +1495,7 @@ class MinghuService(Flask):
         return result
 
     def read_template(self):
-        df=pd.read_excel(os.path.join(self.config_mh['work_dir'],'01-会员管理','模板.xlsm'),sheet_name='辅助表')
+        df=pd.read_excel(os.path.join(self.config_lz['work_dir'],'01-会员管理','模板.xlsm'),sheet_name='辅助表')
         df_cls_types=df[['购课类型']].copy().dropna()
         cls_types=df_cls_types['购课类型'].tolist()
         
@@ -1393,7 +1511,7 @@ class MinghuService(Flask):
     def write_buy_date_to_trial_table(self,formal_cus_name,first_buy_date):
         print('写入体验表：',formal_cus_name,first_buy_date)
         try:
-            fn=os.path.join(self.config_mh['work_dir'],'03-教练管理','体验课上课记录表.xlsx')
+            fn=os.path.join(self.config_lz['work_dir'],'03-教练管理','体验课上课记录表.xlsx')
             app=xw.App(visible=False)
             wb=app.books.open(fn)
             sht=wb.sheets['体验课上课记录表']
@@ -1415,7 +1533,7 @@ class MinghuService(Flask):
             return '写入体验课表错误：'+e
     
     def write_buy(self):
-        wk_dir=self.config_mh['work_dir']
+        wk_dir=self.config_lz['work_dir']
         dat=request.json
         for key,value in dat.items():
             try:
@@ -1454,13 +1572,13 @@ class MinghuService(Flask):
 
     def write_buy_db(self):
         try:
-            wk_dir=self.config_mh['work_dir']
+            wk_dir=self.config_lz['work_dir']
             dat=request.json
             dat['cus_id']=dat['客户编码及姓名'][:7].strip()
             dat['cus_name']=dat['客户编码及姓名'][7:].strip()
             
             del dat['客户编码及姓名']
-            data_cols=['cus_id','cus_name','收款日期', '客户购课编号','购课类型','购课节数', '购课时长（天）', '应收金额', '实收金额', '收款人', '收入类别', '备注','operatorId','operateTime']
+            data_cols=['cus_id','cus_name','收款日期', '购课卡号','购课类型','购课节数', '购课时长（天）', '应收金额', '实收金额', '收款人', '收入类别', '备注','operatorId','operateTime']
             sorted_data={key: dat[key] for key in data_cols}
             values=tuple(sorted_data.values())
 
@@ -1469,61 +1587,116 @@ class MinghuService(Flask):
             
             conn.begin()
 
-            sql=f'''
+            #写入购课表
+            sql='''
                 insert into buy_rec_table
-                (cus_id,cus_name,buy_date,buy_code,buy_type,buy_num,buy_cls_days,pay,real_pay,cashier_name,income_type,comment,operator_id,operate_time)
+                (cus_id,cus_name,buy_date,card_id,buy_type,buy_num,buy_cls_days,pay,real_pay,cashier_name,income_type,comment,operator_id,operate_time)
                 values
                 (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             '''
-
             cursor.execute(sql,values)
+            
+            #写入卡表
+            sql='''
+                insert into cards_table
+                (card_id,card_type,card_name,cls_qty,card_start_time,prd,end_time,cmt)
+                values
+                (%s,%s,%s,%s,%s,%s,%s,%s)
+            '''
+
+            if dat['购课类型']=='限时私教课' or dat['购课类型']=='限时团课':
+                s_time=None
+                end_time=None
+            elif dat['购课类型']=='常规私教课' or dat['购课类型']=='常规团课':
+                s_time=dat['收款日期']
+                e_time=datetime.datetime.strptime(s_time,'%Y-%m-%d')+datetime.timedelta(days=int(dat['购课时长（天）']))
+                end_time=e_time.strftime('%Y-%m-%d')
+
+            values=(dat['购课卡号'],self.config_lz['cls_type_config'][dat['购课类型']]['type'],
+                        self.config_lz['cls_type_config'][dat['购课类型']]['name'],dat['购课节数'],
+                        s_time,dat['购课时长（天）'],end_time,dat['备注'])
+            cursor.execute(sql,values)
+
+            #写入持卡人-卡表
+            sql='''
+                select card_id from cardholder_card_table
+                where cus_id=%s
+            '''
+            cursor.execute(sql,dat['cus_id'])
+            hasIds=cursor.fetchall()
+            has_ids=[]
+            for id in hasIds:
+                if id[0] not in has_ids:
+                    has_ids.append(id[0])
+            print('hasIds:',has_ids)
+            if dat['cus_id'] in has_ids:
+                pass
+            else:
+                try:
+                    values=(dat['cus_id'],dat['购课卡号'],datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),'')
+                    sql='''
+                        insert into cardholder_card_table 
+                        (cus_id,card_id,relation_time,cmt)
+                        values
+                        (%s,%s,%s,%s)
+                    '''
+                    cursor.execute(sql,values)
+                except:
+                    print('insert into cardholder_card_table error')
+                    raise FERROR 
+
+
+            conn.commit()
+
+            
             cus_name=sorted_data['cus_name']
             res_txt=f'{cus_name} 增加一条购课记录'
 
-
-            if sorted_data['购课类型'] in ['限时私教课','限时团课']:
-                try:
-                    sql=f'''
-                        insert into not_start_lmt_table
-                        (cus_id,cus_name,buy_code)
-                        values
-                        (%s,%s,%s)
-                    '''
-                    cursor.execute(sql,[sorted_data['cus_id'],sorted_data['cus_name'],sorted_data['客户购课编号']])
-                    res_txt=f'; {cus_name} 未开课的限时课程记录增加成功'
-                except Exception as start_lmt_error:                    
-                    res_txt=f' \n{cus_name} 未开课限时课程记录未增加成功:\n可能是同一天购课导致的重复购课编码。'
-                    print(f'ERROR: {cus_name} 未开课限时课程记录未增加成功：{start_lmt_error}')
-                    raise FERROR('未开课限时课程记录未增加成功，可能是同一天购课导致的重复购课编码。')
+            # if sorted_data['购课类型'] in ['限时私教课','限时团课']:
+            #     try:
+            #         sql=f'''
+            #             insert into not_start_lmt_table
+            #             (cus_id,cus_name,buy_code)
+            #             values
+            #             (%s,%s,%s)
+            #         '''
+            #         cursor.execute(sql,[sorted_data['cus_id'],sorted_data['cus_name'],sorted_data['客户购课编号']])
+            #         res_txt=f'; {cus_name} 未开课的限时课程记录增加成功'
+            #     except Exception as start_lmt_error:                    
+            #         res_txt=f' \n{cus_name} 未开课限时课程记录未增加成功:\n可能是同一天购课导致的重复购课编码。'
+            #         print(f'ERROR: {cus_name} 未开课限时课程记录未增加成功：{start_lmt_error}')
+            #         raise FERROR('未开课限时课程记录未增加成功，可能是同一天购课导致的重复购课编码。')
             
-            conn.commit()
-            cursor.close()
-            conn.close()
+            
+            
             
             return jsonify({'res':'ok','msg':res_txt})
         except Exception as e:
             conn.rollback()
             print('wirte_buy_db() error, rollbacked!', e)
             return jsonify({'res':'failed','msg':res_txt})
+        finally:
+            cursor.close()
+            conn.close()
 
 
     def cus_list(self):
         dic_li=[]
-        for fn in os.listdir(os.path.join(self.config_mh['work_dir'],'01-会员管理','会员资料')):
+        for fn in os.listdir(os.path.join(self.config_lz['work_dir'],'01-会员管理','会员资料')):
             if re.match(r'^MH\d{3}.*.xlsm$',fn):
                 dic_li.append(fn.split('.')[0])
         return dic_li
 
 
     def ins_list(self):
-        fn=os.path.join(self.config_mh['work_dir'],'03-教练管理','教练资料','教练信息.xlsx')
+        fn=os.path.join(self.config_lz['work_dir'],'03-教练管理','教练资料','教练信息.xlsx')
         df=pd.read_excel(fn,sheet_name='教练信息')
         ins_li=df['姓名'].tolist()
 
         return ins_li
 
     def  get_train_dic(self):
-        fn=os.path.join(self.config_mh['work_dir'],'05-专业资料','训练项目.xlsx')
+        fn=os.path.join(self.config_lz['work_dir'],'05-专业资料','训练项目.xlsx')
         df=pd.read_excel(fn,sheet_name='训练项目')
         df.fillna('',inplace=True)
         
@@ -1586,7 +1759,7 @@ class MinghuService(Flask):
 
 
     def  get_train_list_db(self):
-        # fn=os.path.join(self.config_mh['work_dir'],'05-专业资料','训练项目.xlsx')
+        # fn=os.path.join(self.config_lz['work_dir'],'05-专业资料','训练项目.xlsx')
         # df=pd.read_excel(fn,sheet_name='训练项目')
         # df.fillna('',inplace=True)
         print('from minghu database,get train item list.')
@@ -1670,7 +1843,7 @@ class MinghuService(Flask):
 
 
     def  get_train_list(self):
-        fn=os.path.join(self.config_mh['work_dir'],'05-专业资料','训练项目.xlsx')
+        fn=os.path.join(self.config_lz['work_dir'],'05-专业资料','训练项目.xlsx')
         df=pd.read_excel(fn,sheet_name='训练项目')
         df.fillna('',inplace=True)
         
@@ -1793,11 +1966,7 @@ class MinghuService(Flask):
         result={}
 
         # 获取收款人
-<<<<<<< HEAD
         sql="select concat(cus_id,cus_name) from cus_info_table"
-=======
-        sql="select concat(cus_id,cus_name) from basic_info_table"
->>>>>>> wx_prg
         cursor.execute(sql)
         cus_list_res = cursor.fetchall()
         cus_list=[x[0] for x in cus_list_res]
@@ -1871,7 +2040,7 @@ class MinghuService(Flask):
         work_dir=self.wecom_dir()
         fn=os.path.join(work_dir,cus_name+'.xlsm')
         p=cus_data.CusData()
-        res=p.cus_cls_rec_toweb(fn=fn,cls_types=self.config_mh['all_cls_types'],not_lmt_types=self.config_mh['not_lmt_cls_types'])
+        res=p.cus_cls_rec_toweb(fn=fn,cls_types=self.config_lz['all_cls_types'],not_lmt_types=self.config_lz['not_lmt_cls_types'])
         res.fillna(0)
         data=res.iloc[0].to_dict()
         # print('get_cus_info() ',data)
@@ -1888,27 +2057,47 @@ class MinghuService(Flask):
 
         result['会员编码及姓名']=cus_id_name
 
+        #限时课程不能转让，用cus_id查询上课的节数
+        #常规课程可以转让或共享，用card_id查询上课的节数
+
         # 限时课程到期日
         # sql=f"select max(end_date) from lmt_cls_rec_table WHERE cus_name={cus_name} and cus_id={cus_id}"
-        sql=f"select end_date from lmt_cls_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' order by end_date desc limit 1 "
-        cursor.execute(sql)
-        maxdate_limit_cls_get = cursor.fetchall()
-        if maxdate_limit_cls_get:
-            max_date=maxdate_limit_cls_get[0][0]
-            max_date=max_date.strftime('%Y-%m-%d')
-        else:
-            max_date='-'
+        # sql=f"select end_date from lmt_cls_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' order by end_date desc limit 1 "
+        # cursor.execute(sql)
+        # maxdate_limit_cls_get = cursor.fetchall()
+        # if maxdate_limit_cls_get:
+        #     max_date=maxdate_limit_cls_get[0][0]
+        #     max_date=max_date.strftime('%Y-%m-%d')
+        # else:
+        #     max_date='-'
+        
+        # sql=f"select end_date from lmt_cls_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' order by end_date desc limit 1 "
+        # cursor.execute(sql)
 
-        result['限时课程到期日']=max_date
+        sql=f'''
+        select card_id,max(end_time) as max_lmt_time from cards_table 
+        where card_id in (select card_id from cardholder_card_table where cus_id=%s) and card_type='limit_prd' GROUP by card_id
+
+        '''
+        cursor.execute(sql,cus_id)
+        try:
+            max_date=cursor.fetchone()[1]
+            print('max_date',max_date)  
+        except:
+            max_date='' 
 
         # 限时课程是否有效
-        if maxdate_limit_cls_get:
-            if datetime.datetime.now().date()<=maxdate_limit_cls_get[0][0]:
+        if max_date:
+            if datetime.datetime.now().date()<=max_date:
                 result['限时课程是否有效']='是'
             else:
                 result['限时课程是否有效']='否'
         else:
             result['限时课程是否有效']='否'
+
+        if not max_date:
+            max_date='-'
+        result['限时课程到期日']=max_date
 
 
         #总消费金额
@@ -2005,9 +2194,16 @@ class MinghuService(Flask):
 
         result['上课次数-限时私教课']=cls_tkn_count_lmt_sj
 
-        #上课次数-常规私教课
-        sql=f"select count(cls_datetime) as cls_tkn_count from cls_tkn_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and cls_type='常规私教课'"
-        cursor.execute(sql)
+        #上课次数-常规私教课，通过cus_id查询到card_id，再查询card_id在cls_tkn_rec_table中的节数（次数）
+        # sql=f"select count(cls_datetime) as cls_tkn_count from cls_tkn_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and cls_type='常规私教课'"
+        sql='''
+            select count(card_id) from cls_tkn_rec_table 
+            where card_id in (select card_id from cards_table 
+                                where card_id in (select card_id from cardholder_card_table where cus_id=%s) 
+                                and card_type='long_prd' 
+                                and card_name='私教')
+        '''
+        cursor.execute(sql,cus_id)
         cls_tkn_count_cg_sj=cursor.fetchall()
         cls_tkn_count_cg_sj=cls_tkn_count_cg_sj[0][0]
         if not cls_tkn_count_cg_sj:
@@ -2078,10 +2274,17 @@ class MinghuService(Flask):
 
         ###########################################
         #购课节数-常规私教课
-        sql=f"select sum(buy_num) from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='常规私教课'"
-        cursor.execute(sql)
-        buy_num_cg_sj=cursor.fetchall()
-        buy_num_cg_sj=buy_num_cg_sj[0][0]
+        # sql=f"select sum(buy_num) from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='常规私教课'"
+        sql='''
+        select sum(cls_qty) from cards_table 
+        WHERE card_id in  (select card_id from cardholder_card_table where cus_id=%s) 
+        and card_name='私教' 
+        and card_type='long_prd';
+
+        '''
+        cursor.execute(sql,cus_id)
+        buy_num_cg_sj=cursor.fetchone()[0]
+        # buy_num_cg_sj=buy_num_cg_sj[0]
         if not buy_num_cg_sj:
             buy_num_cg_sj=0
 
@@ -2090,10 +2293,16 @@ class MinghuService(Flask):
 
 
         #购课节数-常规团课
-        sql=f"select sum(buy_num) from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='常规团课'"
-        cursor.execute(sql)
-        buy_num_cg_grp=cursor.fetchall()
-        buy_num_cg_grp=buy_num_cg_grp[0][0]
+        # sql=f"select sum(buy_num) from buy_rec_table WHERE cus_name='{cus_name}' and cus_id='{cus_id}' and buy_type='常规团课'"
+        sql='''
+        select sum(cls_qty) from cards_table 
+        WHERE card_id in  (select card_id from cardholder_card_table where cus_id=%s) 
+        and card_name='团课' 
+        and card_type='long_prd';
+
+        '''
+        cursor.execute(sql,cus_id)
+        buy_num_cg_grp=cursor.fetchone()[0]
         if not buy_num_cg_grp:
             buy_num_cg_grp=0
 
@@ -2163,6 +2372,85 @@ class MinghuService(Flask):
         conn.close()
 
         return jsonify(result)
+    
+    def get_cus_cards_by_type(self):
+        print('get card ids by type....')
+        data=request.json
+        cus_id=data['cus_id_name'][:7]
+        cus_name=data['cus_id_name'][7:]
+        buy_type=data['buy_type']
+        buy_date=data['buy_date']
+
+        if buy_type=='':
+            buy_type='限时私教课'
+        
+        
+        cls_type=self.config_lz['cls_type_config'][buy_type]['type']        
+        cls_name=self.config_lz['cls_type_config'][buy_type]['name']
+
+        print(cls_type,cls_name)
+
+        conn=self.connect_mysql()
+        cursor=conn.cursor()
+        
+        try:
+            #长期常规课程
+            if cls_type=='long_prd':                
+                sql='''
+                    select distinct card_id from cards_table 
+                    where card_id in (select card_id from cardholder_card_table where cus_id=%s)
+                    and card_type=%s
+                    and card_name=%s
+                    and card_start_time<=%s 
+                    and end_time>=%s
+                '''
+                cursor.execute(sql,(cus_id,cls_type,cls_name,buy_date,buy_date))
+                res=cursor.fetchall()
+                if res:
+                    pass
+                #如果不存在卡号，新生成卡号
+                else:
+                    print('get no cus card id,generate new long_prd card id')
+                    cr_time=datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+                    new_card_id=self.config_lz['cus_id_prefix']+'C'+cr_time
+                    res=[new_card_id]
+            #限时课程
+            elif cls_type=='limit_prd':
+                # sql='''
+                #     select card_id from cards_table 
+                #     where card_id in (select card_id from cardholder_card_table where cus_id=%s)
+                #     and card_type=%s
+                #     and card_name=%s
+                #     and card_start_time<=%s 
+                #     and end_time>=%s
+                # '''
+                # cursor.execute(sql,(cus_id,cls_type,cls_name,buy_date,buy_date))
+                # res=cursor.fetchall()
+                # if res:
+                #     pass
+                # #如果不存在卡号，新生成卡号
+                # else:
+                #     print('get no cus card id,generate new long_prd card id')
+                #     cr_time=datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+                #     new_card_id=self.config_lz['cus_id_prefix']+'L'+cr_time
+                #     res=[new_card_id]
+
+                cr_time=datetime.datetime.now().strftime('%Y%m%d%H%M%S')    
+                new_card_id=self.config_lz['cus_id_prefix']+'L'+cr_time
+                res=[new_card_id]
+                
+
+            return jsonify({'res':'ok','card_ids':res})
+
+        except Exception as e:
+            print('get cus card ids failed: ',e)
+            return jsonify({'res':'failed'})
+        finally:
+            cursor.close()
+            conn.close()
+
+
+        
 
     def get_lst_body_history_db(self,cus_id_name,jsonify='yes'):
         if not cus_id_name:
@@ -2289,16 +2577,10 @@ class MinghuService(Flask):
                 return e
         
     def generate_new_db(self):
-        with self.app_lock:
+        with self.app_lock:            
             conn=self.connect_mysql()
             cursor=conn.cursor()
-<<<<<<< HEAD
-            # sql=f"select max(id) from cus_info_table"
             sql=f"SELECT max(cast(substring(cus_id,3) as UNSIGNED)) FROM cus_info_table;"
-=======
-            # sql=f"select max(id) from basic_info_table"
-            sql=f"SELECT max(cast(substring(cus_id,3) as UNSIGNED)) FROM basic_info_table;"
->>>>>>> wx_prg
             cursor.execute(sql)
             max_id=cursor.fetchall()[0][0]
             
@@ -2306,7 +2588,7 @@ class MinghuService(Flask):
             try:
                 dataRequest=request.json
      
-                fn='MH'+txt_num+dataRequest['cusName']
+                fn=self.cus_id_prefix+txt_num+dataRequest['cusName']
                 # fn='MH00220王测试|王测试|女|199008|小红书|pc'
                 data={}  
                 data['trial_cus_name']=dataRequest['trialCusName']
@@ -2315,7 +2597,7 @@ class MinghuService(Flask):
                 data['birthday']=dataRequest['birthDay']
                 data['source']=dataRequest['cusSource']
                 data['dvc']=dataRequest['dvc']
-                data['cus_id']='MH'+txt_num
+                data['cus_id']=self.cus_id_prefix+txt_num
                 data['cus_name']=dataRequest['cusName']
                 data['nick_name']=data['cus_name'] if len(data['cus_name'])<2 else data['cus_name'][1:]
                 data['birthday_type']='ymd'
@@ -2360,11 +2642,7 @@ class MinghuService(Flask):
                     cursor=conn.cursor()
                     #新增会员
                     sql=f'''
-<<<<<<< HEAD
                             insert into  cus_info_table (cus_id,cus_name,nick_name,sex,mobile_phone,birthday,birthday_type,source) 
-=======
-                            insert into  basic_info_table (cus_id,cus_name,nick_name,sex,mobile_phone,birthday,birthday_type,source) 
->>>>>>> wx_prg
                             values
                             (%s,%s,%s,%s,%s,%s,%s,%s)
                         '''
@@ -2411,7 +2689,7 @@ class MinghuService(Flask):
 
     def write_deal_cus_name_to_trial_table(self,formal_cus_name,trial_cus_name):
         try:
-            fn=os.path.join(self.config_mh['work_dir'],'03-教练管理','体验课上课记录表.xlsx')
+            fn=os.path.join(self.config_lz['work_dir'],'03-教练管理','体验课上课记录表.xlsx')
             app=xw.App(visible=False)
             wb=app.books.open(fn)
             sht=wb.sheets['体验课上课记录表']
