@@ -18,7 +18,7 @@
         <div id="openInsBlock">
         <h4>开课人
         <select id="insSelect">
-            <option value="">请选择</option>
+            
         </select>
         </h4>
         </div>
@@ -32,25 +32,28 @@
                 </h4>
             </div>
         
+            <div id="currentValidLmtCls"></div>
 
             <!-- <div id="buyHistoryPrompt"  style="display:none">选择相应的购课编码</div> -->
-            <select id="selectBuyCodeContainer" style="display:none" onchange="calculateClassDate()">        
-                <option value="">--请选择购课编码--</option>
+            <div id="selectCardBlock"><h4>请选择关联卡号 <select id="selectBuyCodeContainer" style="display:none"> 
+                <option value="">--请选择关联卡号--</option>
             </select>
-            
-            
-            
-
-            <div id='startDateBlock' style="display:none">
-                <h4>开课日期<input id="startDate" type="date" onchange="calculateClassDate(dateSameAsBuyCode='no')"> </h4>
+            </h4>
             </div>
-
+            
             <div id="clsLongBlock" style="display:none"><h4>购课时长：
                 <span id="clsLong"></span> 天</h4>
             </div>
+            
 
-            <div id='endDateBlock' style="display:none"><h4>结束日期<input id="endDate" type="date"></h4></div>
-            <div style="margin:10px;"></div>
+            <div id='startDateBlock' style="display:none">
+                <h4>开课日期<input id="startDate" type="date" > </h4>
+            </div>          
+
+            <div id='endDateBlock' style="display:none"><h4>结束日期<input id="endDate" type="date" ></h4></div>
+            <div id='endDatePrompt'></div>
+            <!-- <div style="margin:10px;"></div> -->
+            <br>
             <div id="showDealResult" style="display:none">正在处理……</div>
             <div id="prompt"></div>
             <hr>
@@ -72,6 +75,10 @@
         let insName;
         let insId;
         let insRole;
+        let isInValidEndDateHandler;
+        let isInValidEndDateNewHandler;
+        let isInValidStartDateHandler;
+        let clsQty={};
 
         // 使用DOMContentLoaded事件监听，在页面加载完成后触发获取数据的操作
         document.addEventListener("DOMContentLoaded", function() {   
@@ -134,117 +141,7 @@
         });
 
 
-        function showClsLongBlock(clsLong){
-            const clsLongBlock=document.getElementById('clsLongBlock');
-            const classLong=document.getElementById('clsLong');
-            const selectBuyCode=document.getElementById('selectBuyCodeContainer').value;
-            if(clsLong){
-                clsLongBlock.style.display='block';
-                classLong.innerText=clsLong
-            }else{
-                clsLongBlock.style.display='none';
-            }
-            
-        }
-
-        function showCurrentClass(){
-            const  currentClass=document.getElementById('currentClass');
-            currentClass.style.display="none";
-            currentClass.innerHTML='';
-            console.log(valid_limit_class_rec);
-            
-            if(valid_limit_class_rec){
-
-                const validLimitClassRec=Object.keys(valid_limit_class_rec).map(key => ({                
-                    'validLimitClassRec':valid_limit_class_rec[key]
-                }));
-
-                console.log('validLimitClassRec:',validLimitClassRec);
-                //如果返回的有效限时课程的购课编多于1条
-                if(validLimitClassRec.length>=2){
-                    if(validLimitClassRec[0]['validLimitClassRec']['购课编码']!==''){
-                        currentClass.style.display="block";
-                        const currentBuyCode=validLimitClassRec[0]['validLimitClassRec']['购课编码'];
-                        const currentStartDate=validLimitClassRec[0]['validLimitClassRec']['限时课程起始日'];
-                        const currentEndDate=validLimitClassRec[0]['validLimitClassRec']['限时课程结束日'];
-
-                        const buyList=Object.keys(buy_list).map(key => (                
-                            buy_list[key]
-                            ));
-                        console.log('buyList',buyList)
-                        let currentClsLong;
-                        buyList.forEach(buyRecord=>{
-                            if(buyRecord['购课编码']===currentBuyCode){
-                                currentClsLong=buyRecord['购课时长（天）']
-                            }
-                        });
-                        const compareDate=new Date(currentEndDate)-new Date();
-                        let h4Title;
-                        if(compareDate<=0){
-                            h4Title='最近一次失效的限时课程';
-                        }else{
-                            //如果有多于一条，显示“目前有效”
-                            h4Title='目前有效的限时课程';
-                        }
-                        currentClass.innerHTML=`
-                        <div class="body-history-list" style="padding:8px;">
-                        <h4>${h4Title}</h4>
-                        <hr>
-                        <div><h5>购课编码: ${currentBuyCode}</h5></div>
-                        <div><h5>购课时长: ${currentClsLong}</h5></div>
-                        <div ><h5>生效日期: ${dateToString(currentStartDate,'date')}</h5></div>
-                        <div id='latestValidEndDate'><h5>结束日期: ${dateToString(currentEndDate,'date')}</h5></div>
-                        </div>
-                        `
-                    }else{
-                        currentClass.style.display="none";
-                    }
-                    
-                }else{
-                    if(validLimitClassRec[0]['validLimitClassRec']['购课编码']!==''){
-                        currentClass.style.display="block";               
-                        const currentBuyCode=latest_limit_class_rec[0]['购课编码'];
-                        const currentStartDate=latest_limit_class_rec[0]['限时课程起始日'];
-                        const currentEndDate=latest_limit_class_rec[0]['限时课程结束日'];
-
-                        const buyList=Object.keys(buy_list).map(key => (                
-                            buy_list[key]
-                            ));
-                        console.log('buyList',buyList)
-                        let currentClsLong;
-                        buyList.forEach(buyRecord=>{
-                            if(buyRecord['购课编码']===currentBuyCode){
-                                currentClsLong=buyRecord['购课时长（天）']
-                            }
-                        });
-                        //如果只有一条，显示“最近一次生效课程”
-                        const compareDate=new Date(currentEndDate)-new Date();
-                        let h4Title;
-                        if(compareDate<=0){
-                            h4Title='最近一次失效的限时课程';
-                        }else{
-                            //如果有多于一条，显示“目前有效”
-                            h4Title='目前有效的限时课程';
-                        }
-                        currentClass.innerHTML=`
-                        <div class="body-history-list" style="padding:8px;">                
-                        <h4>${h4Title}</h4>
-                        <hr>
-                        <div><h5>购课编码: ${currentBuyCode}</h5></div>
-                        <div><h5>购课时长: ${currentClsLong}</h5></div>
-                        <div><h5>生效日期: ${dateToString(currentStartDate,'date')}</h5></div>
-                        <div id='latestValidEndDate'><h5>结束日期: ${dateToString(currentEndDate,'date')}</h5></div>
-                        </div>
-                        `
-                    }else{
-                        currentClass.style.display="none";
-                    }             
-                }
-            }else{
-                currentClass.innerHTML='<div><h5>客户无既往限时课程记录</h5><div>';
-            }
-            
-        }
+        
 
         function checkSubmit(){
             const buyCode=document.getElementById('selectBuyCodeContainer').value;
@@ -252,14 +149,7 @@
             const endDate=document.getElementById('endDate').value;
             const startType=document.querySelector('input[name="startTypeRadio"]:checked').value;
             const insNameSelect=document.getElementById('insSelect').value;
-            if(startType==='延长'){
-                if(latest_limit_class_rec && latest_limit_class_rec[0]['购课编码']!==''){
-                    const compareDate=new Date(endDate)-new Date(latest_limit_class_rec[0]['限时课程结束日']);
-                    if(compareDate<=0){
-                        return '选择的结束日必须在目前有效的限时课程的结束日之后';
-                    }
-                }   
-            }else if(startType==='新课'){
+            if(startType==='新课'){
                 const compareDate=new Date(endDate)-new Date(startDate);
                     if(compareDate<=0){
                         return '选择的结束日必须在开始日之后';
@@ -281,6 +171,7 @@
         function submit(){
             const cusName=document.getElementById('cusNameInput').value;
             const checkValidResult=checkSubmit();
+            const startType=document.querySelector('input[name="startTypeRadio"]:checked').value;
             let insIdSend;
             if(checkValidResult==='OK'){
                 document.getElementById('showDealResult').style.display='block';
@@ -293,12 +184,15 @@
                 }
                 console.log(insId,document.getElementById('insSelect').value)
                 data={
-                    'cusName':cusName,
-                    'buyCode':document.getElementById('selectBuyCodeContainer').value,
-                    'startDate':document.getElementById('startDate').value,
-                    'endDate':document.getElementById('endDate').value,
-                    'insId':insIdSend,
-                    'operatorId':insId
+                    'cus_name_input':cusName,
+                    'card_id':document.getElementById('selectBuyCodeContainer').value,
+                    'start_date':document.getElementById('startDate').value,
+                    'end_date':document.getElementById('endDate').value,
+                    'ins_id':insIdSend,
+                    'opr_id':insId,
+                    'opr_type':startType,
+                    'prd':document.getElementById('clsLong').innerText,
+                    'cls_qty':clsQty[document.getElementById('selectBuyCodeContainer').value]
                 }
 
                 console.log(data);
@@ -322,43 +216,35 @@
             }else{
                 alert(checkValidResult)
             }
-            
-
-
         }
-
-        function getBuyList(cusName){
-            fetch('/get_cus_buy_list', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain'
-                    },
-                body:cusName
-                })
-                .then(response => response.json())
-                .then(data => {
-            //将data赋值给块变量cus_list，供后面的handleInput使用
-                console.log(data);
-                  })
-                .catch(error => console.error('Error:', error));
-        }
+   
+        function dateFormat(inputDate){
+            const dateString = inputDate;
+            const dateObj = new Date(dateString);
+            const formattedDate = dateObj.toISOString().split('T')[0];
+            return formattedDate
+        }        
 
         function getBuyCodeList(cusName=''){
             if(cusName===''){
                 cusName=document.getElementById('cusNameInput').value
             }
+            const selectCardBlock=document.getElementById('selectCardBlock');
             const selectBuyCodeContainer=document.getElementById('selectBuyCodeContainer');
             const buyHistoryPrompt=document.getElementById('buyHistoryPrompt');
             const startDateBlock=document.getElementById('startDateBlock');
             const endDateBlock=document.getElementById('endDateBlock');
+            const startDateSel=document.getElementById('startDate');
+            const endDateSel=document.getElementById('endDate');
             const clsLongBlock=document.getElementById('clsLongBlock');
-            
+            const clsLong=document.getElementById('clsLong');
+            clsLong.innerText='';
+            const currentValidLmtCls=document.getElementById('currentValidLmtCls');
+            currentValidLmtCls.innerText='';
             const prompt = document.getElementById('prompt');
             prompt.innerText='';
-            // if (startType===''){
-            
+            const endDatePrompt = document.getElementById('endDatePrompt');
             const startType=document.querySelector('input[name="startTypeRadio"]:checked').value;
-            // }
             const submitButton=document.getElementById('submit');
             submitButton.style.display='none';
             const currentClassResult=document.getElementById('currentClass')
@@ -369,280 +255,240 @@
             endDateBlock.style.display='none';
 
 
-            fetch('/deal_start_limit_page', {
+            fetch('/send_to_start_lmt_page_data', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'text/plain'
+                    'Content-Type': 'application/json'
                     },
-                body:cusName
+                body:JSON.stringify({'cus_name':cusName})
                 })
                 .then(response => response.json())
                 .then(data => {
-            //将data赋值给块变量cus_list，供后面的handleInput使用
-                console.log(data);
-                not_start_buy_code_list=data['not_start_list'];
-                buy_list=data['buy_list'];
-                limit_cls_recs=data['limit_cls_recs'];
-                latest_limit_class_rec=data['maxdate_limit_class_rec'];
-                const maxdate_limit_class_rec=data['maxdate_limit_class_rec'];
-                console.log('maxdate_limit_class_rec',maxdate_limit_class_rec)
-                if(Object.keys(maxdate_limit_class_rec).length>0 && maxdate_limit_class_rec[0]['cus_id']){
-                    const maxDateArr=Object.keys(maxdate_limit_class_rec).map(key => (maxdate_limit_class_rec[key]));
-                    console.log(maxDateArr)
-                    
-                    maxDateArr.forEach(maxDate=>{     
-                        const compareDate=new Date(maxDate['限时课程结束日'])-new Date();           
-                        //今天已超过结束日
-                        if(compareDate<0){
-                            if(startType==='新单'){
-                                valid_limit_class_rec='';
-                            }else{
-                                valid_limit_class_rec=maxdate_limit_class_rec;
+                    console.log(data)
+        
+                    if(data['res']==='ok'){
+                        //目前有限时有效课，有待开 or 有限时有效课，无待开 —— 均不可开新课，但可以延长
+                        if(data['current_valid_limit_rec'].length>0 && data['not_start_limit_recs'].length>0 || data['current_valid_limit_rec'].length>0 && data['not_start_limit_recs'].length===0){
+                            clsQty={};
+                            if(startType==='新课'){
+                                endDatePrompt.innerText='';
+                                currentValidLmtCls.innerText=`目前有限时课程生效\n卡号：${data['current_valid_limit_rec'][0][0]}，有效期至${dateFormat(data['current_valid_limit_rec'][0][3])}`;
+                                clsLongBlock.style.display='none';
+                                selectCardBlock.style.display='none';
+                                prompt.innerText='没有待开课的限时课程'
+                            }else if(startType==='延长'){
+                                selectCardBlock.style.display='block';
+                                selectBuyCodeContainer.style.display='block';
+                                startDateBlock.style.display='block';
+                                endDateBlock.style.display='block';
+                                currentClassResult.style.display='block';
+                                submitButton.style.display='block';
+                                clsLongBlock.style.display='block';
+                                clsLong.innerText=parseInt(data['current_valid_limit_rec'][0][2]);
+
+                                selectBuyCodeContainer.innerHTML='';                                
+                                const cardOpt=document.createElement('option');
+                                cardOpt.value=data['current_valid_limit_rec'][0][0];
+                                cardOpt.text=data['current_valid_limit_rec'][0][0];
+                                selectBuyCodeContainer.append(cardOpt);
+                                selectDate(data['current_valid_limit_rec'][0][1],'startDate','date');
+                                startDateSel.disabled=true;
+                                selectDate(data['current_valid_limit_rec'][0][3],'endDate','date');   
+                                clsQty[data['current_valid_limit_rec'][0][0]]=data['current_valid_limit_rec'][0][4]; 
+                                //验证结束日的有效性，为避免重复添加监听，先移除之前的监听器。
+                                //只有监听器保存在全局变量isInValidEndDateHandler的闭包中才能正确移除。
+                                if(isInValidEndDateHandler){
+                                    endDateSel.removeEventListener('change',isInValidEndDateHandler);
+                                }
+                                isInValidEndDateHandler = createEndDateHandler(data, 'current_valid_limit_rec');                                
+                                endDateSel.addEventListener('change',isInValidEndDateHandler);                                
+                                //手动触发change
+                                // selectBuyCodeContainer.dispatchEvent(new Event('change'));    
+                                // endDateSel.dispatchEvent(new Event('change'));  变量。                      
                             }
-                        //今天没有超过结束日    
-                        }else{
-                            valid_limit_class_rec=maxdate_limit_class_rec;
+                            
+                        //目前 无限时有效课，有待开——可开新课，不可延长
+                        }else if(data['current_valid_limit_rec'].length===0 & data['not_start_limit_recs'].length>0){
+                            clsQty={};
+                            if(startType==='新课'){
+                                prompt.innerText=''
+                                selectCardBlock.style.display='block';   
+                                selectBuyCodeContainer.style.display='block';           
+                                clsLongBlock.style.display='block';
+                                startDateBlock.style.display='block';
+                                endDateBlock.style.display='block';
+                                currentClassResult.style.display='block';
+                                submitButton.style.display='block';
+                                selectBuyCodeContainer.innerHTML='';
+                                let notStartClsInfo=[];
+                                let prds={};
+                                data['not_start_limit_recs'].forEach(rec=>{
+                                    const cardOpt=document.createElement('option');
+                                    cardOpt.value=rec[0];
+                                    cardOpt.text=rec[0];
+                                    selectBuyCodeContainer.append(cardOpt);
+                                    prds[rec[0]]=rec[2];
+                                    clsQty[rec[0]]=rec[4];
+                                    
+                                });
+
+                                
+                                selectBuyCodeContainer.addEventListener('change',function(){
+                                    const cardId=document.getElementById('selectBuyCodeContainer').value;        
+                                    for(i=0;i<data['not_start_limit_recs'].length;i++){
+                                        if(data['not_start_limit_recs'][i][0]===cardId){
+                                            const today=new Date();
+                                            selectDate(today,'startDate','date');
+                                            // startDateSel.disabled=true;
+                                            const endDate=calculateDate(document.getElementById('startDate').value,parseInt(data['not_start_limit_recs'][i][2]));
+                                            console.log(endDate)
+                                            selectDate(endDate,'endDate','date');
+                                            clsLong.innerText=parseInt(data['not_start_limit_recs'][i][2]);
+                                            break;
+                                        }
+                                    }
+                                    
+                                });
+
+                                //课程开始日校验
+                                if(isInValidStartDateHandler){
+                                    startDateSel.removeEventListener('change',isInValidStartDateHandler);
+                                }                    
+                                isInValidStartDateHandler = createInValidStartDateHandler(prds);                                
+                                startDateSel.addEventListener('change',isInValidStartDateHandler);  
+                                
+                                //课程结束日校验
+                                if(isInValidEndDateNewHandler){
+                                    endDateSel.removeEventListener('change',isInValidEndDateNewHandler);
+                                }
+                                isInValidEndDateNewHandler = createEndDateNewHandler(prds);                                
+                                endDateSel.addEventListener('change',isInValidEndDateNewHandler);    
+
+
+                                //手动触发change
+                                selectBuyCodeContainer.dispatchEvent(new Event('change'));    
+                                // endDateSel.dispatchEvent(new Event('change'));                       
+                                   
+                            }else if(startType==='延长'){
+                                prompt.innerText='没有可延长的限时课程';
+                                endDatePrompt.innerText='';
+                                selectCardBlock.style.display='none';
+                                clsLongBlock.style.display='none';
+                                startDateBlock.style.display='none';
+                                endDateBlock.style.display='none';
+                                currentClassResult.style.display='none';
+                                submitButton.style.display='none';                                                      
+                            }
+
                         }
-                    })
-                }else{
-                    valid_limit_class_rec='';
-                }
-                //显示有效课程
-                showCurrentClass();
-                console.log(not_start_buy_code_list);
-                if(startType==='新课'){
-                    // const compareDate=new Date(valid_limit_class_rec[0]['限时课程结束日'])-new Date();
-                    if(not_start_buy_code_list && not_start_buy_code_list[0]['收款日期']!==''){
-                        console.log('有待开课的限时课程')
-                        prompt.innerText=''
-                        selectBuyCodeContainer.style.display='block';
-                        startDateBlock.style.display='block';
-                        endDateBlock.style.display='block';
-                        currentClassResult.style.display='block';
-                        submitButton.style.display='block';
-
-                        // buyHistoryPrompt.style.display='block';
-                        // buyHistoryPrompt.innerText='选择相应的购课编码';
-                        
-                        generateSelectList(not_start_buy_code_list,mode='newClass');
-                        //写入默认的结束日
-                        isInValidEndDate();
-                    }else{
-                        clsLongBlock.innerText='';
-                        prompt.innerText='没有待开课的限时课程'
-                    
-                        console.log('没有待开课的限时课程')
-                    }                   
-
-                }else if(startType==='延长'){
-                    if(valid_limit_class_rec && valid_limit_class_rec[0]['购课编码']!==''){
-                        // if(!valid_limit_class_rec['购课编码']===''){
-                            selectBuyCodeContainer.style.display='block';
-                            startDateBlock.style.display='block';
-                            endDateBlock.style.display='block';
-                            currentClassResult.style.display='block';
-                            submitButton.style.display='block';
+                        //目前 无限时有效课，无待开——不可开新课，不可延长
+                        else if(data['current_valid_limit_rec'].length===0 & data['not_start_limit_recs'].length===0){
+                            clsQty={};
+                            selectCardBlock.style.display='none';
+                            startDateBlock.style.display='none';
+                            clsLongBlock.style.display='none';
+                            endDateBlock.style.display='none';
+                            currentClassResult.style.display='none';
+                            submitButton.style.display='none';
+                            endDatePrompt.style.display='block';
+                            if(startType==='新课'){
+                                prompt.innerText='没有可开的限时课程';
+                            }else if(startType==='延长'){
+                                prompt.innerText='没有可延长限时课程';
+                            }
                             
-                            // buyHistoryPrompt.style.display='block';
-                            // buyHistoryPrompt.innerText='没有待开课的限时课程'
-                            
-                            generateSelectList(valid_limit_class_rec[0],mode='onlyLongerClass');
-                            //写入默认的结束日
-                            isInValidEndDate();
-                        // }else{
-                        //     selectBuyCodeContainer.style.display='none';
-                        //     startDateBlock.style.display='none';
-                        //     endDateBlock.style.display='none';
-                        //     prompt.innerText='没有待延期的限时课程'
-                    
-                        //     console.log('没有待延期的限时课程')
-                        // }
-
-                        
-                    }else{
-                        clsLongBlock.style.display='None';
-                        prompt.innerText='没有待延长的限时课程'
-                        
-                        console.log('没有待延长的限时课程')
+                        }
                     }
-                    
-                }
-                })
+                })         
+                
                 .catch(error => console.error('Error:', error));
 
             
         }
 
-
-        function isInValidEndDate(){      
-            const startDate=document.getElementById('startDate');
-            const endDate=document.getElementById('endDate');
-            compareDate=new Date(endDate.value)- new Date(startDate.value);
-            if(compareDate<=0){
-                console.log('结束日小于开始日，已修改为开始日后的一天。')
-                endDate.value=calculateDate(startDate.value,1);
-            }      
-        }
-
-        function calculateClassDate(dateSameAsBuyCode='yes'){
-            const startDateBlock=document.getElementById('startDateBlock');
-            const prompt = document.getElementById('prompt');
-            prompt.innerText='';
-            let matchBuyRecord;
-            let clsLong;
-            let deal_method=2;
-            
-            // startDateBlock.disabled=false;
-            const buyRecords=Object.keys(not_start_buy_code_list).map(key => ({                
-                'detail':not_start_buy_code_list[key]
-            }));
-            const selectBuyCode = document.getElementById('selectBuyCodeContainer');
-            let startDateFromSelect=document.getElementById('startDate').value;
-            if(dateSameAsBuyCode==='yes'){
-                startDateFromSelect=selectBuyCode.value.slice(-8,-4)+'-'+selectBuyCode.value.slice(-4,-2)+'-'+selectBuyCode.value.slice(-2,);
-            }  
-            console.log('buyRecords, not_start_buy_code_list:',buyRecords);
-
-            // 显示目前生效课程的信息
-            // showCurrentClass()
-            
-            // deal_method: 1：延期处理，2.新开课（不附加在现有的结束日上），3.新开课（附加天数）
-
-            // 计算并选择结束日
-            if(startDateFromSelect.includes('NaN')||startDateFromSelect==='--'){
-                clsLong=0;   
-                selectToday(id='startDate',format='date');
-                selectToday(id='endDate',format='date');
-                showClsLongBlock(clsLong);
-            }else{                     
-                //根据购课编号日期改变日期默认选择值
-                let shouldBreak=false;
-                selectDate(dateInput=startDateFromSelect,id='startDate',format='date');
-                buyRecords.forEach(row=>{
-                    if(shouldBreak){
-                        return;
-                    }
-
-                    if(row['detail']['购课编码'].slice(-8,)===selectBuyCode.value.slice(-8,)){
-                        matchBuyRecord=row['detail'];
-                        clsLong=matchBuyRecord['购课时长（天）']
-                        // console.log('符合条件的购课记录：',row['detail']);
-                        shouldBreak=true;
-                    }else{
-                        clsLong=0
-                    }
-                });           
-
-                console.log(limit_cls_recs);
-                const startType=document.querySelector('input[name="startTypeRadio"]:checked').value;
-                // 比较选择的开始日与目前有效的限时课程结束日之间的天数
-                let compareDate;
-                let noLimitClassHistory='no';
-                if(valid_limit_class_rec  && valid_limit_class_rec[0]['限时课程结束日']!==''){
-                    compareDate=new Date(startDateFromSelect)-new Date(valid_limit_class_rec[0]['限时课程结束日']);
-                    noLimitClassHistory='no';
-                }else{
-                    compareDate=1;
-                    noLimitClassHistory='yes';
-                    
-                
-                }
-                console.log(compareDate);
-                //开课日期与目前的限时课程结束日比较
-                // 开课日期在当期课程结束日的关系，在submit时按不同的方式写入数据
-
-                //新开课（不附加在原来的课程日期上）
-                if(compareDate>0){
-                    deal_method=2;
-                    if(noLimitClassHistory==='yes'){
-                        prompt.innerText='';
-                    }else{
-                        prompt.innerText='课程开始日不在目前限时课程的有效期内';
-                    }
-                    
-                    console.log('写入的购课编号',selectBuyCode.value);
-                    // selectToday(id='startDate',format='date');
-
-                    selectDate(dateInput=calculateDate(startDateFromSelect,parseInt(clsLong)),id='endDate',format='date');            
-                    showClsLongBlock(clsLong);
-                //新开课，附加
-                }else{
-                    deal_method=3;
-                    prompt.innerText='因课程开始日在目前限时课程的有效期内，故该购课编码对应开始日强制修改为今日，并在原来有效期的基础上往后顺延。'
-                    console.log('写入的购课编号',selectBuyCode.value);
-                    selectToday(id='startDate',format='date');
-                    // document.getElementById('startDate').disabled=true;
-  
-                    // 从目前有效的记录中提取结束日期
-                    const currentEndDate=valid_limit_class_rec[0]['限时课程结束日'];
-                    selectDate(dateInput=calculateDate(currentEndDate,parseInt(clsLong)),id='endDate',format='date');            
-                    showClsLongBlock(clsLong);
-
-                }
-
-                
-
-            }  
-        }
-
-        function getMaxDate(dateList){
-            const dateInMilliseconds = dateList.map(date=>new Date(date))
-            // 获取最大的日期（最大的毫秒数）
-            const maxDateInMilliseconds = Math.max.apply(null, dateInMilliseconds);
-            console.log(dateInMilliseconds)
-            // 将最大的日期转换回 Date 对象
-            const maxDate = new Date(maxDateInMilliseconds);
-
-            return maxDate
-        }
-
-
-        function showConfirmationDialog() {
-            var result = window.confirm("没有待开的限时课程，需要购课吗？");
-            if (result) {
-                window.location.href='./input_buy'
-            } else {
-                window.location.href='./'
+        function createInValidStartDateHandler(prds){
+            return function(){
+                isInValidStartDate(prds);
             }
         }
 
-        function generateSelectList(optionsArray,mode='newClass'){
-            if(optionsArray){
-                //生成bucodes并去重
-                let buyCodeNotRepeated=[]
-                const buyCodes = Object.keys(optionsArray).map(key => {
-                    const buyCode = optionsArray[key]['购课编码'];                    
-                    if (!buyCodeNotRepeated.includes(buyCode)) {
-                        buyCodeNotRepeated.push(buyCode);
-                        return { 'code': buyCode };
-                    }                    
-                    return null; // 如果购课编码已经存在，返回null或其他适当的值
-                }).filter(item => item !== null);
-
-
-                console.log(buyCodes)
-                const selectElement=document.getElementById('selectBuyCodeContainer');
-                
-                if(mode==='newClass'){
-                    buyCodes.forEach((buyCode, index) => {
-                    const optionElement = document.createElement("option");
-                    optionElement.value = buyCode.code; // 可选，设置选项的值
-                    optionElement.text = buyCode.code; // 设置选项的文本
-                    selectElement.appendChild(optionElement);
-                });
-                }else if(mode==='onlyLongerClass'){
-                    const optionElement = document.createElement("option");
-                    optionElement.value = latest_limit_class_rec[0]['购课编码']; // 可选，设置选项的值
-                    optionElement.text = latest_limit_class_rec[0]['购课编码']; // 设置选项的文本
-                    selectElement.remove(0);
-                    selectElement.appendChild(optionElement);
-                }
-            }
+        function isInValidStartDate(prds){
+            const today=new Date();
+            const startDateSel=document.getElementById('startDate');
+            const endDateSel=document.getElementById('endDate');
+            const selectBuyCodeContainer=document.getElementById('selectBuyCodeContainer');   
+            const cardId=selectBuyCodeContainer.value;
+            const selectStartDate=startDateSel.value;
+            const selectEndDate=endDateSel.value;
             
-
+            const endDatePrompt=document.getElementById('endDatePrompt');
+            
+            if(new Date(selectStartDate)<today){
+                selectDate(today,'startDate','date');
+                endDatePrompt.innerText='选择的开始日不能早于今天，已修改。';
+            }else{
+                endDatePrompt.innerText='';
+            }
+            const endDateRes=calculateDate(startDateSel.value,parseInt(prds[selectBuyCodeContainer.value]))
+            console.log(endDateRes)
+            selectDate(endDateRes,'endDate','date');
 
         }
+        
 
+        function createEndDateNewHandler(prds) {
+            return function(){
+                isInValidEndDateNew(prds)
+            };
+        }
+
+        function isInValidEndDateNew(prds){     
+            
+            const startDateSel=document.getElementById('startDate');
+            const endDateSel=document.getElementById('endDate');
+            const selectBuyCodeContainer=document.getElementById('selectBuyCodeContainer');   
+            const cardId=selectBuyCodeContainer.value;
+            const selectStartDate=startDateSel.value;
+            const selectEndDate=endDateSel.value;
+            const cardEndDate=calculateDate(startDateSel.value,parseInt(prds[selectBuyCodeContainer.value]));
+            const endDatePrompt=document.getElementById('endDatePrompt');
+
+            console.log(selectEndDate,cardEndDate)
+            
+            if(new Date(selectEndDate)<new Date(cardEndDate)){                
+                selectDate(cardEndDate,'endDate','date');
+                endDatePrompt.innerText='选择的结束日不能小于卡结束日，已修改为卡结束日。';
+            }else{
+                endDatePrompt.innerText='';
+            }
+        }
+
+
+
+        function createEndDateHandler(data,item) {
+            return function(){
+                isInValidEndDate(data,item)
+            };
+        }
+
+        function isInValidEndDate(data,item){     
+            // console.log(event,data,item)
+            const startDateSel=document.getElementById('startDate');
+            const endDateSel=document.getElementById('endDate');
+            const selectBuyCodeContainer=document.getElementById('selectBuyCodeContainer');   
+            const cardId=selectBuyCodeContainer.value;
+            const selectStartDate=startDateSel.value;
+            const selectEndDate=endDateSel.value;
+            const cardEndDate=data[item][0][3];
+            const endDatePrompt=document.getElementById('endDatePrompt');
+            
+            if(new Date(selectEndDate)<new Date(cardEndDate)){                
+                selectDate(cardEndDate,'endDate','date');
+                endDatePrompt.innerText='选择的结束日不能小于卡结束日，已修改为卡结束日。';
+            }else{
+                endDatePrompt.innerText='';
+            }
+        }
 
         function handleCusNameInput() {
             // 获取输入框中的值
